@@ -598,6 +598,9 @@ def main():
 
     for ix , epoch in enumerate(epochs):
         # ======================== Training ================================
+        global_step += 1
+        if global_step >= args.max_train_steps:
+            break
 
         train_metrics = []
 
@@ -625,9 +628,6 @@ def main():
 
             train_step_progress_bar.update(1)
 
-            global_step += 1
-            if global_step >= args.max_train_steps:
-                break
 
         train_metric = jax_utils.unreplicate(train_metric)
 
