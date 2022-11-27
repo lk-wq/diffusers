@@ -433,37 +433,37 @@ def main():
         return resultDict
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="vae", dtype=weight_dtype
+        args.pretrained_model_name_or_path, subfolder="vae", revision="fp16",dtype=weight_dtype
     )
 
-    vae_param_dict = dict(flatdict.FlatDict(vae_params, delimiter='.'))
-    for r in vae_param_dict.items():
-      k , v = r[0], r[1]
-      try:
-        if v.dtype == jnp.float32:
-          v2= v.astype(jnp.bfloat16)
-          vae_param_dict[k] = v2
-          del v
-      except:
-        print("f",k)
-    vae_params = unflatten(vae_param_dict)
-    del vae_param_dict
+#     vae_param_dict = dict(flatdict.FlatDict(vae_params, delimiter='.'))
+#     for r in vae_param_dict.items():
+#       k , v = r[0], r[1]
+#       try:
+#         if v.dtype == jnp.float32:
+#           v2= v.astype(jnp.bfloat16)
+#           vae_param_dict[k] = v2
+#           del v
+#       except:
+#         print("f",k)
+#     vae_params = unflatten(vae_param_dict)
+#     del vae_param_dict
      
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="unet", dtype=weight_dtype
+        args.pretrained_model_name_or_path, subfolder="unet",  revision="fp16",dtype=weight_dtype
     )
-    unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
-    for r in unet_param_dict.items():
-      k , v = r[0], r[1]
-      try:
-        if v.dtype == jnp.float32:
-          v2= v.astype(jnp.bfloat16)
-          unet_param_dict[k] = v2
-          del v
-      except:
-        print("f",k)
-    unet_params = unflatten(unet_param_dict)
-    del unet_param_dict
+#     unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
+#     for r in unet_param_dict.items():
+#       k , v = r[0], r[1]
+#       try:
+#         if v.dtype == jnp.float32:
+#           v2= v.astype(jnp.bfloat16)
+#           unet_param_dict[k] = v2
+#           del v
+#       except:
+#         print("f",k)
+#     unet_params = unflatten(unet_param_dict)
+#     del unet_param_dict
 
     # Optimization
     if args.scale_lr:
