@@ -226,6 +226,9 @@ dataset_name_mapping = {
 def get_params_to_save(params):
     return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], params))
 
+def get_params_to_avg(params):
+    return jax.tree_util.tree_map(lambda x: x[0], params)
+
 
 def main():
     args = parse_args()
@@ -326,6 +329,21 @@ def main():
         inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
         input_ids = inputs.input_ids
         return input_ids
+    def tokenize_captions_unc(examples, is_train=True):
+        captions = []
+        for caption in examples:
+            if isinstance(caption, str):
+                captions.append(caption)
+            elif isinstance(caption, (list, np.ndarray)):
+                # take a random caption if there are multiple
+                captions.append(random.choice(caption) if is_train else caption[0])
+            else:
+                raise ValueError(
+                    f"Caption column `{caption_column}` should contain either strings or lists of strings."
+                )
+        inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
+        input_ids = inputs.input_ids
+        return input_ids
 
     train_transforms = transforms.Compose(
         [
@@ -349,7 +367,7 @@ def main():
             dataset["train"] = dataset["train"].shuffle(seed=args.seed).select(range(args.max_train_samples))
         # Set the training transforms
         train_dataset = dataset["train"].with_transform(preprocess_train)
-
+    import random
     def collate_fn(examples):
         pixel_values = torch.stack([example["pixel_values"] for example in examples])
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
@@ -358,10 +376,29 @@ def main():
         padded_tokens = tokenizer.pad(
             {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
         )
-        batch = {
-            "pixel_values": pixel_values,
-            "input_ids": padded_tokens.input_ids,
-        }
+
+        input_ids = tokenize_captions_unc(["" for example in range(len(examples)) ])
+        ids = [ids for ids in input_ids ]
+
+        padded_tokens2 = tokenizer.pad(
+            {"input_ids": ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
+        )
+        unc = padded_tokens2.input_ids
+        a = [0,1,2,3,4,5,6,7,8,9]
+        random.shuffle(a)
+        if a[0] == 0:
+
+
+          batch = {
+              "pixel_values": pixel_values,
+              "input_ids": unc,
+          }
+        else:
+            batch = {
+              "pixel_values": pixel_values,
+              "input_ids": padded_tokens.input_ids,
+          }
+
         batch = {k: v.numpy() for k, v in batch.items()}
 
         return batch
@@ -376,16 +413,12 @@ def main():
         weight_dtype = jnp.float16
     elif args.mixed_precision == "bf16":
         weight_dtype = jnp.bfloat16
-
+    #shard(
     # Load models and create wrapper for stable diffusion
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
     text_encoder = FlaxCLIPTextModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="text_encoder", dtype=weight_dtype
     )
-    vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="vae", dtype=weight_dtype
-    )
-    ###cast down weights
     import flatdict
     vae_param_dict = dict(flatdict.FlatDict(vae_params, delimiter='.'))
     for r in d.items():
@@ -433,7 +466,7 @@ def main():
         adamw,
     )
 
-    state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+    state = avg_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
@@ -442,7 +475,6 @@ def main():
     # Initialize our training
     rng = jax.random.PRNGKey(args.seed)
     train_rngs = jax.random.split(rng, jax.local_device_count())
-
     def train_step(state, text_encoder_params, vae_params, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
 
@@ -473,15 +505,28 @@ def main():
             noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
             # Get the text embedding for conditioning
+            # print("batch", batch["input_ids"])
             encoder_hidden_states = text_encoder(
                 batch["input_ids"],
                 params=text_encoder_params,
                 train=False,
             )[0]
+            #unc = tokenizer([""]*len(batch['input_ids']), max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
+            # print("unc",unc)
+
+            # encoder_hidden_states_unc = text_encoder(
+            #     batch['unc'],
+            #     params=text_encoder_params,
+            #     train=False,
+            # )[0]
 
             # Predict the noise residual and compute loss
             unet_outputs = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True)
+            # unet_outputs_unc = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states_unc, train=True)
+
             noise_pred = unet_outputs.sample
+            # noise_pred_unc = unet_outputs_unc.sample
+            # noise_pred_use = noise_pred_unc + 3*( noise_pred - noise_pred_unc )
             loss = (noise - noise_pred) ** 2
             loss = loss.mean()
 
@@ -492,17 +537,18 @@ def main():
         grad = jax.lax.pmean(grad, "batch")
 
         new_state = state.apply_gradients(grads=grad)
-
         metrics = {"loss": loss}
         metrics = jax.lax.pmean(metrics, axis_name="batch")
 
-        return new_state, metrics, new_train_rng
+        return new_state, metrics, new_train_rng 
 
     # Create parallel version of the train step
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
 
     # Replicate the train state on each device
     state = jax_utils.replicate(state)
+    # avg_state = jax_utils.replicate(avg_state)
+
     text_encoder_params = jax_utils.replicate(text_encoder.params)
     vae_params = jax_utils.replicate(vae_params)
 
@@ -523,9 +569,16 @@ def main():
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
     global_step = 0
-
+    @jax.jit
+    def swa_update(params, avg_params,epoch_index):
+      # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
+      step_ = 1/(epoch_index+2)
+      return optax.incremental_update(params, avg_params, step_size=step_)
+    import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
-    for epoch in epochs:
+    avg = avg_state.params
+
+    for ix , epoch in enumerate(epochs):
         # ======================== Training ================================
 
         train_metrics = []
@@ -535,7 +588,21 @@ def main():
         # train
         for batch in train_dataloader:
             batch = shard(batch)
+            # batch = shard(batch)
+
             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+            # start = time.perf_counter()
+
+            # p = state.params
+            # duration = time.perf_counter() - start
+            # print("p",duration)
+            # ga = get_params_to_save(p)
+            # duration = time.perf_counter() - start
+            # print("ga", duration)
+            # avg = ema_update(ga , avg)
+            # duration = time.perf_counter() - start
+            # print("avg", duration)
+
             train_metrics.append(train_metric)
 
             train_step_progress_bar.update(1)
@@ -548,6 +615,10 @@ def main():
 
         train_step_progress_bar.close()
         epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
+        estart = 100
+        if ix >= estart:
+            eix = float(ix-estart)
+            avg = swa_update(get_params_to_save(state.params), avg,eix)
 
     # Create the pipeline using using the trained modules and save it.
     if jax.process_index() == 0:
@@ -572,7 +643,7 @@ def main():
             params={
                 "text_encoder": get_params_to_save(text_encoder_params),
                 "vae": get_params_to_save(vae_params),
-                "unet": get_params_to_save(state.params),
+                "unet": avg,
                 "safety_checker": safety_checker.params,
             },
         )
