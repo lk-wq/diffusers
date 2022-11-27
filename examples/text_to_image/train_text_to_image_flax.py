@@ -436,34 +436,34 @@ def main():
         args.pretrained_model_name_or_path, subfolder="vae",from_pt=True
     )
 
-#     vae_param_dict = dict(flatdict.FlatDict(vae_params, delimiter='.'))
-#     for r in vae_param_dict.items():
-#       k , v = r[0], r[1]
-#       try:
-#         if v.dtype == jnp.float32:
-#           v2= v.astype(jnp.bfloat16)
-#           vae_param_dict[k] = v2
-#           del v
-#       except:
-#         print("f",k)
-#     vae_params = unflatten(vae_param_dict)
-#     del vae_param_dict
+    vae_param_dict = dict(flatdict.FlatDict(vae_params, delimiter='.'))
+    for r in vae_param_dict.items():
+      k , v = r[0], r[1]
+      try:
+        if v.dtype == jnp.float32:
+          v2= v.astype(jnp.bfloat16)
+          vae_param_dict[k] = v2
+          del v
+      except:
+        print("f",k)
+    vae_params = unflatten(vae_param_dict)
+    del vae_param_dict
      
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",  from_pt=True
     )
-#     unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
-#     for r in unet_param_dict.items():
-#       k , v = r[0], r[1]
-#       try:
-#         if v.dtype == jnp.float32:
-#           v2= v.astype(jnp.bfloat16)
-#           unet_param_dict[k] = v2
-#           del v
-#       except:
-#         print("f",k)
-#     unet_params = unflatten(unet_param_dict)
-#     del unet_param_dict
+    unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
+    for r in unet_param_dict.items():
+      k , v = r[0], r[1]
+      try:
+        if v.dtype == jnp.float32:
+          v2= v.astype(jnp.bfloat16)
+          unet_param_dict[k] = v2
+          del v
+      except:
+        print("f",k)
+    unet_params = unflatten(unet_param_dict)
+    del unet_param_dict
 
     # Optimization
     if args.scale_lr:
@@ -640,8 +640,14 @@ def main():
 
     # Create the pipeline using using the trained modules and save it.
     if jax.process_index() == 0:
-        scheduler = FlaxPNDMScheduler(
-            beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+        scheduler = FlaxDDIMScheduler(
+            beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+            # clip_sample=False,
+            num_train_timesteps=1000,
+            prediction_type="v_prediction",
+            set_alpha_to_one=False,
+            steps_offset=1,
+            # skip_prk_steps=True,
         )
         safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
             "CompVis/stable-diffusion-safety-checker", from_pt=True
