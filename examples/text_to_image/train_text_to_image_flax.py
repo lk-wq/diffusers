@@ -433,7 +433,7 @@ def main():
         return resultDict
 
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="vae", revision="fp16",dtype=weight_dtype
+        args.pretrained_model_name_or_path, subfolder="vae", revision="fp16",from_pt=True
     )
 
 #     vae_param_dict = dict(flatdict.FlatDict(vae_params, delimiter='.'))
@@ -450,7 +450,7 @@ def main():
 #     del vae_param_dict
      
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="unet",  revision="fp16",dtype=weight_dtype
+        args.pretrained_model_name_or_path, subfolder="unet",  revision="fp16",from_pt=True
     )
 #     unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
 #     for r in unet_param_dict.items():
