@@ -420,6 +420,10 @@ def main():
         args.pretrained_model_name_or_path, subfolder="text_encoder", dtype=weight_dtype
     )
     import flatdict
+    vae, vae_params = FlaxAutoencoderKL.from_pretrained(
+        args.pretrained_model_name_or_path, subfolder="vae", dtype=weight_dtype
+    )
+
     vae_param_dict = dict(flatdict.FlatDict(vae_params, delimiter='.'))
     for r in d.items():
       k , v = r[0], r[1]
