@@ -162,18 +162,19 @@ class FlaxStableDiffusionPipeline(FlaxDiffusionPipeline):
 
         images_was_copied = False
         for idx, has_nsfw_concept in enumerate(has_nsfw_concepts):
-            if has_nsfw_concept:
-                if not images_was_copied:
-                    images_was_copied = True
-                    images = images.copy()
+            pass
+#             if has_nsfw_concept:
+#                 if not images_was_copied:
+#                     images_was_copied = True
+#                     images = images.copy()
 
-                images[idx] = np.zeros(images[idx].shape, dtype=np.uint8)  # black image
+#                 images[idx] = np.zeros(images[idx].shape, dtype=np.uint8)  # black image
 
-            if any(has_nsfw_concepts):
-                warnings.warn(
-                    "Potential NSFW content was detected in one or more images. A black image will be returned"
-                    " instead. Try again with a different prompt and/or seed."
-                )
+#             if any(has_nsfw_concepts):
+#                 warnings.warn(
+#                     "Potential NSFW content was detected in one or more images. A black image will be returned"
+#                     " instead. Try again with a different prompt and/or seed."
+#                 )
 
         return images, has_nsfw_concepts
 
