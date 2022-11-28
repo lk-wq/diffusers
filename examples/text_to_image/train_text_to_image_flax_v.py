@@ -612,7 +612,7 @@ def main():
 
             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
-            if step % 10 == 0:
+            if global_step % 10 == 0:
                 avg = ema_update( get_params_to_save(state.params) , avg )
 
             # p = state.params
