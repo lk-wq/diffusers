@@ -521,7 +521,7 @@ def main():
 
             # Add noise to the latents according to the noise magnitude at each timestep
             # (this is the forward diffusion process)
-            noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
+            noisy_latents, alpha, sigma = noise_scheduler.add_noise(latents, noise, timesteps)
 
             # Get the text embedding for conditioning
             # print("batch", batch["input_ids"])
@@ -546,7 +546,8 @@ def main():
             noise_pred = unet_outputs.sample
             # noise_pred_unc = unet_outputs_unc.sample
             # noise_pred_use = noise_pred_unc + 3*( noise_pred - noise_pred_unc )
-            loss = (noise - noise_pred) ** 2
+            v = alpha*noise - sigma * latents
+            loss = (v - noise_pred) ** 2
             loss = loss.mean()
 
             return loss
