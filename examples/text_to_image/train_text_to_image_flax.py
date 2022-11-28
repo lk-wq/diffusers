@@ -635,8 +635,11 @@ def main():
         epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
         estart = 120
         if ix >= estart:
-            eix = float(ix-estart)
-            avg = swa_update(get_params_to_save(state.params), avg,eix)
+            if ix == estart:
+                avg = get_params_to_save(state.params)
+            else:
+                eix = float(ix-estart)
+                avg = swa_update(get_params_to_save(state.params), avg,eix)
 
     # Create the pipeline using using the trained modules and save it.
     if jax.process_index() == 0:
