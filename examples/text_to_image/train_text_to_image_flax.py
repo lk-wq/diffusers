@@ -599,9 +599,6 @@ def main():
 
     for ix , epoch in enumerate(epochs):
         # ======================== Training ================================
-        global_step += 1
-        if global_step >= args.max_train_steps:
-            break
 
         train_metrics = []
 
@@ -641,6 +638,9 @@ def main():
             else:
                 eix = float(ix-estart)
                 avg = swa_update(get_params_to_save(state.params), avg,eix)
+        global_step += 1
+        if global_step >= args.max_train_steps:
+            break
 
     # Create the pipeline using using the trained modules and save it.
     if jax.process_index() == 0:
