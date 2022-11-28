@@ -633,7 +633,7 @@ def main():
 
         train_step_progress_bar.close()
         epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
-        estart = 100
+        estart = 120
         if ix >= estart:
             eix = float(ix-estart)
             avg = swa_update(get_params_to_save(state.params), avg,eix)
