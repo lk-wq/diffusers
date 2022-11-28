@@ -18,7 +18,6 @@ from datasets import load_dataset
 from diffusers import (
     FlaxAutoencoderKL,
     FlaxDDPMScheduler,
-    FlaxDDPMScheduler_V,
     FlaxPNDMScheduler,
     FlaxStableDiffusionPipeline,
     FlaxUNet2DConditionModel,
@@ -486,7 +485,7 @@ def main():
         adamw,
     )
 
-    state = avg_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+    state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
@@ -547,7 +546,7 @@ def main():
             noise_pred = unet_outputs.sample
             # noise_pred_unc = unet_outputs_unc.sample
             # noise_pred_use = noise_pred_unc + 3*( noise_pred - noise_pred_unc )
-            v = alpha*noise - sigma*latents
+            v = alpha*noise - sigma * latents
             loss = (v - noise_pred) ** 2
             loss = loss.mean()
 
@@ -590,20 +589,17 @@ def main():
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
     global_step = 0
-    @jax.jit
-    def swa_update(params, avg_params,epoch_index):
+    #@jax.jit
+    def ema_update(params, avg_params):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
-      step_ = 1/(epoch_index+2)
-      return optax.incremental_update(params, avg_params, step_size=step_)
+#       step_ = 1/(epoch_index+2)
+      return optax.incremental_update(params, avg_params, step_size=0.0001)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
-    avg = avg_state.params
+    avg = get_params_to_save(state.params)
 
     for ix , epoch in enumerate(epochs):
         # ======================== Training ================================
-        global_step += 1
-        if global_step >= args.max_train_steps:
-            break
 
         train_metrics = []
 
@@ -616,6 +612,8 @@ def main():
 
             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
+            if step % 10 == 0:
+                avg = ema_update( get_params_to_save(state.params) , avg )
 
             # p = state.params
             # duration = time.perf_counter() - start
@@ -636,13 +634,9 @@ def main():
 
         train_step_progress_bar.close()
         epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
-        estart = 120
-        if ix >= estart:
-            if ix == estart:
-                avg = get_params_to_save(state.params)
-            else:
-                eix = float(ix-estart)
-                avg = swa_update(get_params_to_save(state.params), avg,eix)
+        global_step += 1
+        if global_step >= args.max_train_steps:
+            break
 
     # Create the pipeline using using the trained modules and save it.
     if jax.process_index() == 0:
