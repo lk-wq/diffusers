@@ -485,7 +485,7 @@ def main():
         adamw,
     )
 
-    state = avg_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+    state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
@@ -589,14 +589,14 @@ def main():
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
     global_step = 0
-    @jax.jit
+    #@jax.jit
     def swa_update(params, avg_params,epoch_index):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
       step_ = 1/(epoch_index+2)
       return optax.incremental_update(params, avg_params, step_size=step_)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
-    avg = avg_state.params
+    #avg = avg_state.params
 
     for ix , epoch in enumerate(epochs):
         # ======================== Training ================================
@@ -632,7 +632,7 @@ def main():
 
         train_step_progress_bar.close()
         epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
-        estart = 120
+        estart = 0
         if ix >= estart:
             if ix == estart:
                 avg = get_params_to_save(state.params)
