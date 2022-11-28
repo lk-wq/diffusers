@@ -312,7 +312,7 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
         sqrt_one_minus_alpha_prod = broadcast_to_shape_from_left(sqrt_one_minus_alpha_prod, original_samples.shape)
 
         noisy_samples = sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
-        return noisy_samples
+        return noisy_samples, sqrt_alpha_prod, sqrt_one_minus_alpha_prod
 
     def __len__(self):
         return self.config.num_train_timesteps
