@@ -21,6 +21,7 @@ from diffusers import (
     FlaxPNDMScheduler,
     FlaxStableDiffusionPipeline,
     FlaxUNet2DConditionModel,
+    FlaxDDIMScheduler,
 )
 from diffusers.pipelines.stable_diffusion import FlaxStableDiffusionSafetyChecker
 from flax import jax_utils
