@@ -69,7 +69,7 @@ class FolderData(Dataset):
         If you pass in a root directory it will be searched for images
         ending in ext (ext can be a list)
         """
-        self.root_dir = Path(root_dir)
+        self.root_dir = root_dir
         self.default_caption = default_caption
         self.return_paths = return_paths
         with open(root_dir+'metadata.jsonl', "rt") as f:
@@ -102,7 +102,7 @@ class FolderData(Dataset):
 
     def __getitem__(self, index):
         data = {}
-        print("fn",self.captions[index])
+#         print("fn",self.captions[index])
         filename = self.captions[index]['file_name']
 
         im = Image.open(self.root_dir+filename)
