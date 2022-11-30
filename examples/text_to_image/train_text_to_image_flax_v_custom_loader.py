@@ -105,7 +105,7 @@ class FolderData(Dataset):
         print("fn",self.captions[index])
         filename = self.captions[index]['file_name']
 
-        im = Image.open(root_dir+filename)
+        im = Image.open(self.root_dir+filename)
         im = self.process_im(im)
         data["image"] = im
         caption = self.captions[index]['text']
