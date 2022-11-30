@@ -57,6 +57,7 @@ train_transforms = transforms.Compose(
 class FolderData(Dataset):
     def __init__(self,
         root_dir,
+        token_dir,
         caption_file=None,
         image_transforms=[],
         ext="jpg",
@@ -93,7 +94,8 @@ class FolderData(Dataset):
         transforms.Normalize([0.5], [0.5]),
             ]
         )
-        self.tokenizer = tokenizer
+        self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
+
 
     def __len__(self):
         return len(self.captions)
@@ -414,7 +416,7 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
