@@ -380,7 +380,6 @@ def main():
 #         )
         # See more about loading custom images at
         # https://huggingface.co/docs/datasets/v2.4.0/en/image_load#imagefolder
-    dataset = FolderData(args.train_data_dir)
     # Preprocessing the datasets.
     # We need to tokenize inputs and targets.
 #     column_names = dataset["train"].column_names
@@ -413,6 +412,10 @@ def main():
 #         inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
 #         input_ids = inputs.input_ids
 #         return input_ids
+    tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
+
+    dataset = FolderData(args.train_data_dir)
+
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
         inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
@@ -489,10 +492,10 @@ def main():
         weight_dtype = jnp.bfloat16
     #shard(
     # Load models and create wrapper for stable diffusion
-    tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
     text_encoder = FlaxCLIPTextModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="text_encoder", from_pt=True
     )
+    
     import flatdict
     def unflatten(dictionary):
         resultDict = dict()
