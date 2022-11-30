@@ -6,3 +6,4 @@ datasets
 ftfy
 tensorboard
 modelcards
+flatdict
