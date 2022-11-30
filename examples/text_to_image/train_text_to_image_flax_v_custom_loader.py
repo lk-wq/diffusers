@@ -709,7 +709,7 @@ def main():
             train_metrics.append(train_metric)
 
             train_step_progress_bar.update(1)
-            if gloabal_step % 100 == 0 and jax.process_index() == 0:
+            if global_step % 100 == 0 and jax.process_index() == 0:
                 scheduler = FlaxDDIMScheduler(
                     beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
                     # clip_sample=False,
