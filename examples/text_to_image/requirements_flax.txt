@@ -7,3 +7,4 @@ ftfy
 tensorboard
 modelcards
 flatdict
+einops
