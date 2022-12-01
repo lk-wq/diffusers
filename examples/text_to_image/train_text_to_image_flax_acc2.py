@@ -709,7 +709,7 @@ def main():
                 avg = ema_update( get_params_to_save(state.params) , avg, global_step//256 )
 
 #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
-                if global_step % 512 == 0:
+                if global_step % 5120 == 0:
                     scheduler = FlaxDDIMScheduler(
                         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
                         # clip_sample=False,
@@ -724,7 +724,7 @@ def main():
             #         )
 
                     safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-                        "CompVis/stable-diffusion-safety-checker", from_pt=True
+                        "CompVis/stable-diffusion-safety-checker", revision='bf16',dtype=weight_dtype
                     )
                     pipeline = FlaxStableDiffusionPipeline(
                         text_encoder=text_encoder,
