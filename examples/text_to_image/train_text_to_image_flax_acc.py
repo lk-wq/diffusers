@@ -756,6 +756,9 @@ def main():
                         "safety_checker": safety_checker.params,
                     },
                 )
+                del pipeline
+                del safety_checker
+                
 
 
         train_metric = jax_utils.unreplicate(train_metric)
