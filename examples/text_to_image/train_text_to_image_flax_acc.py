@@ -558,14 +558,17 @@ def main():
         weight_decay=args.adam_weight_decay,
     )
     
-    adamw2 = optax.MultiSteps(
-        adamw, 256
-    )
+#     adamw2 = optax.MultiSteps(
+#         adamw, 256
+#     )
 
 
-    optimizer = optax.chain(
+    optimizer_ = optax.chain(
         optax.clip_by_global_norm(args.max_grad_norm),
-        adamw2,
+        adamw,
+    )
+    optimizer = optax.MultiSteps(
+        optimizer_, 256
     )
 
     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
