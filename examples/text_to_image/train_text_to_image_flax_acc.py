@@ -701,8 +701,8 @@ def main():
 
             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
-            if global_step % 256 == 0 and global_step > 0:
-                avg = ema_update( get_params_to_save(state.params) , avg, global_step//256 )
+#             if global_step % 256 == 0 and global_step > 0:
+#                 avg = ema_update( get_params_to_save(state.params) , avg, global_step//256 )
 
             # p = state.params
             # duration = time.perf_counter() - start
@@ -752,7 +752,7 @@ def main():
                     params={
                         "text_encoder": get_params_to_save(text_encoder_params),
                         "vae": get_params_to_save(vae_params),
-                        "unet": get_params_to_save(avg),
+                        "unet": get_params_to_save(state.params),
                         "safety_checker": safety_checker.params,
                     },
                 )
