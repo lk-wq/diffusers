@@ -701,64 +701,56 @@ def main():
 
             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
-#             if global_step % 256 == 0 and global_step > 0:
-#                 avg = ema_update( get_params_to_save(state.params) , avg, global_step//256 )
-
-            # p = state.params
-            # duration = time.perf_counter() - start
-            # print("p",duration)
-            # ga = get_params_to_save(p)
-            # duration = time.perf_counter() - start
-            # print("ga", duration)
-            # avg = ema_update(ga , avg)
-            # duration = time.perf_counter() - start
-            # print("avg", duration)
-            global_step += 1
-            if global_step >= args.max_train_steps:
-                break
-
             train_metrics.append(train_metric)
 
             train_step_progress_bar.update(1)
-            if global_step % 5000 == 0 and jax.process_index() == 0:
-                scheduler = FlaxDDIMScheduler(
-                    beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-                    # clip_sample=False,
-                    num_train_timesteps=1000,
-                    prediction_type="v_prediction",
-                    set_alpha_to_one=False,
-                    steps_offset=1,
-                    # skip_prk_steps=True,
-                )
-        #         scheduler = FlaxPNDMScheduler(
-        #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-        #         )
 
-                safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-                    "CompVis/stable-diffusion-safety-checker", from_pt=True
-                )
-                pipeline = FlaxStableDiffusionPipeline(
-                    text_encoder=text_encoder,
-                    vae=vae,
-                    unet=unet,
-                    tokenizer=tokenizer,
-                    scheduler=scheduler,
-                    safety_checker=safety_checker,
-                    feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
-                )
+            if global_step % 256 == 0 and global_step > 0 and jax.process_index() == 0:
+                avg = ema_update( get_params_to_save(state.params) , avg, global_step//256 )
 
-                pipeline.save_pretrained(
-                    args.output_dir+str(global_step),
-                    params={
-                        "text_encoder": get_params_to_save(text_encoder_params),
-                        "vae": get_params_to_save(vae_params),
-                        "unet": get_params_to_save(state.params),
-                        "safety_checker": safety_checker.params,
-                    },
-                )
-                del pipeline
-                del safety_checker
+#             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
+                if global_step % 512 == 0:
+                    scheduler = FlaxDDIMScheduler(
+                        beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+                        # clip_sample=False,
+                        num_train_timesteps=1000,
+                        prediction_type="v_prediction",
+                        set_alpha_to_one=False,
+                        steps_offset=1,
+                        # skip_prk_steps=True,
+                    )
+            #         scheduler = FlaxPNDMScheduler(
+            #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+            #         )
+
+                    safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
+                        "CompVis/stable-diffusion-safety-checker", from_pt=True
+                    )
+                    pipeline = FlaxStableDiffusionPipeline(
+                        text_encoder=text_encoder,
+                        vae=vae,
+                        unet=unet,
+                        tokenizer=tokenizer,
+                        scheduler=scheduler,
+                        safety_checker=safety_checker,
+                        feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+                    )
+
+                    pipeline.save_pretrained(
+                        args.output_dir+str(global_step),
+                        params={
+                            "text_encoder": get_params_to_save(text_encoder_params),
+                            "vae": get_params_to_save(vae_params),
+                            "unet": avg,
+                            "safety_checker": safety_checker.params,
+                        },
+                    )
+                    del pipeline
+                    del safety_checker
                 
+            global_step += 1
+            if global_step >= args.max_train_steps:
+                break
 
 
         train_metric = jax_utils.unreplicate(train_metric)
