@@ -724,7 +724,7 @@ def main():
             #         )
 
                     safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-                        "CompVis/stable-diffusion-safety-checker", revision='bf16',dtype=weight_dtype
+                        "CompVis/stable-diffusion-safety-checker", from_pt=True
                     )
                     pipeline = FlaxStableDiffusionPipeline(
                         text_encoder=text_encoder,
@@ -774,7 +774,7 @@ def main():
 #         )
 
         safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-            "CompVis/stable-diffusion-safety-checker", revision='bf16', dtype=weight_dtype
+            "CompVis/stable-diffusion-safety-checker", from_pt=True
         )
         pipeline = FlaxStableDiffusionPipeline(
             text_encoder=text_encoder,
