@@ -663,6 +663,19 @@ def main():
     # Train!
     num_update_steps_per_epoch = math.ceil(len(train_dataloader))
 
+    import glob
+    from google.cloud import storage
+
+    def upload_local_directory_to_gcs(local_path, bucket, gcs_path):
+        assert os.path.isdir(local_path)
+        for local_file in glob.glob(local_path + '/**'):
+            if not os.path.isfile(local_file):
+               upload_local_directory_to_gcs(local_file, bucket, gcs_path + "/" + os.path.basename(local_file))
+            else:
+               remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
+               blob = bucket.blob(remote_path)
+               blob.upload_from_filename(local_file)
+
     # Scheduler and math around the number of training steps.
     if args.max_train_steps is None:
         args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
@@ -749,8 +762,10 @@ def main():
                             "safety_checker": safety_checker.params,
                         },
                     )
-                    blob = bucket.blob(args.output_dir+str(global_step))
-                    blob.upload_from_filename(args.output_dir+str(global_step))
+#                     blob = bucket.blob(args.output_dir+str(global_step))
+                    upload_local_directory_to_gcs(args.output_dir+str(global_step), bucket, args.output_dir+str(global_step))
+
+#                     blob.upload_from_filename(args.output_dir+str(global_step))
                     del blob
                     del pipeline
                     del safety_checker
