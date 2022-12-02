@@ -196,7 +196,10 @@ def parse_args():
     )
     parser.add_argument("--seed", type=int, default=0, help="A seed for reproducible training.")
     parser.add_argument("--bucketname", type=str, default='buck', help="Name of bucket.")
-    parser.add_argument("--restart_from", type=int, default=0, help="Steps to restart rom")
+    parser.add_argument("--bucketdir", type=str, default='buck', help="Bucket directory.")
+
+    parser.add_argument("--restart_from", type=int, default=0, help="Steps to restart from")
+    parser.add_argument("--save_frequency", type=int, default=5120, help="How frequently to save")
 
     parser.add_argument(
         "--resolution",
@@ -668,7 +671,7 @@ def main():
     from google.cloud import storage
 
     def upload_local_directory_to_gcs(local_path, bucket, gcs_path):
-        assert os.path.isdir(local_path)
+        #assert os.path.isdir(local_path)
         for local_file in glob.glob(local_path + '/**'):
             if not os.path.isfile(local_file):
                upload_local_directory_to_gcs(local_file, bucket, gcs_path + "/" + os.path.basename(local_file))
@@ -728,7 +731,7 @@ def main():
                 avg = ema_update( get_params_to_save(state.params) , avg, global_step//256 )
 
 #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
-                if global_step % 5120 == 0:
+                if global_step % args.save_frequency == 0:
                     scheduler = FlaxDDIMScheduler(
                         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
                         # clip_sample=False,
@@ -765,7 +768,7 @@ def main():
                         },
                     )
 #                     blob = bucket.blob(args.output_dir+str(global_step))
-                    upload_local_directory_to_gcs(args.output_dir+str(global_step), bucket, args.output_dir+str(global_step))
+                    upload_local_directory_to_gcs(args.output_dir+str(global_step), bucket, args.bucketdir+str(global_step))
 
 #                     blob.upload_from_filename(args.output_dir+str(global_step))
                     del blob
