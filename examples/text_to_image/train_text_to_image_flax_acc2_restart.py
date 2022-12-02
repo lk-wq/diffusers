@@ -200,6 +200,7 @@ def parse_args():
 
     parser.add_argument("--restart_from", type=int, default=0, help="Steps to restart from")
     parser.add_argument("--save_frequency", type=int, default=5120, help="How frequently to save")
+    parser.add_argument("--accumulation_frequency", type=int, default=256, help="How frequently to save")
 
     parser.add_argument(
         "--resolution",
@@ -727,7 +728,7 @@ def main():
 
             train_step_progress_bar.update(1)
 
-            if global_step % 256 == 0 and global_step > 0 and jax.process_index() == 0:
+            if global_step % args.accumulation_frequency == 0 and global_step > 0 and jax.process_index() == 0:
                 avg = ema_update( get_params_to_save(state.params) , avg, global_step//256 )
 
 #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
