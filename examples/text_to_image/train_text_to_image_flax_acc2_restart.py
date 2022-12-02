@@ -691,7 +691,7 @@ def main():
     logger.info(f"  Total train batch size (w. parallel & distributed) = {total_train_batch_size}")
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
-    global_step = 0
+    global_step = restart_from
     #@jax.jit
     def ema_update(params, avg_params, it):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
@@ -705,7 +705,7 @@ def main():
     avg = get_params_to_save(state.params)
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
-    
+        
     for ix , epoch in enumerate(epochs):
         # ======================== Training ================================
 
