@@ -575,7 +575,7 @@ def main():
         adamw,
     )
     optimizer = optax.MultiSteps(
-        optimizer_, 256
+        optimizer_, args.accumulation_frequency
     )
 
     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
