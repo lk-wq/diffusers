@@ -775,7 +775,9 @@ def main():
 #                     del blob
                     del pipeline
                     del safety_checker
-                
+                    jax.lib.xla_bridge.get_backend().defragment()
+
+
             global_step += 1
             if global_step >= args.max_train_steps:
                 break
