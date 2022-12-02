@@ -771,7 +771,7 @@ def main():
                     upload_local_directory_to_gcs(args.output_dir+str(global_step), bucket, args.bucketdir+str(global_step))
 
 #                     blob.upload_from_filename(args.output_dir+str(global_step))
-                    del blob
+#                     del blob
                     del pipeline
                     del safety_checker
                 
