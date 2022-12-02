@@ -675,6 +675,7 @@ def main():
                remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
                blob = bucket.blob(remote_path)
                blob.upload_from_filename(local_file)
+               del blob
 
     # Scheduler and math around the number of training steps.
     if args.max_train_steps is None:
