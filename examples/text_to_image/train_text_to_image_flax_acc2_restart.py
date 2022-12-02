@@ -196,6 +196,7 @@ def parse_args():
     )
     parser.add_argument("--seed", type=int, default=0, help="A seed for reproducible training.")
     parser.add_argument("--bucketname", type=str, default='buck', help="Name of bucket.")
+    parser.add_argument("--restart_from", type=int, default=0, help="Steps to restart rom")
 
     parser.add_argument(
         "--resolution",
