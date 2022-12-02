@@ -775,7 +775,7 @@ def main():
 #                     del blob
                     del pipeline
                     del safety_checker
-                    jax.lib.xla_bridge.get_backend().defragment()
+#                     jax.lib.xla_bridge.get_backend().defragment()
 
 
             global_step += 1
