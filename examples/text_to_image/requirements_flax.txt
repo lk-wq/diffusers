@@ -8,3 +8,4 @@ tensorboard
 modelcards
 flatdict
 einops
+google-cloud-storage
