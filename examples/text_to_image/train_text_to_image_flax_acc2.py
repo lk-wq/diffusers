@@ -53,7 +53,7 @@ train_transforms = transforms.Compose(
         transforms.Normalize([0.5], [0.5]),
     ]
 )
-
+from google.cloud import storage
 class FolderData(Dataset):
     def __init__(self,
         root_dir,
@@ -195,6 +195,8 @@ def parse_args():
         help="The directory where the downloaded models and datasets will be stored.",
     )
     parser.add_argument("--seed", type=int, default=0, help="A seed for reproducible training.")
+    parser.add_argument("--bucketname", type=str, default='buck', help="Name of bucket.")
+
     parser.add_argument(
         "--resolution",
         type=int,
@@ -686,7 +688,9 @@ def main():
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
     avg = get_params_to_save(state.params)
-
+    client = storage.Client()
+    bucket = client.bucket(args.bucketname)
+    
     for ix , epoch in enumerate(epochs):
         # ======================== Training ================================
 
@@ -745,6 +749,9 @@ def main():
                             "safety_checker": safety_checker.params,
                         },
                     )
+                    blob = bucket.blob(args.output_dir+str(global_step))
+                    blob.upload_from_filename(args.output_dir+str(global_step))
+                    del blob
                     del pipeline
                     del safety_checker
                 
