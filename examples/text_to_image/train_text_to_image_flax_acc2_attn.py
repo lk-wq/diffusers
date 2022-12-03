@@ -9,6 +9,7 @@ from typing import Optional
 import numpy as np
 import torch
 import torch.utils.checkpoint
+import flax
 
 import jax
 import jax.numpy as jnp
@@ -747,7 +748,7 @@ def main():
             train_step_progress_bar.update(1)
 
             if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
-                if global_step % self.ema_frequency == 0:
+                if global_step % args.ema_frequency == 0:
                   avg = ema_update( get_params_to_save(state.params) , avg, global_step//args.accumulation_frequency )
 
 #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
