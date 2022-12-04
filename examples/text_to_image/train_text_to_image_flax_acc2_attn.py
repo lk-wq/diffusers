@@ -109,7 +109,7 @@ class FolderData(Dataset):
         im = Image.open(self.root_dir+filename)
         im = self.process_im(im)
         data["image"] = im
-        caption = self.captions[index]['text']
+        caption = "a beautiful digital art fabric pattern " + self.captions[index]['text']
         
         data["txt"] = self.tokenize_captions(caption)
 
@@ -465,7 +465,7 @@ def main():
             {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
         )
 
-        input_ids = tokenize_captions(["" for example in range(len(examples)) ])
+        input_ids = tokenize_captions(["a beautiful digital art fabric pattern" for example in range(len(examples)) ])
         ids = [ids for ids in input_ids ]
 
         padded_tokens2 = tokenizer.pad(
