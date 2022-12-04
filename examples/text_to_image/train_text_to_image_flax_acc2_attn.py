@@ -203,6 +203,11 @@ def parse_args():
     parser.add_argument("--save_frequency", type=int, default=5120, help="How frequently to save")
     parser.add_argument("--accumulation_frequency", type=int, default=1, help="How frequently to save")
     parser.add_argument("--ema_frequency", type=int, default=10, help="How frequently to perform ema")
+    parser.add_argument("--negative_prompt", type=str, default="", help="Negative prompt for unconditional generation")
+
+    parser.add_argument("--scheduling", type=str, default="constant", help="scheduling")
+    parser.add_argument("--warmup_steps", type=int, default=0, help="warm up steps")
+    
 
     parser.add_argument(
         "--resolution",
@@ -239,6 +244,13 @@ def parse_args():
         default=1e-4,
         help="Initial learning rate (after the potential warmup period) to use.",
     )
+    parser.add_argument(
+        "--init_learning_rate",
+        type=float,
+        default=1e-6,
+        help="Initial learning rate before warmup.",
+    )
+
     parser.add_argument(
         "--scale_lr",
         action="store_true",
@@ -465,7 +477,7 @@ def main():
             {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
         )
 
-        input_ids = tokenize_captions(["a beautiful digital art fabric pattern" for example in range(len(examples)) ])
+        input_ids = tokenize_captions([args.negative_prompt for example in range(len(examples)) ])
         ids = [ids for ids in input_ids ]
 
         padded_tokens2 = tokenizer.pad(
@@ -475,7 +487,6 @@ def main():
         a = [0,1,2,3,4,5,6,7,8,9]
         random.shuffle(a)
         if a[0] == 0:
-
 
           batch = {
               "pixel_values": pixel_values,
@@ -556,11 +567,37 @@ def main():
     # Optimization
     if args.scale_lr:
         args.learning_rate = args.learning_rate * total_train_batch_size
+    if args.scheduling != "constant"
+#         def join_schedules(schedules: Sequence[base.Schedule],
+#                    boundaries: Sequence[int]) -> base.Schedule:
+#           def schedule(step: jnp.DeviceArray) -> jnp.DeviceArray:
+#             output = schedules[0](step)
+#             for boundary, schedule in zip(boundaries, schedules[1:]):
+#               output = jnp.where(step < boundary, output, schedule(step - boundary))
+#             return output
+#           return schedule
 
-    constant_scheduler = optax.constant_schedule(args.learning_rate)
+
+        def warmup_linear_schedule(
+            init_value: float,
+            peak_value: float,
+            warmup_steps: int,
+        ) -> base.Schedule:
+          schedules = [
+              linear_schedule(
+                  init_value=init_value,
+                  end_value=peak_value,
+                  transition_steps=warmup_steps),
+              optax.constant_schedule(
+                  peak_value)]
+          return optax.join_schedules(schedules, [warmup_steps])
+        scheduler = warmup_linear_schedule(init_value=args.init_learning_rate, peak_value=args.learning_rate,warmup_steps=args.warmup_steps)
+
+    else:
+        scheduler = optax.constant_schedule(args.learning_rate)
 
     adamw = optax.adamw(
-        learning_rate=constant_scheduler,
+        learning_rate=scheduler,
         b1=args.adam_beta1,
         b2=args.adam_beta2,
         eps=args.adam_epsilon,
