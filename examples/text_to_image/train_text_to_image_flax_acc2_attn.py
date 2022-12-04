@@ -45,6 +45,15 @@ from einops import rearrange
 # from ldm.util import instantiate_from_config
 from datasets import load_dataset
 resolution = 512
+import functools
+import inspect
+from typing import Callable, Dict, Union, NamedTuple, Optional, Iterable, Sequence
+
+import chex
+
+from optax._src import base
+from optax._src import numerics
+
 train_transforms = transforms.Compose(
     [
         transforms.Resize((resolution, resolution), interpolation=transforms.InterpolationMode.BILINEAR),
