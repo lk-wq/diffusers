@@ -65,6 +65,7 @@ class FolderData(Dataset):
         default_caption="",
         postprocess=None,
         return_paths=False,
+        negative_prompt="",
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -96,6 +97,7 @@ class FolderData(Dataset):
             ]
         )
         self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
+        self.negative_prompt = negative_prompt
 
 
     def __len__(self):
@@ -109,7 +111,7 @@ class FolderData(Dataset):
         im = Image.open(self.root_dir+filename)
         im = self.process_im(im)
         data["image"] = im
-        caption = "a beautiful digital art fabric pattern " + self.captions[index]['text']
+        caption = self.negative_prompt + self.captions[index]['text']
         
         data["txt"] = self.tokenize_captions(caption)
 
@@ -437,7 +439,7 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
