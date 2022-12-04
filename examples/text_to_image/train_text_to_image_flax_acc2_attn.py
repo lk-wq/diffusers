@@ -569,17 +569,7 @@ def main():
     # Optimization
     if args.scale_lr:
         args.learning_rate = args.learning_rate * total_train_batch_size
-    if args.scheduling != "constant"
-#         def join_schedules(schedules: Sequence[base.Schedule],
-#                    boundaries: Sequence[int]) -> base.Schedule:
-#           def schedule(step: jnp.DeviceArray) -> jnp.DeviceArray:
-#             output = schedules[0](step)
-#             for boundary, schedule in zip(boundaries, schedules[1:]):
-#               output = jnp.where(step < boundary, output, schedule(step - boundary))
-#             return output
-#           return schedule
-
-
+    if args.scheduling != "constant":
         def warmup_linear_schedule(
             init_value: float,
             peak_value: float,
