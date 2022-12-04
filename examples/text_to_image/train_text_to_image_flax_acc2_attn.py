@@ -53,7 +53,6 @@ import chex
 
 from optax._src import base
 from optax._src import numerics
-
 train_transforms = transforms.Compose(
     [
         transforms.Resize((resolution, resolution), interpolation=transforms.InterpolationMode.BILINEAR),
@@ -579,23 +578,13 @@ def main():
     if args.scale_lr:
         args.learning_rate = args.learning_rate * total_train_batch_size
     if args.scheduling != "constant":
-        def linear_schedule(
-            init_value: chex.Scalar,
-            end_value: chex.Scalar,
-            transition_steps: int,
-            transition_begin: int = 0
-        ) -> base.Schedule:
-          return polynomial_schedule(
-              init_value=init_value, end_value=end_value, power=1,
-              transition_steps=transition_steps, transition_begin=transition_begin)
-
         def warmup_linear_schedule(
             init_value: float,
             peak_value: float,
             warmup_steps: int,
         ) -> base.Schedule:
           schedules = [
-              linear_schedule(
+              optax.linear_schedule(
                   init_value=init_value,
                   end_value=peak_value,
                   transition_steps=warmup_steps),
