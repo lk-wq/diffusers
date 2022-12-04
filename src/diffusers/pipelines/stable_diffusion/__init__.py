@@ -75,4 +75,5 @@ if is_transformers_available() and is_flax_available():
 
     from ...schedulers.scheduling_pndm_flax import PNDMSchedulerState
     from .pipeline_flax_stable_diffusion import FlaxStableDiffusionPipeline
+    from .Flaxpipelinenegative import FlaxStableDiffusionPipelineNeg
     from .safety_checker_flax import FlaxStableDiffusionSafetyChecker
