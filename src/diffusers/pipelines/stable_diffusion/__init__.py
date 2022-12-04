@@ -74,6 +74,5 @@ if is_transformers_available() and is_flax_available():
         nsfw_content_detected: List[bool]
 
     from ...schedulers.scheduling_pndm_flax import PNDMSchedulerState
-    from .pipeline_flax_stable_diffusion import FlaxStableDiffusionPipeline
-    from .Flaxpipelinenegative import FlaxStableDiffusionPipelineNeg
+    from .pipeline_flax_stable_diffusion import FlaxStableDiffusionPipeline, FlaxStableDiffusionPipelineNeg
     from .safety_checker_flax import FlaxStableDiffusionSafetyChecker
