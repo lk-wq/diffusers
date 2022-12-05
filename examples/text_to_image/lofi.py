@@ -525,7 +525,7 @@ def main():
             params={
                 "text_encoder": text_encoder.params,
                 "vae": vae_params,
-                "unet": unet_avg_params,
+                "unet": unet_params_avg,
                 "safety_checker": safety_checker.params,
             },
         )
