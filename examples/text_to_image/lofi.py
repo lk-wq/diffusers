@@ -422,9 +422,22 @@ def main():
      
     
     for i in range(4):
-      unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-          args.file+str(i), subfolder="unet",  revision='bf16',dtype=weight_dtype
-      )
+      if i == 0:
+          unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+              args.file0, subfolder="unet",  revision='bf16',dtype=weight_dtype
+          )
+      if i == 1:
+          unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+              args.file1, subfolder="unet",  revision='bf16',dtype=weight_dtype
+          )
+      if i == 2:
+          unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+              args.file2, subfolder="unet",  revision='bf16',dtype=weight_dtype
+          )
+      if i == 3:
+          unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+              args.file3, subfolder="unet",  revision='bf16',dtype=weight_dtype
+          )
 
       unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
       for r in unet_param_dict.items():
