@@ -474,11 +474,6 @@ def main():
                blob.upload_from_filename(local_file)
                del blob
 
-    # Scheduler and math around the number of training steps.
-    if args.max_train_steps is None:
-        args.max_train_steps = args.num_train_epochs * num_update_steps_per_epoch
-
-    args.num_train_epochs = math.ceil(args.max_train_steps / num_update_steps_per_epoch)
 
     logger.info("***** Running training *****")
     logger.info(f"  Num examples = {len(train_dataset)}")
@@ -488,7 +483,6 @@ def main():
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
     global_step = args.restart_from
-    #@jax.jit
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
     client = storage.Client()
