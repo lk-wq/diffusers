@@ -74,6 +74,7 @@ class FolderData(Dataset):
         postprocess=None,
         return_paths=False,
         negative_prompt="",
+        restart_from=0,
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -86,7 +87,8 @@ class FolderData(Dataset):
             lines = f.readlines()
             lines = [json.loads(x) for x in lines]
             # captions = {x["file_name"]: x["text"].strip("\n") for x in lines}
-        self.captions = lines
+        rs = restart_from % len(lines)
+        self.captions = lines[rs:] + lines[:rs]
 
         # Only used if there is no caption file
         # self.paths = []
@@ -447,7 +449,7 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,restart_from=args.restart_from)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
