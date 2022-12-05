@@ -485,16 +485,9 @@ def main():
                del blob
 
 
-    logger.info("***** Running training *****")
-    logger.info(f"  Num examples = {len(train_dataset)}")
-    logger.info(f"  Num Epochs = {args.num_train_epochs}")
-    logger.info(f"  Instantaneous batch size per device = {args.train_batch_size}")
-    logger.info(f"  Total train batch size (w. parallel & distributed) = {total_train_batch_size}")
-    logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
     global_step = args.restart_from
     import time
-    epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
     
