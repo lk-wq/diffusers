@@ -880,7 +880,7 @@ def main():
             params={
                 "text_encoder": get_params_to_save(text_encoder_params),
                 "vae": get_params_to_save(vae_params),
-                "unet": get_params_to_save(state.params),
+                "unet": avg,
                 "safety_checker": safety_checker.params,
             },
         )
