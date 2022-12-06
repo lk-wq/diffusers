@@ -219,8 +219,8 @@ def parse_args():
 
     parser.add_argument("--scheduling", type=str, default="constant", help="scheduling")
     parser.add_argument("--warmup_steps", type=int, default=0, help="warm up steps")
+    parser.add_argument("--offset", type=int, default=0, help="shift dataset")
     
-
     parser.add_argument(
         "--resolution",
         type=int,
@@ -449,7 +449,7 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,restart_from=args.restart_from)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,restart_from=args.offset)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
