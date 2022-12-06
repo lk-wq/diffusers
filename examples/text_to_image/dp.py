@@ -86,7 +86,7 @@ class FolderData(Dataset):
         self.root_dir = root_dir
         self.default_caption = default_caption
         self.return_paths = return_paths
-        with open(root_dir+'metadata'+section0+'_'+section1+'.jsonl', "rt") as f:
+        with open(root_dir+'metadata'+str(section0)+'_'+str(section1)+'.jsonl', "rt") as f:
             lines = f.readlines()
             lines = [json.loads(x) for x in lines]
             # captions = {x["file_name"]: x["text"].strip("\n") for x in lines}
