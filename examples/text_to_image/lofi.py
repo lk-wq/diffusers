@@ -225,7 +225,6 @@ def parse_args():
     parser.add_argument("--file2", type=str, default="", help="file name 2")
     parser.add_argument("--file3", type=str, default="", help="file name 3")
     parser.add_argument("--file4", type=str, default="", help="file name 4")
-    parser.add_argument("--file5", type=str, default="", help="file name 5")
 
 
     parser.add_argument(
@@ -423,7 +422,7 @@ def main():
     del vae_param_dict
      
     
-    for i in range(6):
+    for i in range(5):
       if i == 0:
           unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
               args.file0, subfolder="unet",  revision='bf16',dtype=weight_dtype
