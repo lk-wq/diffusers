@@ -844,11 +844,11 @@ def main():
                     del safety_checker
 #                     jax.lib.xla_bridge.get_backend().defragment()
 
-            if epoch == 0:
-              break
             global_step += 1
             if global_step >= args.max_train_steps:
                 break
+            if epoch == 0:
+              break
 
             
         train_metric = jax_utils.unreplicate(train_metric)
