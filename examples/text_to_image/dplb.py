@@ -87,11 +87,10 @@ class FolderData(Dataset):
         self.default_caption = default_caption
         self.return_paths = return_paths
         l = []
-        for i in range(9):
-          with open(root_dir+'metadata_simple_'+str(section0)+'.jsonl', "rt") as f:
-              lines = f.readlines()
-              lines = [json.loads(x) for x in lines]
-              l.extend(lines)
+        with open(root_dir+'2metadata_simple_'+str(section0)+'.jsonl', "rt") as f:
+          lines = f.readlines()
+          lines = [json.loads(x) for x in lines]
+          l.extend(lines)
             # captions = {x["file_name"]: x["text"].strip("\n") for x in lines}
         # rs = restart_from % len(lines)
         import random
