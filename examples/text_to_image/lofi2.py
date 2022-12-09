@@ -220,7 +220,7 @@ def parse_args():
     parser.add_argument("--scheduling", type=str, default="constant", help="scheduling")
     parser.add_argument("--warmup_steps", type=int, default=0, help="warm up steps")
     
-    parser.add_argument("--file_list", type=list, default=[], help="file list")
+    parser.add_argument("--file_list", type=str, default="", help="file list")
 
     parser.add_argument(
         "--resolution",
@@ -416,10 +416,10 @@ def main():
     vae_params = unflatten(vae_param_dict)
     del vae_param_dict
      
-    
-    for i in range(len(args.file_list)):
+    fl = args.file_list.split(',')
+    for i in fl:
       unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-          args.file_list[i], subfolder="unet",  revision='bf16',dtype=weight_dtype
+          i, subfolder="unet",  revision='bf16',dtype=weight_dtype
       )
       unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
       for r in unet_param_dict.items():
