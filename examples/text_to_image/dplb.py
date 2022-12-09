@@ -826,7 +826,7 @@ def main():
                     )
 
                     pipeline.save_pretrained(
-                        args.output_dir+str(global_step),
+                        args.output_dir,
                         params={
                             "text_encoder": get_params_to_save(text_encoder_params),
                             "vae": get_params_to_save(vae_params),
@@ -835,7 +835,7 @@ def main():
                         },
                     )
 #                     blob = bucket.blob(args.output_dir+str(global_step))
-                    upload_local_directory_to_gcs(args.output_dir+str(global_step), bucket, args.bucketdir+str(global_step))
+                    upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir)
 
 #                     blob.upload_from_filename(args.output_dir+str(global_step))
 #                     del blob
@@ -889,6 +889,7 @@ def main():
                 "safety_checker": safety_checker.params,
             },
         )
+        upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir)
 
         if args.push_to_hub:
             repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
