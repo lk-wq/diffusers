@@ -417,7 +417,7 @@ def main():
     del vae_param_dict
      
     fl = args.file_list.split(',')
-    for i in fl:
+    for ix , i in enumerate(fl):
       unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
           i, subfolder="unet",  revision='bf16',dtype=weight_dtype
       )
@@ -431,9 +431,9 @@ def main():
             del v
         except:
           print("f",k)
-      if i > 0:
+      if ix > 0:
         unet_params = unflatten(unet_param_dict)
-        step = 1-(i/(i+1))
+        step = 1-(ix/(ix+1))
         unet_params_avg = optax.incremental_update(unet_params, unet_params_avg, step_size=step)
       else:
         unet_params_avg = unflatten(unet_param_dict)
