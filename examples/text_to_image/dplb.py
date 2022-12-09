@@ -88,7 +88,7 @@ class FolderData(Dataset):
         self.return_paths = return_paths
         l = []
         for i in range(9):
-          with open(root_dir+'metadata'+str(section0)+'_'+str(i)+'.jsonl', "rt") as f:
+          with open(root_dir+'metadata_simple_'+str(section0)+'.jsonl', "rt") as f:
               lines = f.readlines()
               lines = [json.loads(x) for x in lines]
               l.extend(lines)
@@ -847,9 +847,6 @@ def main():
             global_step += 1
             if global_step >= args.max_train_steps:
                 break
-            if epoch == 0:
-              break
-
             
         train_metric = jax_utils.unreplicate(train_metric)
 
