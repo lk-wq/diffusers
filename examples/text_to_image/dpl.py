@@ -766,8 +766,8 @@ def main():
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
 #       step_ = 1/(epoch_index+2)
       decay = 0.9999
-      decay = min(decay,(1 + it) / (10 + it))
-      step = 1 - decay
+      decay2 = min(decay,(1 + it) / (10 + it))
+      step = 1 - decay2
       return optax.incremental_update(params, avg_params, step_size=step)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
