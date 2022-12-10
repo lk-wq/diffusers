@@ -762,11 +762,8 @@ def main():
 
     global_step = args.restart_from
     @jax.jit
-    def ema_update(params, avg_params, it):
+    def ema_update(params, avg_params, decay):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
-#       step_ = 1/(epoch_index+2)
-      decay = 0.9999
-#       decay2 = min(decay,(1 + it) / (10 + it))
       step = 1 - decay
       return optax.incremental_update(params, avg_params, step_size=step)
     import time
@@ -800,7 +797,11 @@ def main():
 
             if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
                 if global_step % args.ema_frequency == 0:
-                  avg = ema_update( get_params_to_save(state.params) , avg, global_step//args.accumulation_frequency )
+                  it = global_step//args.accumulation_frequency
+                  decay = 0.9999
+                  decay = min(decay,(1 + it) / (10 + it))
+
+                  avg = ema_update( get_params_to_save(state.params) , avg, decay )
 
     #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                 if global_step % args.save_frequency == 0:
@@ -837,6 +838,8 @@ def main():
                             "text_encoder": get_params_to_save(text_encoder_params),
                             "vae": get_params_to_save(vae_params),
                             "unet": avg,
+                            "safety_checker": safety_checker.params,
+
                         },
                     )
     #                     blob = bucket.blob(args.output_dir+str(global_step))
@@ -894,6 +897,8 @@ def main():
                 "text_encoder": get_params_to_save(text_encoder_params),
                 "vae": get_params_to_save(vae_params),
                 "unet": avg,
+                "safety_checker": safety_checker.params,
+
             },
         )
         upload_local_directory_to_gcs(args.output_dir , bucket, args.bucketdir)
