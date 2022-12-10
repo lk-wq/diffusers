@@ -833,7 +833,7 @@ def main():
                     )
 
                     pipeline.save_pretrained(
-                        args.output_dir+str(global_step),
+                        args.output_dir,
                         params={
                             "text_encoder": get_params_to_save(text_encoder_params),
                             "vae": get_params_to_save(vae_params),
