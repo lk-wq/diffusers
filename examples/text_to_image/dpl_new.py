@@ -851,10 +851,10 @@ def main():
             break
 
 
-        train_metric = jax_utils.unreplicate(train_metric)
+    train_metric = jax_utils.unreplicate(train_metric)
 
-        train_step_progress_bar.close()
-        epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
+    train_step_progress_bar.close()
+#         epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
 
     # Create the pipeline using using the trained modules and save it.
     if jax.process_index() == 0:
