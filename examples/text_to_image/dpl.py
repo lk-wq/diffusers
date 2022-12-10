@@ -804,7 +804,7 @@ def main():
 
     #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                 if global_step % args.save_frequency == 0:
-                    print("saving" , global_step)
+                    print("saving -----------------------------------------------> " , global_step)
                     scheduler = FlaxDDIMScheduler(
                         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
                         # clip_sample=False,
