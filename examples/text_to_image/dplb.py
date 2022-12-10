@@ -760,12 +760,9 @@ def main():
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
     global_step = args.restart_from
-    #@jax.jit
-    def ema_update(params, avg_params, it):
+    @jax.jit
+    def ema_update(params, avg_params, decay):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
-#       step_ = 1/(epoch_index+2)
-      decay = 0.9999
-      decay = min(decay,(1 + it) / (10 + it))
       step = 1 - decay
       return optax.incremental_update(params, avg_params, step_size=step)
     import time
@@ -776,75 +773,81 @@ def main():
     
         
         # ======================== Training ================================
+    for ix , epoch in enumerate(epochs):
 
-    train_metrics = []
+        train_metrics = []
 
-    steps_per_epoch = len(train_dataset) // total_train_batch_size
-    train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
-    # train
-    for batch in train_dataloader:
-        batch = shard(batch)
-        # batch = shard(batch)
+        steps_per_epoch = len(train_dataset) // total_train_batch_size
+        train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
+        # train
+        for batch in train_dataloader:
+            batch = shard(batch)
+            # batch = shard(batch)
 
-        state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
-        # start = time.perf_counter()
-        train_metrics.append(train_metric)
+            state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+            # start = time.perf_counter()
+            train_metrics.append(train_metric)
 
-        train_step_progress_bar.update(1)
+            train_step_progress_bar.update(1)
 
-        if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
-            if global_step % args.ema_frequency == 0:
-              avg = ema_update( get_params_to_save(state.params) , avg, global_step//args.accumulation_frequency )
+            if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
+                if global_step % args.ema_frequency == 0:'
 
-#             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
-            if global_step % args.save_frequency == 0:
-                scheduler = FlaxDDIMScheduler(
-                    beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-                    # clip_sample=False,
-                    num_train_timesteps=1000,
-                    prediction_type="v_prediction",
-                    set_alpha_to_one=False,
-                    steps_offset=1,
-                    # skip_prk_steps=True,
-                )
-        #         scheduler = FlaxPNDMScheduler(
-        #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-        #         )
+                      it = global_step//args.accumulation_frequency
+                      decay = 0.9999
+                      decay = min(decay,(1 + it) / (10 + it))
+                      avg = ema_update( get_params_to_save(state.params) , avg, decay )
 
-                safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-                    "CompVis/stable-diffusion-safety-checker", from_pt=True
-                )
-                pipeline = FlaxStableDiffusionPipeline(
-                    text_encoder=text_encoder,
-                    vae=vae,
-                    unet=unet,
-                    tokenizer=tokenizer,
-                    scheduler=scheduler,
-                    safety_checker=safety_checker,
-                    feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
-                )
+    #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
+                if global_step % args.save_frequency == 0:
+                    scheduler = FlaxDDIMScheduler(
+                        beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+                        # clip_sample=False,
+                        num_train_timesteps=1000,
+                        prediction_type="v_prediction",
+                        set_alpha_to_one=False,
+                        steps_offset=1,
+                        # skip_prk_steps=True,
+                    )
+            #         scheduler = FlaxPNDMScheduler(
+            #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+            #         )
 
-                pipeline.save_pretrained(
-                    args.output_dir,
-                    params={
-                        "text_encoder": get_params_to_save(text_encoder_params),
-                        "vae": get_params_to_save(vae_params),
-                        "unet": avg,
-                    },
-                )
-#                     blob = bucket.blob(args.output_dir+str(global_step))
-                upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir)
+                    safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
+                        "CompVis/stable-diffusion-safety-checker", from_pt=True
+                    )
+                    pipeline = FlaxStableDiffusionPipeline(
+                        text_encoder=text_encoder,
+                        vae=vae,
+                        unet=unet,
+                        tokenizer=tokenizer,
+                        scheduler=scheduler,
+                        safety_checker=safety_checker,
+                        feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+                    )
 
-#                     blob.upload_from_filename(args.output_dir+str(global_step))
-#                     del blob
-                del pipeline
-                del safety_checker
-#                     jax.lib.xla_bridge.get_backend().defragment()
+                    pipeline.save_pretrained(
+                        args.output_dir,
+                        params={
+                            "text_encoder": get_params_to_save(text_encoder_params),
+                            "vae": get_params_to_save(vae_params),
+                            "unet": avg,
+                            "safety_checker": safety_checker.params,
+                        },
+                    )
+    #                     blob = bucket.blob(args.output_dir+str(global_step))
+                    upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir)
 
-        global_step += 1
-        if global_step >= args.max_train_steps:
-            break
-            
+    #                     blob.upload_from_filename(args.output_dir+str(global_step))
+    #                     del blob
+                    del pipeline
+                    del safety_checker
+    #                     jax.lib.xla_bridge.get_backend().defragment()
+
+            global_step += 1
+            if global_step >= args.max_train_steps:
+                break
+
         train_metric = jax_utils.unreplicate(train_metric)
 
         train_step_progress_bar.close()
@@ -884,6 +887,8 @@ def main():
                 "text_encoder": get_params_to_save(text_encoder_params),
                 "vae": get_params_to_save(vae_params),
                 "unet": avg,
+                "safety_checker": safety_checker.params,
+
             },
         )
         upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir)
