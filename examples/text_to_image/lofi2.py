@@ -417,7 +417,7 @@ def main():
     del vae_param_dict
      
     fl = args.file_list.split(',')
-    count  0
+    count = 0
     for ix , i in enumerate(fl):
       try: 
           unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
