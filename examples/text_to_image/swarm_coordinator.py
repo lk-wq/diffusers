@@ -221,6 +221,7 @@ def parse_args():
     
     parser.add_argument("--file_list", type=str, default="", help="file list")
     parser.add_argument("--coordination_interval", type=float, default=2, help="Hours between coordination rounds")
+    parser.add_argument("--local_path", type=float, default="", help="where to save local updates")
     
 
     parser.add_argument(
