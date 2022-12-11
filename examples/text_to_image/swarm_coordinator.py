@@ -221,6 +221,8 @@ def parse_args():
     parser.add_argument("--warmup_steps", type=int, default=0, help="warm up steps")
     
     parser.add_argument("--file_list", type=str, default="", help="file list")
+    parser.add_argument("--coordination_interval", type=float, default=2, help="Hours between coordination rounds")
+    
 
     parser.add_argument(
         "--resolution",
@@ -415,26 +417,62 @@ def main():
         print("f",k)
     vae_params = unflatten(vae_param_dict)
     del vae_param_dict
-    
-    def download_remote_directory_to_local(local_path, bucket, files_list):
+    client = storage.Client()
+    bucket = client.bucket(args.bucketname)
+
+    def download_remote_directory_to_local(local_path, bucket, files_list, last_update_time):
     #assert os.path.isdir(local_path)
+      update_list = []
       for ix , remote_path in eumerate(files_list_):
 #        remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
-        blob = bucket.blob(remote_path)
-        blob.download_from_filename(local_path+str(ix))
+        try: 
+            blobs = bucket.list_blobs(prefix=remote_path) 
+            for blob in blobs:
+                filename = blob.name.replace('/', '_')
+                last_modified = blob.update
+                # We only need the unet and also we only want to use the local update if the last modification
+                # to the local update happened after the last global update
+                if 'unet' in filename and last_modified > last_update_time:
+                    import os
+                    try:
+                        dir_ = local_path+str(ix)+'/unet'
+                        os.mkdir(dir_)
+                    except:
+                        pass
+                blob.download_to_filename(dir_+'/'+filename)  # Download
+                update_list.append(local_path+str(ix))                
+#             blob.download_to_filename(local_path+str(ix))
+        except:
+            print("FILE NOT FOUND ------------->",remote_path)
+        return update_list
     
+    import glob
+    from google.cloud import storage
+    from datetime import datetime, timezone, timedelta
+    def upload_local_directory_to_gcs(local_path, bucket, gcs_path):
+        #assert os.path.isdir(local_path)
+        for local_file in glob.glob(local_path + '/**'):
+            if not os.path.isfile(local_file):
+               upload_local_directory_to_gcs(local_file, bucket, gcs_path + "/" + os.path.basename(local_file))
+            else:
+               remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
+               blob = bucket.blob(remote_path)
+               blob.upload_from_filename(local_file)
+               del blob
 
     fl = args.file_list.split(',')
-    local_fl = [args.local_path+str(ix) for ix in range(len(fl))]
+
+    start = datetime.now( timezone.utc )
+    interval = timedelta(hours=args.coordiation_interval)
     while True:
-      if time.time() - start > args.coordination_interval:
-        
-        download_remote_directory_to_local( args.local_path, bucket, fl )
-        
-        
-        start = time.time()
+      print("beginning")
+      if datetime.now( timezone.utc ) - start > interval:
+        import random
+        update_list = download_remote_directory_to_local( args.local_path, bucket, fl )
+        start = datetime.now(timezone.utc)
+
         count = 0
-        for ix , i in enumerate(local_fl):
+        for ix , i in enumerate(update_list):
           try: 
               unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
                   i, subfolder="unet",  revision='bf16',dtype=weight_dtype
@@ -460,52 +498,29 @@ def main():
         else:
           unet_params_avg = unflatten(unet_param_dict)
         count += 1
-
 #     text_encoder_params = jax_utils.replicate(text_encoder.params)
 #     vae_params = jax_utils.replicate(vae_params)
 
-    # Train!
-    import glob
-    from google.cloud import storage
-
-    def upload_local_directory_to_gcs(local_path, bucket, gcs_path):
-        #assert os.path.isdir(local_path)
-        for local_file in glob.glob(local_path + '/**'):
-            if not os.path.isfile(local_file):
-               upload_local_directory_to_gcs(local_file, bucket, gcs_path + "/" + os.path.basename(local_file))
-            else:
-               remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
-               blob = bucket.blob(remote_path)
-               blob.upload_from_filename(local_file)
-               del blob
-
-
-
-    global_step = args.restart_from
-    import time
-    client = storage.Client()
-    bucket = client.bucket(args.bucketname)
-    
-    
-    # Create the pipeline using using the trained modules and save it.
-    if jax.process_index() == 0:
-        scheduler = FlaxDDIMScheduler(
-            beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+        # Train!
+        # Create the pipeline using using the trained modules and save it.
+      if jax.process_index() == 0:
+          scheduler = FlaxDDIMScheduler(
+              beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
             # clip_sample=False,
-            num_train_timesteps=1000,
-            prediction_type="v_prediction",
-            set_alpha_to_one=False,
-            steps_offset=1,
+          num_train_timesteps=1000,
+          prediction_type="v_prediction",
+          set_alpha_to_one=False,
+          steps_offset=1,
             # skip_prk_steps=True,
-        )
+          )
 #         scheduler = FlaxPNDMScheduler(
 #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
 #         )
 
-        safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
+      safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
             "CompVis/stable-diffusion-safety-checker", from_pt=True
-        )
-        pipeline = FlaxStableDiffusionPipeline(
+      )
+      pipeline = FlaxStableDiffusionPipeline(
             text_encoder=text_encoder,
             vae=vae,
             unet=unet,
@@ -513,9 +528,9 @@ def main():
             scheduler=scheduler,
             safety_checker=safety_checker,
             feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
-        )
+      )
 
-        pipeline.save_pretrained(
+      pipeline.save_pretrained(
             args.output_dir,
             params={
                 "text_encoder": text_encoder.params,
@@ -523,10 +538,9 @@ def main():
                 "unet": unet_params_avg,
                 "safety_checker": safety_checker.params,
             },
-        )
-
-        if args.push_to_hub:
-            repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
+      )
+      print("completed")
+      break
 
 
 if __name__ == "__main__":
