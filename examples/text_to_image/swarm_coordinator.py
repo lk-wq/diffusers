@@ -62,7 +62,6 @@ train_transforms = transforms.Compose(
         transforms.Normalize([0.5], [0.5]),
     ]
 )
-from google.cloud import storage
 class FolderData(Dataset):
     def __init__(self,
         root_dir,
@@ -417,6 +416,8 @@ def main():
         print("f",k)
     vae_params = unflatten(vae_param_dict)
     del vae_param_dict
+    from google.cloud import storage
+
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
 
