@@ -474,14 +474,14 @@ def main():
 
         count = 0
         for ix , i in enumerate(update_list):
-          try: 
-              unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-                  i, subfolder="unet",  revision='bf16',dtype=weight_dtype
-              )
-              count += 1
-          except:
-              print("load fail ------------------------------>",i) 
-              continue
+#           try: 
+          unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+              i, subfolder="unet",  revision='bf16',dtype=weight_dtype
+          )
+          count += 1
+#           except:
+#               print("load fail ------------------------------>",i) 
+#               continue
           unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
           for r in unet_param_dict.items():
             k , v = r[0], r[1]
