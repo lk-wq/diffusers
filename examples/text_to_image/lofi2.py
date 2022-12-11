@@ -417,10 +417,15 @@ def main():
     del vae_param_dict
      
     fl = args.file_list.split(',')
+    count  0
     for ix , i in enumerate(fl):
-      unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-          i, subfolder="unet",  revision='bf16',dtype=weight_dtype
-      )
+      try: 
+          unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+              i, subfolder="unet",  revision='bf16',dtype=weight_dtype
+          )
+      except:
+          print("load fail ------------------------------>",i) 
+          continue
       unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
       for r in unet_param_dict.items():
         k , v = r[0], r[1]
@@ -431,12 +436,13 @@ def main():
             del v
         except:
           print("f",k)
-      if ix > 0:
+      if count > 0:
         unet_params = unflatten(unet_param_dict)
-        step = 1-(ix/(ix+1))
+        step = 1-(count/(count+1))
         unet_params_avg = optax.incremental_update(unet_params, unet_params_avg, step_size=step)
       else:
         unet_params_avg = unflatten(unet_param_dict)
+      count += 1
 
 #     text_encoder_params = jax_utils.replicate(text_encoder.params)
 #     vae_params = jax_utils.replicate(vae_params)
