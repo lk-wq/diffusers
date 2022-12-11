@@ -464,13 +464,13 @@ def main():
 
     fl = args.file_list.split(',')
 
-    start = datetime.now( timezone.utc )
+    start = datetime.now( timezone.utc )-timedelta(days=4)
     interval = timedelta(hours=args.coordination_interval)
     while True:
       print("beginning")
       if datetime.now( timezone.utc ) - start > interval:
         import random
-        update_list = download_remote_directory_to_local( args.local_path, bucket, fl )
+        update_list = download_remote_directory_to_local( args.local_path, bucket, fl, start )
         start = datetime.now(timezone.utc)
         print("update_list - - - - - - - - - - - - - - - - - - - - - - - - - -------------------------> ",update_list)
 
