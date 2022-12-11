@@ -464,7 +464,7 @@ def main():
     fl = args.file_list.split(',')
 
     start = datetime.now( timezone.utc )
-    interval = timedelta(hours=args.coordiation_interval)
+    interval = timedelta(hours=args.coordination_interval)
     while True:
       print("beginning")
       if datetime.now( timezone.utc ) - start > interval:
