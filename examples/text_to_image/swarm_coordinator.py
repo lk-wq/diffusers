@@ -472,6 +472,7 @@ def main():
         update_list = download_remote_directory_to_local( args.local_path, bucket, fl )
         start = datetime.now(timezone.utc)
         print("update_list - - - - - - - - - - - - - - - - - - - - - - - - - -------------------------> ",update_list)
+
         count = 0
         for ix , i in enumerate(update_list):
 #           try: 
@@ -505,44 +506,44 @@ def main():
 
         # Train!
         # Create the pipeline using using the trained modules and save it.
-      if jax.process_index() == 0:
+        if jax.process_index() == 0:
           scheduler = FlaxDDIMScheduler(
-              beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-            # clip_sample=False,
-          num_train_timesteps=1000,
-          prediction_type="v_prediction",
-          set_alpha_to_one=False,
-          steps_offset=1,
-            # skip_prk_steps=True,
+                  beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+                # clip_sample=False,
+              num_train_timesteps=1000,
+              prediction_type="v_prediction",
+              set_alpha_to_one=False,
+              steps_offset=1,
+                # skip_prk_steps=True,
+              )
+    #         scheduler = FlaxPNDMScheduler(
+    #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+    #         )
+
+          safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
+                "CompVis/stable-diffusion-safety-checker", from_pt=True
           )
-#         scheduler = FlaxPNDMScheduler(
-#             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-#         )
+          pipeline = FlaxStableDiffusionPipeline(
+                text_encoder=text_encoder,
+                vae=vae,
+                unet=unet,
+                tokenizer=tokenizer,
+                scheduler=scheduler,
+                safety_checker=safety_checker,
+                feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+          )
 
-      safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-            "CompVis/stable-diffusion-safety-checker", from_pt=True
-      )
-      pipeline = FlaxStableDiffusionPipeline(
-            text_encoder=text_encoder,
-            vae=vae,
-            unet=unet,
-            tokenizer=tokenizer,
-            scheduler=scheduler,
-            safety_checker=safety_checker,
-            feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
-      )
-
-      pipeline.save_pretrained(
-            args.output_dir,
-            params={
-                "text_encoder": text_encoder.params,
-                "vae": vae_params,
-                "unet": unet_params_avg,
-                "safety_checker": safety_checker.params,
-            },
-      )
-      print("completed")
-      break
+          pipeline.save_pretrained(
+                args.output_dir,
+                params={
+                    "text_encoder": text_encoder.params,
+                    "vae": vae_params,
+                    "unet": unet_params_avg,
+                    "safety_checker": safety_checker.params,
+                },
+          )
+          print("completed")
+          break
 
 
 if __name__ == "__main__":
