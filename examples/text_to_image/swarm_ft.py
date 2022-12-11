@@ -887,6 +887,7 @@ def main():
                         state = train_state.TrainState.create(apply_fn=unet_candidate.__call__, params=unet_params, tx=optimizer)
 
                       del unet_param_dict , unet_param_candidate_dict
+                      start = time.time()
 
                       
 
