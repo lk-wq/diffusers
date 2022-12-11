@@ -471,13 +471,14 @@ def main():
         import random
         update_list = download_remote_directory_to_local( args.local_path, bucket, fl )
         start = datetime.now(timezone.utc)
-
+        print("update_list",update_list)
         count = 0
         for ix , i in enumerate(update_list):
 #           try: 
           unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
               i, subfolder="unet",  revision='bf16',dtype=weight_dtype
           )
+          
           count += 1
 #           except:
 #               print("load fail ------------------------------>",i) 
