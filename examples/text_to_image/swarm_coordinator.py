@@ -466,7 +466,8 @@ def main():
                del blob
 
     fl = args.file_list.split(',')
-
+    print("args.file_list --------------------------->",args.file_list)
+    print("??????????????????? fl", fl)
     start = datetime.now( timezone.utc )-timedelta(days=4)
     interval = timedelta(hours=args.coordination_interval)
     while True:
