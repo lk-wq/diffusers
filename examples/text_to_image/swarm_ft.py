@@ -852,13 +852,23 @@ def main():
             
                     if datetime.now( timezone.utc ) - start > timedelta(args.interval):
                       ### DOWNLOAD FUNCTION ### 
-                      print("args.
-                      blob = bucket.blob(args.remote_weight_path)
+#                       print("args.
+                      blobs = bucket.list_blobs(prefix=args.remote_weight_path+'unet')
                       ### DETECT if there's been a change ###
+                      for blob in blobs:
+                        pass
                       date_updated = blob.updated
+                      
                       if datetime.now( timezone.utc ) - date_updated < timedelta(args.interval_check_fresh):
                           print("------------------------------------------> RECENT UPDATE DETECTED , UPDATED TO CONSENSUS WEIGHTS")
-                          blob.download_to_filename(args.local_weight_path)
+                          
+                          for blob in blobs:
+                            name = blob.name
+                            if 'config' in name:
+                                blob.download_to_filename(args.local_weight_path+'config.json')
+                            else:
+                                blob.download_to_filename(args.local_weight_path+'diffusion_flax_model.msgpack')
+                                
                 
                           ### LOAD WEIGHT FROM PATH ###
                           unet_candidate, unet_params_candidate = FlaxUNet2DConditionModel.from_pretrained(
