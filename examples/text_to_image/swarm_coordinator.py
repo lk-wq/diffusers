@@ -561,7 +561,7 @@ def main():
           del safety_checker
 
           print("completed")
-#           break
+          break
 
 
 if __name__ == "__main__":
