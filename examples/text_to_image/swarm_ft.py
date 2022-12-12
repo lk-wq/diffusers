@@ -219,8 +219,6 @@ def parse_args():
 
     parser.add_argument("--remote_weight_path", type=str, default='buck', help="Remote path for consensus updates")
     parser.add_argument("--local_weight_path", type=str, default='buck', help="Local path for consensus updates")
-    parser.add_argument("--interval", type=int, default=7200, help="How many seconds to wait between updates")
-
     
     parser.add_argument("--restart_from", type=int, default=0, help="Steps to restart from")
     parser.add_argument("--save_frequency", type=int, default=5120, help="How frequently to save")
