@@ -232,6 +232,8 @@ def parse_args():
     parser.add_argument("--warmup_steps", type=int, default=0, help="warm up steps")
     parser.add_argument("--section0", type=int, default=0, help="section 0")
     parser.add_argument("--section1", type=int, default=0, help="section 1")
+    parser.add_argument("--interval_check_fresh", type=float, default=2, help="check if there's been a consensus update in this many hours")
+    parser.add_argument("--interval", type=float, default=0.5, help="check no more than this often for updates")
     
     parser.add_argument(
         "--resolution",
@@ -778,8 +780,8 @@ def main():
     
         
         # ======================== Training ================================
-    import time
-    start = time.time()
+    from datetime import datetime, timedelta, timezone
+    start = datetime.now( timezone.utc )
     for ix , epoch in enumerate(epochs):
 
         train_metrics = []
@@ -849,46 +851,45 @@ def main():
     #                     del blob
                     del pipeline
                     del safety_checker
-                    if time.time() - start > args.interval:
+            
+                    if datetime.now( timezone.utc ) - start > timedelta(args.interval):
                       ### DOWNLOAD FUNCTION ### 
                       blob = bucket.blob(args.remote_weight_path)
-                      blob.download_to_filename(args.local_weight_path)
-                
-                      ### LOAD WEIGHT FROM PATH ###
-                      unet_candidate, unet_params_candidate = FlaxUNet2DConditionModel.from_pretrained(
-                        args.local_weight_path, subfolder="unet",  revision='bf16',dtype=weight_dtype
-                      )
-                      
                       ### DETECT if there's been a change ###
-                      unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
-                      unet_param_candidate_dict = dict(flatdict.FlatDict(unet_params_candidate, delimiter='.'))
-                      update_detected = False
-                      for r0, r1 in zip(unet_param_dict.items(), unet_param_candidate.items()):
-                        k0 , v0 = r0[0], r0[1]
-                        k1 , v1 = r1[0], r1[1]
+                      date_updated = blob.updated
+                      if datetime.now( timezone.utc ) - date_updated < timedelta(args.interval_check_fresh):
+                          print("------------------------------------------> RECENT UPDATE DETECTED , UPDATED TO CONSENSUS WEIGHTS")
+                          blob.download_to_filename(args.local_weight_path)
+                
+                          ### LOAD WEIGHT FROM PATH ###
+                          unet_candidate, unet_params_candidate = FlaxUNet2DConditionModel.from_pretrained(
+                            args.local_weight_path, subfolder="unet",  revision='bf16',dtype=weight_dtype
+                          )
 
-                        try:
-                          if v0.dtype == jnp.float32:
-                            v2_0= v0.astype(jnp.bfloat16)
-                            v2_1= v1.astype(jnp.bfloat16)
-                            unet_param_dict[k0] = v2_0
-                            unet_param_candidate_dict[k1] = v2_1
-                            if v2_0 != v2_1:
-                              updated_detected = True
-                            del v0, v1, v2_0, v2_1
-                        except:
-                          print("f",k)
-                      if update_detected is False:
-                        print("------------------------------------------> NO UPDATE , REVERTING TO CURRENT WEIGHTS")
+                          ### DETECT if there's been a change ###
+                          unet_param_candidate_dict = dict(flatdict.FlatDict(unet_params_candidate, delimiter='.'))
+                          unet_candidate_params = unflatten(unet_param_candidate_dict)
+                          
+                          unet_candidate_param_dict = dict(flatdict.FlatDict(unet_candidate_params, delimiter='.'))
+                          for r in unet_candidate_param_dict.items():
+                            k , v = r[0], r[1]
+                            try:
+                              if v.dtype == jnp.float32:
+                                v2= v.astype(jnp.bfloat16)
+                                unet_candidate_param_dict[k] = v2
+                                del v
+                            except:
+                              print("f",k)
+                          unet_candidate_params = unflatten(unet_candidate_param_dict)
+                          new_state = optax.incremental_update(get_params_to_save(state.params), unet_candidate_params, step_size=.99)
+                          state = train_state.TrainState.create(apply_fn=unet.__call__, params=new_state, tx=optimizer)
+
+                          del unet_param_dict
                       else:
-                        print("------------------------------------------> UPDATE DETECTED , UPDATED TO CONSENSUS WEIGHTS")
-                         
-                        unet_params = unflatten(unet_param_candidate_dict)
-                        state = train_state.TrainState.create(apply_fn=unet_candidate.__call__, params=unet_params, tx=optimizer)
+                        print("- - - - - - > NO RECENT UPDATE DETECTED")
+                      start = datetime.now(timezone.utc)
 
-                      del unet_param_dict , unet_param_candidate_dict
-                      start = time.time()
-
+                                                
                       
 
     #                     jax.lib.xla_bridge.get_backend().defragment()
