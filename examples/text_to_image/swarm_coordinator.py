@@ -432,7 +432,7 @@ def main():
         blobs = bucket.list_blobs(prefix=remote_path) 
         for blob in blobs:
             filename = blob.name.replace('/', '_')
-            last_modified = blob.update
+            last_modified = blob.updated
             # We only need the unet and also we only want to use the local update if the last modification
             # to the local update happened after the last global update
             print("filenames", last_modified > last_update_time)
