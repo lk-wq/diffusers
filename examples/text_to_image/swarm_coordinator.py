@@ -425,7 +425,7 @@ def main():
     def download_remote_directory_to_local(local_path, bucket, files_list, last_update_time):
     #assert os.path.isdir(local_path)
       update_list = []
-      for ix , remote_path in enumerate(files_list_):
+      for ix , remote_path in enumerate(files_list):
 #        remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
         try: 
             blobs = bucket.list_blobs(prefix=remote_path) 
