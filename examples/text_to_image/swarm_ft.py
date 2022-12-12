@@ -874,9 +874,9 @@ def main():
 
                             if 'config' in name:
 
-                                blob.download_to_filename(args.local_weight_path+'config.json')
+                                blob.download_to_filename(args.local_weight_path+'unet/config.json')
                             else:
-                                blob.download_to_filename(args.local_weight_path+'diffusion_flax_model.msgpack')
+                                blob.download_to_filename(args.local_weight_path+'unet/diffusion_flax_model.msgpack')
                                 
                 
                           ### LOAD WEIGHT FROM PATH ###
