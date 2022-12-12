@@ -428,6 +428,7 @@ def main():
       update_list = []
       for ix , remote_path in enumerate(files_list):
 #        remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
+        print("remote path is --->",remote_path)
         blobs = bucket.list_blobs(prefix=remote_path) 
         for blob in blobs:
             filename = blob.name.replace('/', '_')
