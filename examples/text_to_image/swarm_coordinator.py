@@ -489,7 +489,6 @@ def main():
               i, subfolder="unet",  revision='bf16',dtype=weight_dtype
           )
           
-          count += 1
 #           except:
 #               print("load fail ------------------------------>",i) 
 #               continue
