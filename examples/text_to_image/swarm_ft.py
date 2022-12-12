@@ -888,17 +888,17 @@ def main():
                           unet_param_candidate_dict = dict(flatdict.FlatDict(unet_params_candidate, delimiter='.'))
                           unet_candidate_params = unflatten(unet_param_candidate_dict)
                           
-                          for r in unet_candidate_param_dict.items():
+                          for r in unet_param_candidate_dict.items():
                             k , v = r[0], r[1]
                             try:
                               if v.dtype == jnp.float32:
                                 v2= v.astype(jnp.bfloat16)
-                                unet_candidate_param_dict[k] = v2
+                                unet_param_candidate_dict[k] = v2
                                 del v
                             except:
                               print("f",k)
-                          unet_candidate_params = unflatten(unet_candidate_param_dict)
-                          new_state = optax.incremental_update(get_params_to_save(state.params), unet_candidate_params, step_size=.99)
+                          unet_candidate_params = unflatten(unet_param_candidate_dict)
+                          new_state = optax.incremental_update(get_params_to_save(state.params), unet_candidate_params, step_size=.01)
                           state = train_state.TrainState.create(apply_fn=unet.__call__, params=new_state, tx=optimizer)
 
                           del unet_param_dict
