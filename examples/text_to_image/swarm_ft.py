@@ -388,6 +388,7 @@ def main():
         set_seed(args.seed)
 
     # Handle the repository creation
+    import os
     if jax.process_index() == 0:
         if args.push_to_hub:
             if args.hub_model_id is None:
