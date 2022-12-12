@@ -724,6 +724,9 @@ def main():
         metrics = jax.lax.pmean(metrics, axis_name="batch")
 
         return new_state, metrics, new_train_rng 
+#     def update(state, candidate):
+#         new_state = optax.incremental_update(state.params, candidate, step_size=.01)
+#         return new_state
 
     # Create parallel version of the train step
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
@@ -898,11 +901,13 @@ def main():
                             except:
                               print("f",k)
                           unet_candidate_params = unflatten(unet_param_candidate_dict)
-                          new_state = optax.incremental_update(get_params_to_save(state.params), unet_candidate_params, step_size=.01)
-                          state = train_state.TrainState.create(apply_fn=unet.__call__, params=new_state, tx=optimizer)
-                          state = jax_utils.replicate(state)
+                          unet_candidate_params = jax_utils.replicate(unet_candidate_params)
 
-                          del unet_param_candidate_dict
+                          state = optax.incremental_update(state.params, unet_candidate_params, step_size=.01)
+#                           state = train_state.TrainState.create(apply_fn=unet.__call__, params=new_state, tx=optimizer)
+#                           state = jax_utils.replicate(state)
+
+                          del unet_param_candidate_dict, unet_candidate_params
                       else:
                         print("- - - - - - > NO RECENT UPDATE DETECTED")
                       start = datetime.now(timezone.utc)
