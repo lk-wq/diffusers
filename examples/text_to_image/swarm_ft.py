@@ -792,13 +792,13 @@ def main():
             batch = shard(batch)
             # batch = shard(batch)
 
-           state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+            state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
-           train_metrics.append(train_metric)
+            train_metrics.append(train_metric)
 
-           train_step_progress_bar.update(1)
+            train_step_progress_bar.update(1)
 
-           if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
+            if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
 #                 if global_step % args.ema_frequency == 0:
 
 #                       it = global_step//args.accumulation_frequency
@@ -911,8 +911,8 @@ def main():
 
     #                     jax.lib.xla_bridge.get_backend().defragment()
 
-           global_step += 1
-           if global_step >= args.max_train_steps:
+            global_step += 1
+            if global_step >= args.max_train_steps:
                 break
 
         #train_metric = jax_utils.unreplicate(train_metric)
