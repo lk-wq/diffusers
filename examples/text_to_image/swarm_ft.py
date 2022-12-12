@@ -850,7 +850,7 @@ def main():
 #     #                     del blob
 #                     del pipeline
 #                     del safety_checker
-            
+                    print("pass fail-------------------------------->",datetime.now( timezone.utc ) - start > timedelta(args.interval))
                     if datetime.now( timezone.utc ) - start > timedelta(args.interval):
                       ### DOWNLOAD FUNCTION ### 
 #                       print("args.
