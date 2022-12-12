@@ -440,13 +440,14 @@ def main():
             if 'unet' in filename and last_modified > last_update_time:
                 import os
                 try:
-                    dir_ = local_path+'/'+str(ix)+'/unet'
+                    dir_ = local_path+str(ix)+'/unet'
+                    os.mkdir(local_path+str(ix))
                     os.mkdir(dir_)
                 except:
                     pass
                 print("file name and dir_",filename,dir_)
                 blob.download_to_filename(dir_+'/'+filename)  # Download
-                update_list.append(local_pat+'/'+str(ix))                
+                update_list.append(local_path+str(ix))                
 #             blob.download_to_filename(local_path+str(ix))
         return update_list
     
