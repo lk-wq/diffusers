@@ -864,7 +864,14 @@ def main():
                           
                           for blob in blobs:
                             name = blob.name
+                            try:
+                                import os
+                                os.mkdir(args.local_weight_path+'unet/')
+                            except:
+                                pass
+
                             if 'config' in name:
+
                                 blob.download_to_filename(args.local_weight_path+'config.json')
                             else:
                                 blob.download_to_filename(args.local_weight_path+'diffusion_flax_model.msgpack')
@@ -879,7 +886,6 @@ def main():
                           unet_param_candidate_dict = dict(flatdict.FlatDict(unet_params_candidate, delimiter='.'))
                           unet_candidate_params = unflatten(unet_param_candidate_dict)
                           
-                          unet_candidate_param_dict = dict(flatdict.FlatDict(unet_candidate_params, delimiter='.'))
                           for r in unet_candidate_param_dict.items():
                             k , v = r[0], r[1]
                             try:
