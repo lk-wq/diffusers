@@ -798,60 +798,61 @@ def main():
             train_step_progress_bar.update(1)
 
             if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
-                if global_step % args.ema_frequency == 0:
+#                 if global_step % args.ema_frequency == 0:
 
-                      it = global_step//args.accumulation_frequency
-                      decay = 0.9999
-                      decay = min(decay,(1 + it) / (10 + it))
-                      avg = ema_update( get_params_to_save(state.params) , avg, decay )
+#                       it = global_step//args.accumulation_frequency
+#                       decay = 0.9999
+#                       decay = min(decay,(1 + it) / (10 + it))
+#                       avg = ema_update( get_params_to_save(state.params) , avg, decay )
 
     #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                 if global_step % args.save_frequency == 0:
-                    scheduler = FlaxDDIMScheduler(
-                        beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-                        # clip_sample=False,
-                        num_train_timesteps=1000,
-                        prediction_type="v_prediction",
-                        set_alpha_to_one=False,
-                        steps_offset=1,
-                        # skip_prk_steps=True,
-                    )
-            #         scheduler = FlaxPNDMScheduler(
-            #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-            #         )
+#                     scheduler = FlaxDDIMScheduler(
+#                         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+#                         # clip_sample=False,
+#                         num_train_timesteps=1000,
+#                         prediction_type="v_prediction",
+#                         set_alpha_to_one=False,
+#                         steps_offset=1,
+#                         # skip_prk_steps=True,
+#                     )
+#             #         scheduler = FlaxPNDMScheduler(
+#             #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+#             #         )
 
-                    safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-                        "CompVis/stable-diffusion-safety-checker", from_pt=True
-                    )
-                    pipeline = FlaxStableDiffusionPipeline(
-                        text_encoder=text_encoder,
-                        vae=vae,
-                        unet=unet,
-                        tokenizer=tokenizer,
-                        scheduler=scheduler,
-                        safety_checker=safety_checker,
-                        feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
-                    )
+#                     safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
+#                         "CompVis/stable-diffusion-safety-checker", from_pt=True
+#                     )
+#                     pipeline = FlaxStableDiffusionPipeline(
+#                         text_encoder=text_encoder,
+#                         vae=vae,
+#                         unet=unet,
+#                         tokenizer=tokenizer,
+#                         scheduler=scheduler,
+#                         safety_checker=safety_checker,
+#                         feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+#                     )
 
-                    pipeline.save_pretrained(
-                        args.output_dir,
-                        params={
-                            "text_encoder": get_params_to_save(text_encoder_params),
-                            "vae": get_params_to_save(vae_params),
-                            "unet": avg,
-                            "safety_checker": safety_checker.params,
-                        },
-                    )
-    #                     blob = bucket.blob(args.output_dir+str(global_step))
-                    upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir+str(global_step))
+#                     pipeline.save_pretrained(
+#                         args.output_dir,
+#                         params={
+#                             "text_encoder": get_params_to_save(text_encoder_params),
+#                             "vae": get_params_to_save(vae_params),
+#                             "unet": avg,
+#                             "safety_checker": safety_checker.params,
+#                         },
+#                     )
+#     #                     blob = bucket.blob(args.output_dir+str(global_step))
+#                     upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir+str(global_step))
                     
-    #                     blob.upload_from_filename(args.output_dir+str(global_step))
-    #                     del blob
-                    del pipeline
-                    del safety_checker
+#     #                     blob.upload_from_filename(args.output_dir+str(global_step))
+#     #                     del blob
+#                     del pipeline
+#                     del safety_checker
             
                     if datetime.now( timezone.utc ) - start > timedelta(args.interval):
                       ### DOWNLOAD FUNCTION ### 
+                      print("args.
                       blob = bucket.blob(args.remote_weight_path)
                       ### DETECT if there's been a change ###
                       date_updated = blob.updated
