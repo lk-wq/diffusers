@@ -899,12 +899,12 @@ def main():
                                 del v
                             except:
                               print("f",k)
-#                           del state
+                          del state
                           unet_candidate_params = unflatten(unet_param_candidate_dict)
                           unet_candidate_params = jax_utils.replicate(unet_candidate_params)
-                          state.params = unet_candidate_params
-#                           state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_candidate_params, tx=optimizer)
-#                           state = jax_utils.replicate(state)
+#                           state.params = unet_candidate_params
+                          state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_candidate_params, tx=optimizer)
+                          state = jax_utils.replicate(state)
 
 #                           state = optax.incremental_update(state.params, unet_candidate_params, step_size=.01)
 #                           state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_candidate_params, tx=optimizer)
