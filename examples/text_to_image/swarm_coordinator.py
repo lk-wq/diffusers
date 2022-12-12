@@ -473,8 +473,9 @@ def main():
     print("??????????????????? fl", fl)
     start = datetime.now( timezone.utc )-timedelta(days=4)
     interval = timedelta(hours=args.coordination_interval)
+    it = 0
     while True:
-      print("beginning")
+#       print("beginning")
       if datetime.now( timezone.utc ) - start > interval:
         import random
         update_list = download_remote_directory_to_local( args.local_path, bucket, fl, start )
@@ -550,8 +551,17 @@ def main():
                     "safety_checker": safety_checker.params,
                 },
           )
+          upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir+str(it))
+          upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir)
+          it += 1
+
+    #                     blob.upload_from_filename(args.output_dir+str(global_step))
+    #                     del blob
+          del pipeline
+          del safety_checker
+
           print("completed")
-          break
+#           break
 
 
 if __name__ == "__main__":
