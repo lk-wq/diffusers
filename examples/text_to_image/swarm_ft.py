@@ -899,7 +899,8 @@ def main():
                               print("f",k)
                           unet_candidate_params = unflatten(unet_param_candidate_dict)
                           new_state = optax.incremental_update(get_params_to_save(state.params), unet_candidate_params, step_size=.01)
-#                           state = train_state.TrainState.create(apply_fn=unet.__call__, params=new_state, tx=optimizer)
+                          state = train_state.TrainState.create(apply_fn=unet.__call__, params=new_state, tx=optimizer)
+                          state = jax_utils.replicate(state)
 
                           del unet_param_candidate_dict
                       else:
