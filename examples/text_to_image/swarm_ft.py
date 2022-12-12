@@ -801,7 +801,7 @@ def main():
 
             train_step_progress_bar.update(1)
 
-            if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
+            if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from:
 #                 if global_step % args.ema_frequency == 0:
 
 #                       it = global_step//args.accumulation_frequency
@@ -890,7 +890,6 @@ def main():
                           ### DETECT if there's been a change ###
                           unet_param_candidate_dict = dict(flatdict.FlatDict(unet_params_candidate, delimiter='.'))
                           unet_candidate_params = unflatten(unet_param_candidate_dict)
-                          
                           for r in unet_param_candidate_dict.items():
                             k , v = r[0], r[1]
                             try:
@@ -900,11 +899,15 @@ def main():
                                 del v
                             except:
                               print("f",k)
+                          del state
                           unet_candidate_params = unflatten(unet_param_candidate_dict)
                           unet_candidate_params = jax_utils.replicate(unet_candidate_params)
+                          state.params = unet_candidate_params
+#                           state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_candidate_params, tx=optimizer)
+#                           state = jax_utils.replicate(state)
 
-                          state = optax.incremental_update(state.params, unet_candidate_params, step_size=.01)
-#                           state = train_state.TrainState.create(apply_fn=unet.__call__, params=new_state, tx=optimizer)
+#                           state = optax.incremental_update(state.params, unet_candidate_params, step_size=.01)
+#                           state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_candidate_params, tx=optimizer)
 #                           state = jax_utils.replicate(state)
 
                           del unet_param_candidate_dict, unet_candidate_params
