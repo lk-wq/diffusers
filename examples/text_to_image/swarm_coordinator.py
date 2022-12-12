@@ -449,7 +449,7 @@ def main():
                 blob.download_to_filename(dir_+'/'+filename)  # Download
                 update_list.append(local_path+str(ix))                
 #             blob.download_to_filename(local_path+str(ix))
-        return update_list
+        return list(set(update_list))
     
     import glob
     from google.cloud import storage
@@ -481,6 +481,7 @@ def main():
         count = 0
         for ix , i in enumerate(update_list):
 #           try: 
+
           unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
               i, subfolder="unet",  revision='bf16',dtype=weight_dtype
           )
