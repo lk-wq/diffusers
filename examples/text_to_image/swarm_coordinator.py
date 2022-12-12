@@ -424,28 +424,26 @@ def main():
 
     def download_remote_directory_to_local(local_path, bucket, files_list, last_update_time):
     #assert os.path.isdir(local_path)
+      print("file list -------------------------------------------------->", files_list)
       update_list = []
       for ix , remote_path in enumerate(files_list):
 #        remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
-        try: 
-            blobs = bucket.list_blobs(prefix=remote_path) 
-            for blob in blobs:
-                filename = blob.name.replace('/', '_')
-                last_modified = blob.update
-                # We only need the unet and also we only want to use the local update if the last modification
-                # to the local update happened after the last global update
-                if 'unet' in filename and last_modified > last_update_time:
-                    import os
-                    try:
-                        dir_ = local_path+str(ix)+'/unet'
-                        os.mkdir(dir_)
-                    except:
-                        pass
-                blob.download_to_filename(dir_+'/'+filename)  # Download
-                update_list.append(local_path+str(ix))                
+        blobs = bucket.list_blobs(prefix=remote_path) 
+        for blob in blobs:
+            filename = blob.name.replace('/', '_')
+            last_modified = blob.update
+            # We only need the unet and also we only want to use the local update if the last modification
+            # to the local update happened after the last global update
+            if 'unet' in filename and last_modified > last_update_time:
+                import os
+                try:
+                    dir_ = local_path+str(ix)+'/unet'
+                    os.mkdir(dir_)
+                except:
+                    pass
+            blob.download_to_filename(dir_+'/'+filename)  # Download
+            update_list.append(local_path+str(ix))                
 #             blob.download_to_filename(local_path+str(ix))
-        except:
-            print("FILE NOT FOUND - - - - - - - - - - - - - >",remote_path)
         return update_list
     
     import glob
