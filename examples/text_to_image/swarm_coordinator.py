@@ -434,6 +434,7 @@ def main():
             last_modified = blob.update
             # We only need the unet and also we only want to use the local update if the last modification
             # to the local update happened after the last global update
+            print("filenames", last_modified > last_update_time)
             if 'unet' in filename and last_modified > last_update_time:
                 import os
                 try:
