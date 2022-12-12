@@ -443,8 +443,8 @@ def main():
                     os.mkdir(dir_)
                 except:
                     pass
-            blob.download_to_filename(dir_+'/'+filename)  # Download
-            update_list.append(local_path+str(ix))                
+                blob.download_to_filename(dir_+'/'+filename)  # Download
+                update_list.append(local_path+str(ix))                
 #             blob.download_to_filename(local_path+str(ix))
         return update_list
     
