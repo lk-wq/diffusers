@@ -729,7 +729,11 @@ def main():
 #         return new_state
 
     # Create parallel version of the train step
+    def update(s , c , batch ):
+    
+        return c
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
+    p_update = jax.pmap(update, "batch", donate_argnums=(0,))
 
     # Replicate the train state on each device
     state = jax_utils.replicate(state)
@@ -902,9 +906,11 @@ def main():
                           del state, unet_params
                           unet_candidate_params = unflatten(unet_param_candidate_dict)
                           unet_candidate_params = jax_utils.replicate(unet_candidate_params)
+                          state = p_update(state, unet_candidate_params, batch)
+
 #                           state.params = unet_candidate_params
-                          state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_candidate_params, tx=optimizer)
-                          state = jax_utils.replicate(state)
+#                           state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_candidate_params, tx=optimizer)
+#                           state = jax_utils.replicate(state)
 
 #                           state = optax.incremental_update(state.params, unet_candidate_params, step_size=.01)
 #                           state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_candidate_params, tx=optimizer)
