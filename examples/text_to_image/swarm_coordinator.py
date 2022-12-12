@@ -446,7 +446,10 @@ def main():
                 except:
                     pass
                 print("file name and dir_",filename,dir_)
-                blob.download_to_filename(dir_+'/'+filename)  # Download
+                if 'config' in filename:
+                    blob.download_to_filename(dir_+'/'+ config.json )  # Download
+                else:
+                    blob.download_to_filename(dir_+'/'+ unet_diffusion_flax_model.msgpack )  # Download
                 update_list.append(local_path+str(ix))                
 #             blob.download_to_filename(local_path+str(ix))
         return list(set(update_list))
