@@ -899,7 +899,7 @@ def main():
                                 del v
                             except:
                               print("f",k)
-                          del state
+#                           del state
                           unet_candidate_params = unflatten(unet_param_candidate_dict)
                           unet_candidate_params = jax_utils.replicate(unet_candidate_params)
                           state.params = unet_candidate_params
