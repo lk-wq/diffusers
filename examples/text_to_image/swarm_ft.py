@@ -862,7 +862,8 @@ def main():
                       
                       if datetime.now( timezone.utc ) - date_updated < timedelta(args.interval_check_fresh):
                           print("------------------------------------------> RECENT UPDATE DETECTED , UPDATED TO CONSENSUS WEIGHTS")
-                          
+                          blobs = bucket.list_blobs(prefix=args.remote_weight_path+'unet')
+
                           for blob in blobs:
                             name = blob.name
                             try:
