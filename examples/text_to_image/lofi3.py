@@ -439,18 +439,21 @@ def main():
             # to the local update happened after the last global update
             print("filenames", last_modified > last_update_time, last_modified, last_update_time)
             if 'unet' in filename and last_modified > last_update_time:
-                import os
                 try:
-                    dir_ = local_path+str(count)+'/unet'
-                    os.mkdir(local_path+str(count))
-                    os.mkdir(dir_)
+                    import os
+                    try:
+                        dir_ = local_path+str(count)+'/unet'
+                        os.mkdir(local_path+str(count))
+                        os.mkdir(dir_)
+                    except:
+                        pass
+                    print("file name and dir_ ", filename , dir_)
+                    if 'config' in filename:
+                        blob.download_to_filename(dir_+'/'+ 'config.json' )  # Download
+                    else:
+                        blob.download_to_filename(dir_+'/'+ 'diffusion_flax_model.msgpack' )  # Download
                 except:
-                    pass
-                print("file name and dir_ ", filename , dir_)
-                if 'config' in filename:
-                    blob.download_to_filename(dir_+'/'+ 'config.json' )  # Download
-                else:
-                    blob.download_to_filename(dir_+'/'+ 'diffusion_flax_model.msgpack' )  # Download
+                    print("failed ---------------------------> ")
                 update_list.append(local_path+str(count))   
         count += 1
 #             blob.download_to_filename(local_path+str(ix))
