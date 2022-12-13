@@ -472,7 +472,6 @@ def main():
 
     prefix_list = args.prefix_list.split(',')
     print("args.prefix_list --------------------------->", args.prefix_list)
-    print("??????????????????? fl", fl)
     start = datetime.now( timezone.utc )-timedelta( hours = args.coordination_interval )
     interval = timedelta(hours=args.coordination_interval)
 #       print("beginning")
