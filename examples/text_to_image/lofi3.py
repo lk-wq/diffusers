@@ -219,7 +219,7 @@ def parse_args():
     parser.add_argument("--scheduling", type=str, default="constant", help="scheduling")
     parser.add_argument("--warmup_steps", type=int, default=0, help="warm up steps")
     
-    parser.add_argument("--file_list", type=str, default="", help="file list")
+    parser.add_argument("--prefix_list", type=str, default="", help="file list")
     parser.add_argument("--coordination_interval", type=float, default=2, help="Hours between coordination rounds")
     parser.add_argument("--local_path", type=str, default="", help="where to save local updates")
     
@@ -426,6 +426,7 @@ def main():
     #assert os.path.isdir(local_path)
       print("prefix list -------------------------------------------------->", prefix_list )
       update_list = []
+      count = 0
       for ix , remote_path in enumerate(prefix_list):
 #        remote_path = os.path.join(gcs_path, local_file[1 + len(local_path):])
         print("remote path is --->",remote_path)
@@ -440,8 +441,8 @@ def main():
             if 'unet' in filename and last_modified > last_update_time:
                 import os
                 try:
-                    dir_ = local_path+str(ix)+'/unet'
-                    os.mkdir(local_path+str(ix))
+                    dir_ = local_path+str(count)+'/unet'
+                    os.mkdir(local_path+str(count))
                     os.mkdir(dir_)
                 except:
                     pass
@@ -450,7 +451,8 @@ def main():
                     blob.download_to_filename(dir_+'/'+ 'config.json' )  # Download
                 else:
                     blob.download_to_filename(dir_+'/'+ 'diffusion_flax_model.msgpack' )  # Download
-                update_list.append(local_path+str(ix))                
+                update_list.append(local_path+str(count))   
+                count += 1
 #             blob.download_to_filename(local_path+str(ix))
         return list(set(update_list))
     
@@ -471,7 +473,7 @@ def main():
     prefix_list = args.prefix_list.split(',')
     print("args.prefix_list --------------------------->", args.prefix_list)
     print("??????????????????? fl", fl)
-    start = datetime.now( timezone.utc )-timedelta( hours = args.interval )
+    start = datetime.now( timezone.utc )-timedelta( hours = args.coordination_interval )
     interval = timedelta(hours=args.coordination_interval)
 #       print("beginning")
     update_list = download_remote_directory_to_local( args.local_path, bucket, prefix_list , start )
