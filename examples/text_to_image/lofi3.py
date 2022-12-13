@@ -452,7 +452,7 @@ def main():
                 else:
                     blob.download_to_filename(dir_+'/'+ 'diffusion_flax_model.msgpack' )  # Download
                 update_list.append(local_path+str(count))   
-                count += 1
+        count += 1
 #             blob.download_to_filename(local_path+str(ix))
         return list(set(update_list))
     
