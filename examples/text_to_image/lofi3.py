@@ -433,6 +433,7 @@ def main():
         print("local path is ---->", local_path)
         blobs = bucket.list_blobs(prefix=remote_path) 
         for blob in blobs:
+            prefix = blob.name.split('/')[0]
             filename = blob.name.replace('/', '_')
             last_modified = blob.updated
             # We only need the unet and also we only want to use the local update if the last modification
@@ -442,8 +443,8 @@ def main():
                 try:
                     import os
                     try:
-                        dir_ = local_path+str(count)+'/unet'
-                        os.mkdir(local_path+str(count))
+                        dir_ = local_path+str(prefix)+'/unet'
+                        os.mkdir(local_path+str(prefix))
                         os.mkdir(dir_)
                     except:
                         pass
@@ -452,12 +453,11 @@ def main():
                         blob.download_to_filename(dir_+'/'+ 'config.json' )  # Download
                     else:
                         blob.download_to_filename(dir_+'/'+ 'diffusion_flax_model.msgpack' )  # Download
+                    update_list.append(local_path+prefix)   
                 except:
                     print("failed ---------------------------> ")
-                update_list.append(local_path+str(count))   
-        count += 1
 #             blob.download_to_filename(local_path+str(ix))
-        return list(set(update_list))
+      return list(set(update_list))
     
     import glob
     from google.cloud import storage
@@ -484,10 +484,13 @@ def main():
     count = 0
     for ix , i in enumerate(update_list):
 #           try: 
-
-      unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-          i, subfolder="unet",  revision='bf16',dtype=weight_dtype
-      )
+      try:
+          unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+              i, subfolder="unet",  revision='bf16',dtype=weight_dtype
+          )
+      except:
+          print("couldn't load",i)
+          continue
 
 #           except:
 #               print("load fail ------------------------------>",i) 
