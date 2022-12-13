@@ -547,9 +547,7 @@ def main():
                 "safety_checker": safety_checker.params,
             },
       )
-      upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir+str(it))
-      upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir)
-      it += 1
+      upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir)      
 
 #                     blob.upload_from_filename(args.output_dir+str(global_step))
 #                     del blob
