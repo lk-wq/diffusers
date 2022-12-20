@@ -626,22 +626,22 @@ def main():
     optimizer = optax.MultiSteps(
         optimizer_, args.accumulation_frequency
     )
-#     def flattened_traversal(fn):
-#       """Returns function that is called with `(path, param)` instead of pytree."""
-#       def mask(tree):
-#         flat = flax.traverse_util.flatten_dict(tree)
-#         return flax.traverse_util.unflatten_dict(
-#             {k: fn(k, v) for k, v in flat.items()})
-#       return mask
-#     label_fn = flattened_traversal(
-#         lambda path, _: 'adam' if any([check_str(i) for i in path]) else 'none')
-#     def check_str(s):
-#       if 'atte' in s:
-#         return True
-#       return False
+    def flattened_traversal(fn):
+      """Returns function that is called with `(path, param)` instead of pytree."""
+      def mask(tree):
+        flat = flax.traverse_util.flatten_dict(tree)
+        return flax.traverse_util.unflatten_dict(
+            {k: fn(k, v) for k, v in flat.items()})
+      return mask
+    label_fn = flattened_traversal(
+        lambda path, _: 'adam' if any([check_str(i) for i in path]) else 'none')
+    def check_str(s):
+      if 'attn' in s:
+        return True
+      return False
     
-#     optimizer = optax.multi_transform(
-#       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
+    optimizer = optax.multi_transform(
+      {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
 
     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
