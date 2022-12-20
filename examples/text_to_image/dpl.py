@@ -623,7 +623,7 @@ def main():
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
     )
-    optimizer = optax.MultiSteps(
+    optimizer_2 = optax.MultiSteps(
         optimizer_, args.accumulation_frequency
     )
     def flattened_traversal(fn):
