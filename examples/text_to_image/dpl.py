@@ -761,7 +761,7 @@ def main():
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
     global_step = args.restart_from
-    #@jax.jit
+    @jax.jit
     def ema_update(params, avg_params, decay):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
       step = 1 - decay
