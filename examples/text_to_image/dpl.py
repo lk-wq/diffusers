@@ -798,7 +798,7 @@ def main():
             if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
                 if global_step % args.ema_frequency == 0:
                   it = global_step//args.accumulation_frequency
-                  decay = 0.9999
+                  decay = 0.99
                   decay = min(decay,(1 + it) / (10 + it))
 
                   avg = ema_update( get_params_to_save(state.params) , avg, decay )
