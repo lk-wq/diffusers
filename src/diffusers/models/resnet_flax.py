@@ -25,7 +25,7 @@ class FlaxUpsample2D(nn.Module):
             self.out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding=((1, 1), (1, 1)),
+            padding='CIRCULAR',
             dtype=self.dtype,
         )
 
