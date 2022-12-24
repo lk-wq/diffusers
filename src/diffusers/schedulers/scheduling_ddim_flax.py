@@ -299,6 +299,15 @@ class FlaxDDIMScheduler(FlaxSchedulerMixin, ConfigMixin):
         noise: jnp.ndarray,
         timesteps: jnp.ndarray,
     ) -> jnp.ndarray:
+        return add_noise_common(state.common, original_samples, noise, timesteps)
+
+    def add_noise_v(
+        self,
+        state: DDIMSchedulerState,
+        original_samples: jnp.ndarray,
+        noise: jnp.ndarray,
+        timesteps: jnp.ndarray,
+    ) -> jnp.ndarray:
         return add_noise_common_v(state.common, original_samples, noise, timesteps)
 
     def __len__(self):
