@@ -29,6 +29,8 @@ from .scheduling_utils_flax import (
     FlaxSchedulerMixin,
     FlaxSchedulerOutput,
     add_noise_common,
+)
+from diffusers.schedulers.scheduling_utils_flax import (
     add_noise_common_v,
 )
 
