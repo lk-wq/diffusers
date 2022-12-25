@@ -273,7 +273,7 @@ class FlaxCrossAttnUpBlock2DF(nn.Module):
         for i in range(self.num_layers):
             res_skip_channels = self.in_channels if (i == self.num_layers - 1) else self.out_channels
             resnet_in_channels = self.prev_output_channel if i == 0 else self.out_channels
-            if i == self.num_layers - 1:
+            if True:
                 res_block = FlaxResnetBlock2DF(
                     in_channels=resnet_in_channels + res_skip_channels,
                     out_channels=self.out_channels,
@@ -419,7 +419,7 @@ class FlaxUpBlock2DF(nn.Module):
         for i in range(self.num_layers):
             res_skip_channels = self.in_channels if (i == self.num_layers - 1) else self.out_channels
             resnet_in_channels = self.prev_output_channel if i == 0 else self.out_channels
-            if i == self.num_layers - 1:
+            if True:
                 res_block = FlaxResnetBlock2DF(
                     in_channels=resnet_in_channels + res_skip_channels,
                     out_channels=self.out_channels,
