@@ -198,30 +198,54 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             input_channel = reversed_block_out_channels[min(i + 1, len(block_out_channels) - 1)]
 
             is_final_block = i == len(block_out_channels) - 1
-
-            if up_block_type == "CrossAttnUpBlock2D":
-                up_block = FlaxCrossAttnUpBlock2D(
-                    in_channels=input_channel,
-                    out_channels=output_channel,
-                    prev_output_channel=prev_output_channel,
-                    num_layers=self.layers_per_block + 1,
-                    attn_num_head_channels=reversed_attention_head_dim[i],
-                    add_upsample=not is_final_block,
-                    dropout=self.dropout,
-                    use_linear_projection=self.use_linear_projection,
-                    only_cross_attention=only_cross_attention[i],
-                    dtype=self.dtype,
-                )
+            if not is_final_block:
+                if up_block_type == "CrossAttnUpBlock2D":
+                    up_block = FlaxCrossAttnUpBlock2D(
+                        in_channels=input_channel,
+                        out_channels=output_channel,
+                        prev_output_channel=prev_output_channel,
+                        num_layers=self.layers_per_block + 1,
+                        attn_num_head_channels=reversed_attention_head_dim[i],
+                        add_upsample=not is_final_block,
+                        dropout=self.dropout,
+                        use_linear_projection=self.use_linear_projection,
+                        only_cross_attention=only_cross_attention[i],
+                        dtype=self.dtype,
+                    )
+                else:
+                    up_block = FlaxUpBlock2D(
+                        in_channels=input_channel,
+                        out_channels=output_channel,
+                        prev_output_channel=prev_output_channel,
+                        num_layers=self.layers_per_block + 1,
+                        add_upsample=not is_final_block,
+                        dropout=self.dropout,
+                        dtype=self.dtype,
+                    )
             else:
-                up_block = FlaxUpBlock2D(
-                    in_channels=input_channel,
-                    out_channels=output_channel,
-                    prev_output_channel=prev_output_channel,
-                    num_layers=self.layers_per_block + 1,
-                    add_upsample=not is_final_block,
-                    dropout=self.dropout,
-                    dtype=self.dtype,
-                )
+                if up_block_type == "CrossAttnUpBlock2D":
+                    up_block = FlaxCrossAttnUpBlock2DF(
+                        in_channels=input_channel,
+                        out_channels=output_channel,
+                        prev_output_channel=prev_output_channel,
+                        num_layers=self.layers_per_block + 1,
+                        attn_num_head_channels=reversed_attention_head_dim[i],
+                        add_upsample=not is_final_block,
+                        dropout=self.dropout,
+                        use_linear_projection=self.use_linear_projection,
+                        only_cross_attention=only_cross_attention[i],
+                        dtype=self.dtype,
+                    )
+                else:
+                    up_block = FlaxUpBlock2DF(
+                        in_channels=input_channel,
+                        out_channels=output_channel,
+                        prev_output_channel=prev_output_channel,
+                        num_layers=self.layers_per_block + 1,
+                        add_upsample=not is_final_block,
+                        dropout=self.dropout,
+                        dtype=self.dtype,
+                    )
 
             up_blocks.append(up_block)
             prev_output_channel = output_channel
