@@ -224,7 +224,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                     )
             else:
                 if up_block_type == "CrossAttnUpBlock2D":
-                    up_block = FlaxCrossAttnUpBlock2DF(
+                    up_block = FlaxCrossAttnUpBlock2D(
                         in_channels=input_channel,
                         out_channels=output_channel,
                         prev_output_channel=prev_output_channel,
@@ -237,7 +237,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                         dtype=self.dtype,
                     )
                 else:
-                    up_block = FlaxUpBlock2DF(
+                    up_block = FlaxUpBlock2D(
                         in_channels=input_channel,
                         out_channels=output_channel,
                         prev_output_channel=prev_output_channel,
