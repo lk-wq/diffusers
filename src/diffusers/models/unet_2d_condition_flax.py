@@ -26,9 +26,13 @@ from .embeddings_flax import FlaxTimestepEmbedding, FlaxTimesteps
 from .unet_2d_blocks_flax import (
     FlaxCrossAttnDownBlock2D,
     FlaxCrossAttnUpBlock2D,
+    FlaxCrossAttnUpBlock2DF,
+
     FlaxDownBlock2D,
     FlaxUNetMidBlock2DCrossAttn,
     FlaxUpBlock2D,
+    FlaxUpBlock2DF,
+
 )
 
 
@@ -224,7 +228,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                     )
             else:
                 if up_block_type == "CrossAttnUpBlock2D":
-                    up_block = FlaxCrossAttnUpBlock2D(
+                    up_block = FlaxCrossAttnUpBlock2DF(
                         in_channels=input_channel,
                         out_channels=output_channel,
                         prev_output_channel=prev_output_channel,
@@ -237,7 +241,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                         dtype=self.dtype,
                     )
                 else:
-                    up_block = FlaxUpBlock2D(
+                    up_block = FlaxUpBlock2DF(
                         in_channels=input_channel,
                         out_channels=output_channel,
                         prev_output_channel=prev_output_channel,
