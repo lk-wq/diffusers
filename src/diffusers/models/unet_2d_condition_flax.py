@@ -319,7 +319,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         for up_block in self.up_blocks:
             res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
             down_block_res_samples = down_block_res_samples[: -(self.layers_per_block + 1)]
-            if isinstance(up_block, FlaxCrossAttnUpBlock2D):
+            if isinstance(up_block, FlaxCrossAttnUpBlock2D) or isinstance(up_block, FlaxCrossAttnUpBlock2DF):
                 sample = up_block(
                     sample,
                     temb=t_emb,
