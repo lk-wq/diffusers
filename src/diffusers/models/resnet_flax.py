@@ -49,7 +49,7 @@ class FlaxDownsample2D(nn.Module):
             self.out_channels,
             kernel_size=(3, 3),
             strides=(2, 2),
-            padding=((1, 1), (1, 1)),  # padding="VALID",
+            padding='CIRCULAR',
             dtype=self.dtype,
         )
 
