@@ -77,7 +77,7 @@ class FlaxUpsample2D(nn.Module):
             self.in_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding=((1, 1), (1, 1)),
+            padding='CIRCULAR',
             dtype=self.dtype,
         )
 
@@ -156,7 +156,7 @@ class FlaxResnetBlock2D(nn.Module):
             out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding=((1, 1), (1, 1)),
+            padding='CIRCULAR',
             dtype=self.dtype,
         )
 
@@ -166,7 +166,7 @@ class FlaxResnetBlock2D(nn.Module):
             out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding=((1, 1), (1, 1)),
+            padding='CIRCULAR',
             dtype=self.dtype,
         )
 
@@ -505,7 +505,7 @@ class FlaxEncoder(nn.Module):
             block_out_channels[0],
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding=((1, 1), (1, 1)),
+            padding='CIRCULAR',
             dtype=self.dtype,
         )
 
@@ -543,7 +543,7 @@ class FlaxEncoder(nn.Module):
             conv_out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding=((1, 1), (1, 1)),
+            padding='CIRCULAR',
             dtype=self.dtype,
         )
 
@@ -617,7 +617,7 @@ class FlaxDecoder(nn.Module):
             block_out_channels[-1],
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding=((1, 1), (1, 1)),
+            padding='CIRCULAR',
             dtype=self.dtype,
         )
 
@@ -658,7 +658,7 @@ class FlaxDecoder(nn.Module):
             self.out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding=((1, 1), (1, 1)),
+            padding='CIRCULAR',
             dtype=self.dtype,
         )
 
