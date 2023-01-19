@@ -785,7 +785,7 @@ class FlaxDecoder(nn.Module):
 
             is_final_block = i == len(block_out_channels) - 1
 
-            up_block = FlaxUpDecoderBlock2DCircular(
+            up_block = FlaxUpDecoderBlock2D(
                 in_channels=prev_output_channel,
                 out_channels=output_channel,
                 num_layers=self.layers_per_block + 1,
