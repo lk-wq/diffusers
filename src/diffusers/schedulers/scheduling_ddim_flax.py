@@ -293,7 +293,7 @@ class FlaxDDIMScheduler(FlaxSchedulerMixin, ConfigMixin):
         if not return_dict:
             return (prev_sample, state)
 
-        return FlaxDDIMSchedulerOutput(prev_sample=prev_sample, state=state) , pred_original_sample
+        return FlaxDDIMSchedulerOutput(prev_sample=prev_sample, state=state) 
 
     def add_noise(
         self,
