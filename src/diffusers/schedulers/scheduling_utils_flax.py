@@ -271,5 +271,5 @@ def add_noise_common_v(
     sqrt_one_minus_alpha_prod = sqrt_one_minus_alpha_prod.flatten()
     sqrt_one_minus_alpha_prod = broadcast_to_shape_from_left(sqrt_one_minus_alpha_prod, original_samples.shape)
 
-    noisy_samples = - sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
+    noisy_samples = sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
     return noisy_samples
