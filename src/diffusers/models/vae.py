@@ -182,8 +182,9 @@ class Decoder(nn.Module):
         sample = self.conv_in(sample)
         print("post conv in")
         # middle
+        print("s",sample.size())
         sample = self.mid_block(sample)
-        print("middle", self.mid_block)
+        print("middle huh", sample.size(),self.mid_block)
 
         # up
         for up_block in self.up_blocks:
