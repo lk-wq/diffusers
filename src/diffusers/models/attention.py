@@ -134,9 +134,9 @@ class AttentionBlock(nn.Module):
 
         scale = 1 / math.sqrt(self.channels / self.num_heads)
 
-        query_proj = self.reshape_heads_to_batch_dim(query_proj).half()
-        key_proj = self.reshape_heads_to_batch_dim(key_proj).half()
-        value_proj = self.reshape_heads_to_batch_dim(value_proj).half()
+        query_proj = self.reshape_heads_to_batch_dim(query_proj)#.half()
+        key_proj = self.reshape_heads_to_batch_dim(key_proj)#.half()
+        value_proj = self.reshape_heads_to_batch_dim(value_proj)#.half()
         print("query / key",query_proj.size(), key_proj.size())
         if self._use_memory_efficient_attention_xformers:
             # Memory efficient attention
