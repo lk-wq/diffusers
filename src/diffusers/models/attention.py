@@ -167,7 +167,7 @@ class AttentionBlock(nn.Module):
                 # print(attention_probs)
                 hidden_states = attention_probs @ value_proj
                 h.append(hidden_states) 
-            hideen_states = torch.cat(h).squeeze().unsqueeze(0)
+            hidden_states = torch.cat(h).squeeze().unsqueeze(0)
         # reshape hidden_states
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
 
