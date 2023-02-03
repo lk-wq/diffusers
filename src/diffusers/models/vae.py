@@ -182,7 +182,7 @@ class Decoder(nn.Module):
         sample = self.conv_in(sample)
         print("post conv in")
         # middle
-        print("s",sample.size())
+        print("NEW s",sample.size())
         sample = self.mid_block(sample)
         torch.save(sample, 'sample.pth')
         print("middle huh", sample.size(),self.mid_block)
