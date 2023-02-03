@@ -391,6 +391,7 @@ class UNetMidBlock2D(nn.Module):
 
     def forward(self, hidden_states, temb=None):
         hidden_states = self.resnets[0](hidden_states, temb)
+        print("rez",len(self.resnets))
         for attn, resnet in zip(self.attentions, self.resnets[1:]):
             if attn is not None:
                 print("attn hit")
