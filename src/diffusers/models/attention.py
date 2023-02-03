@@ -161,7 +161,7 @@ class AttentionBlock(nn.Module):
 #             attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
 #             hidden_states = torch.bmm(attention_probs, value_proj).float()
             h = []
-            scaler = 2048
+            scaler = 256
             for _ in range(query_proj.size(1)//scaler + 1):
                 attention_scores = scale*(key_proj @ query_proj.transpose(-1,-2)[:,:,scaler*_:scaler*(_+1)].T).squeeze(-1)
                 attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
