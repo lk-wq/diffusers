@@ -178,8 +178,9 @@ class Decoder(nn.Module):
 
     def forward(self, z):
         sample = z
+        print("pre conv in")
         sample = self.conv_in(sample)
-
+        print("post conv in")
         # middle
         sample = self.mid_block(sample)
         print("middle")
