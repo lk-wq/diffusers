@@ -134,9 +134,9 @@ class AttentionBlock(nn.Module):
 
         scale = 1 / math.sqrt(self.channels / self.num_heads)
 
-        query_proj = self.reshape_heads_to_batch_dim(query_proj)
-        key_proj = self.reshape_heads_to_batch_dim(key_proj)
-        value_proj = self.reshape_heads_to_batch_dim(value_proj)
+        query_proj = self.reshape_heads_to_batch_dim(query_proj).half()
+        key_proj = self.reshape_heads_to_batch_dim(key_proj).half()
+        value_proj = self.reshape_heads_to_batch_dim(value_proj).half()
 
         if self._use_memory_efficient_attention_xformers:
             # Memory efficient attention
@@ -159,7 +159,7 @@ class AttentionBlock(nn.Module):
                 alpha=scale,
             )
             attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
-            hidden_states = torch.bmm(attention_probs, value_proj)
+            hidden_states = torch.bmm(attention_probs, value_proj).float()
 
         # reshape hidden_states
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
