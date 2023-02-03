@@ -145,22 +145,29 @@ class AttentionBlock(nn.Module):
             )
             hidden_states = hidden_states.to(query_proj.dtype)
         else:
-            attention_scores = torch.baddbmm(
-                torch.empty(
-                    query_proj.shape[0],
-                    query_proj.shape[1],
-                    key_proj.shape[1],
-                    dtype=query_proj.dtype,
-                    device=query_proj.device,
-                ),
-                query_proj,
-                key_proj.transpose(-1, -2),
-                beta=0,
-                alpha=scale,
-            )
-            attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
-            hidden_states = torch.bmm(attention_probs, value_proj).float()
-
+#             attention_scores = torch.baddbmm(
+#                 torch.empty(
+#                     query_proj.shape[0],
+#                     query_proj.shape[1],
+#                     key_proj.shape[1],
+#                     dtype=query_proj.dtype,
+#                     device=query_proj.device,
+#                 ),
+#                 query_proj,
+#                 key_proj.transpose(-1, -2),
+#                 beta=0,
+#                 alpha=scale,
+#             )
+#             attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
+#             hidden_states = torch.bmm(attention_probs, value_proj).float()
+            h = []
+            for _ in range(query_proj.size(1)):
+                attention_scores = (key_proj @ query_proj.transpose(-1,-2)[:,:,_].T).squeeze(-1)
+                attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
+                # print(attention_probs)
+                hidden_states = attention_probs @ value_proj
+                h.append(hidden_states)
+            hideen_states = torch.cat(h).squeeze().unsqueeze(0)
         # reshape hidden_states
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
 
