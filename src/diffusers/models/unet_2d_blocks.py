@@ -366,7 +366,7 @@ class UNetMidBlock2D(nn.Module):
                         rescale_output_factor=output_scale_factor,
                         eps=resnet_eps,
                         norm_num_groups=resnet_groups,
-                    )
+                    ).half()
                 )
             else:
                 attentions.append(None)
@@ -395,7 +395,7 @@ class UNetMidBlock2D(nn.Module):
         for attn, resnet in zip(self.attentions, self.resnets[1:]):
             if attn is not None:
                 print("attn hit")
-                hidden_states = attn(hidden_states)
+                hidden_states = attn(hidden_states.half()).float()
             print("res hit")
             hidden_states = resnet(hidden_states, temb)
 
