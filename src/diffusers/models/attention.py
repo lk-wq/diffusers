@@ -123,7 +123,7 @@ class AttentionBlock(nn.Module):
         batch, channel, height, width = hidden_states.shape
 
         # norm
-        hidden_states = self.group_norm(hidden_states)
+        hidden_states = self.group_norm(hidden_states.float()).half()
 
         hidden_states = hidden_states.view(batch, channel, height * width).transpose(1, 2)
 
