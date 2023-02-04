@@ -19,7 +19,7 @@ import torch
 import torch.nn as nn
 
 from ..utils import BaseOutput, randn_tensor
-from .unet_2d_blocks import UNetMidBlock2D, get_down_block, get_up_block
+from .unet_2d_blocks import UNetMidBlock2D, get_down_block, get_up_block, UNetMidBlock2DCircular
 
 
 @dataclass
@@ -135,7 +135,7 @@ class Decoder(nn.Module):
         self.up_blocks = nn.ModuleList([])
 
         # mid
-        self.mid_block = UNetMidBlock2D(
+        self.mid_block = UNetMidBlock2DCircular(
             in_channels=block_out_channels[-1],
             resnet_eps=1e-6,
             resnet_act_fn=act_fn,
