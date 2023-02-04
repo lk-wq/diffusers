@@ -163,6 +163,8 @@ class AttentionBlock(nn.Module):
             h = []
             scaler = 256
             for _ in range(query_proj.size(1)//scaler + 1):
+                if _ % 1000 == 0:
+                    print(_)
                 attention_scores = scale*(key_proj @ query_proj.transpose(-1,-2)[:,:,scaler*_:scaler*(_+1)].T).squeeze(-1)
                 attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
                 # print(attention_probs)
