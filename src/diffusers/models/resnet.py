@@ -723,7 +723,7 @@ class ResnetBlock2DCircular(nn.Module):
         elif self.downsample is not None:
             input_tensor = self.downsample(input_tensor)
             hidden_states = self.downsample(hidden_states)
-        if hidden_states[-1] > 3072:
+        if hidden_states[-1].size() > 3072:
             hidden_states = conv_slice(self.conv1 , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
         else:
             hidden_states = self.conv1(hidden_states)
@@ -743,14 +743,14 @@ class ResnetBlock2DCircular(nn.Module):
         hidden_states = self.nonlinearity(hidden_states)
 
         hidden_states = self.dropout(hidden_states)
-        if hidden_states[-1] > 3072:
+        if hidden_states.size()[-1] > 3072:
             hidden_states = conv_slice(self.conv2 , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
 
         else:
             hidden_states = self.conv2(hidden_states)
 
         if self.conv_shortcut is not None:
-            if hidden_states[-1] > 3072:
+            if hidden_states.size()[-1] > 3072:
                 input_tensor = conv_slice(self.conv_shortcut , slice_fraction,input_tensor)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
             else:
                 input_tensor = self.conv_shortcut(input_tensor)
