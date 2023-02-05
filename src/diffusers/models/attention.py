@@ -171,6 +171,7 @@ class AttentionBlock(nn.Module):
 #                 hidden_states = attention_probs @ value_proj
 #                 h.append(hidden_states) 
 #             hidden_states = torch.cat(h).squeeze().unsqueeze(0)
+            print("efficient god?")
             query = torch.softmax(query_proj,dim=-1)
             key = torch.softmax(key_proj,dim=-2)
             kv = (key.T.squeeze() @ value_proj.squeeze())
