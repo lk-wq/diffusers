@@ -190,10 +190,11 @@ class Decoder(nn.Module):
         # up
         for up_block in self.up_blocks:
             print("up hit" , up_block)
-            sample = up_block(sample)
+            up_block.to(torch.bfloat16)
+            sample = up_block(sample.to(torch.bfloat16)
             
         # post-process
-        sample = self.conv_norm_out(sample)
+        sample = self.conv_norm_out(sample.float())
         sample = self.conv_act(sample)
         sample = self.conv_out(sample)
 
