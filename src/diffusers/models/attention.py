@@ -160,18 +160,23 @@ class AttentionBlock(nn.Module):
 #             )
 #             attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
 #             hidden_states = torch.bmm(attention_probs, value_proj).float()
-            h = []
-            scaler = 256
-            for _ in range(query_proj.size(1)//scaler + 1):
-                if _ % 1000 == 0:
-                    print(_)
-                attention_scores = scale*(key_proj @ query_proj.transpose(-1,-2)[:,:,scaler*_:scaler*(_+1)].T).squeeze(-1)
-                attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
-                # print(attention_probs)
-                hidden_states = attention_probs @ value_proj
-                h.append(hidden_states) 
+#             h = []
+#             scaler = 256
+#             for _ in range(query_proj.size(1)//scaler + 1):
+#                 if _ % 1000 == 0:
+#                     print(_)
+#                 attention_scores = scale*(key_proj @ query_proj.transpose(-1,-2)[:,:,scaler*_:scaler*(_+1)].T).squeeze(-1)
+#                 attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
+#                 # print(attention_probs)
+#                 hidden_states = attention_probs @ value_proj
+#                 h.append(hidden_states) 
 #             hidden_states = torch.cat(h).squeeze().unsqueeze(0)
-            hidden_states = torch.cat(h,dim=1).squeeze().unsqueeze(0)
+            query = torch.softmax(query_proj,dim=-1)
+            key = torch.softmax(key_proj,dim=-2)
+            kv = (key.T.squeeze() @ value_proj.squeeze())
+            hidden_states = (query @ kv).squeeze().unsqueeze(0) 
+
+#             hidden_states = torch.cat(h,dim=1).squeeze().unsqueeze(0)
         # reshape hidden_states
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
 
