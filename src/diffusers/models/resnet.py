@@ -613,7 +613,7 @@ def conv_slice(conv , slice_fraction,input):
   slice_size = conv.out_channels//slice_fraction
   for slice_ in range(slice_fraction):
     c00 = conv.weight[slice_*slice_size:slice_size*(slice_+1),:,:,:]
-    n00 = nn.Conv2d(conv.in_channels,conv.out_channels//8,kernel_size=conv.kernel_size,stride=conv.stride,bias=None,padding=conv.padding,padding_mode=conv.padding_mode)
+    n00 = nn.Conv2d(conv.in_channels,slice_size,kernel_size=conv.kernel_size,stride=conv.stride,bias=None,padding=conv.padding,padding_mode=conv.padding_mode)
     n00.weight.data.copy_(c00)
     n00.weight.data = n00.weight.to(input.dtype)
     hidden_states_temp = n00(input)
