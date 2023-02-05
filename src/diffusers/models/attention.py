@@ -21,7 +21,7 @@ from torch import nn
 from ..utils.import_utils import is_xformers_available
 from .cross_attention import CrossAttention
 from .embeddings import CombinedTimestepLabelEmbeddings
-
+from performer_pytorch import FastAttention
 
 if is_xformers_available():
     import xformers
@@ -73,6 +73,7 @@ class AttentionBlock(nn.Module):
 
         self._use_memory_efficient_attention_xformers = False
         self._attention_op = None
+        self.attn_fn = FastAttention(dim_heads=channels, nb_features=512, causal=False, no_projection=False)
 
     def reshape_heads_to_batch_dim(self, tensor):
         batch_size, seq_len, dim = tensor.shape
@@ -133,12 +134,13 @@ class AttentionBlock(nn.Module):
         value_proj = self.value(hidden_states)
 
         scale = 1 / math.sqrt(self.channels / self.num_heads)
-
+        print("pre", query_proj.size())
         query_proj = self.reshape_heads_to_batch_dim(query_proj)#.half()
         key_proj = self.reshape_heads_to_batch_dim(key_proj)#.half()
         value_proj = self.reshape_heads_to_batch_dim(value_proj)#.half()
+        
         print("query / key",query_proj.size(), key_proj.size())
-        if self._use_memory_efficient_attention_xformers:
+        if False:#self._use_memory_efficient_attention_xformers:
             # Memory efficient attention
             hidden_states = xformers.ops.memory_efficient_attention(
                 query_proj, key_proj, value_proj, attn_bias=None, op=self._attention_op
@@ -171,12 +173,13 @@ class AttentionBlock(nn.Module):
 #                 hidden_states = attention_probs @ value_proj
 #                 h.append(hidden_states) 
 #             hidden_states = torch.cat(h).squeeze().unsqueeze(0)
-            print("efficient god?")
-            query = torch.softmax(query_proj,dim=-1)
-            key = torch.softmax(key_proj,dim=-2)
-            kv = (key.T.squeeze() @ value_proj.squeeze())
-            hidden_states = (query @ kv).squeeze().unsqueeze(0) 
-
+            print("efficient god? 2")
+#             query = torch.softmax(query_proj,dim=-1)
+#             key = torch.softmax(key_proj,dim=-2)
+#             kv = (key.T.squeeze() @ value_proj.squeeze())
+#             hidden_states = (query @ kv).squeeze().unsqueeze(0) 
+#             attn_fn = FastAttention(dim_heads=512, nb_features=512, causal=False, no_projection=True)
+              hidden_states = self.attn_fn( query_proj.squeeze().unsqueeze(0).unsqueeze(0), key_proj.squeeze().unsqueeze(0).unsqueeze(0), value_proj.squeeze().unsqueeze(0).unsqueeze(0) ).squeeze().unsqueeze(0)
 #             hidden_states = torch.cat(h,dim=1).squeeze().unsqueeze(0)
         # reshape hidden_states
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
