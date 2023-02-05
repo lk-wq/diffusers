@@ -608,6 +608,17 @@ class ResnetBlock2D(nn.Module):
         output_tensor = (input_tensor + hidden_states) / self.output_scale_factor
 
         return output_tensor
+def conv_slice(conv , slice_fraction,input):
+  h = []
+  slice_size = conv.out_channels//8
+  for slice_ in range(slice_fraction):
+    c00 = conv.weight[slice_*slice_size:slice_size*(slice_+1),:,:,:]
+    n00 = nn.Conv2d(conv.in_channels,conv.out_channels//8,kernel_size=conv.kernel_size,stride=conv.stride,bias=None,padding=conv.padding,padding_mode=conv.padding_mode)
+    n00.weight.data.copy_(c00)
+    n00.weight.data = n00.weight.to(input.dtype)
+    hidden_states_temp = n00(input)
+    h.append(hidden_states_temp)
+  return torch.cat(h,dim=1) + conv.bias.data.unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
 
 class ResnetBlock2DCircular(nn.Module):
     def __init__(
@@ -712,8 +723,10 @@ class ResnetBlock2DCircular(nn.Module):
         elif self.downsample is not None:
             input_tensor = self.downsample(input_tensor)
             hidden_states = self.downsample(hidden_states)
-
-        hidden_states = self.conv1(hidden_states)
+        if hidden_states[-1] > 3072:
+            hidden_states = conv_slice(self.conv1 , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+        else:
+            hidden_states = self.conv1(hidden_states)
 
         if temb is not None:
             temb = self.time_emb_proj(self.nonlinearity(temb))[:, :, None, None]
@@ -730,10 +743,17 @@ class ResnetBlock2DCircular(nn.Module):
         hidden_states = self.nonlinearity(hidden_states)
 
         hidden_states = self.dropout(hidden_states)
-        hidden_states = self.conv2(hidden_states)
+        if hidden_states[-1] > 3072:
+            hidden_states = conv_slice(self.conv2 , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+
+        else:
+            hidden_states = self.conv2(hidden_states)
 
         if self.conv_shortcut is not None:
-            input_tensor = self.conv_shortcut(input_tensor)
+            if hidden_states[-1] > 3072:
+                input_tensor = conv_slice(self.conv_shortcut , slice_fraction,input_tensor)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+            else:
+                input_tensor = self.conv_shortcut(input_tensor)
 
         output_tensor = (input_tensor + hidden_states) / self.output_scale_factor
 
