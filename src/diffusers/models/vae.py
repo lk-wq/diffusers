@@ -156,7 +156,7 @@ class Decoder(nn.Module):
             is_final_block = i == len(block_out_channels) - 1
 
             up_block = get_up_block(
-                up_block_type,
+                "UpDecoderBlock2DCircular",
                 num_layers=self.layers_per_block + 1,
                 in_channels=prev_output_channel,
                 out_channels=output_channel,
