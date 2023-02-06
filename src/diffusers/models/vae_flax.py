@@ -58,7 +58,7 @@ class FlaxAutoencoderKLOutput(BaseOutput):
     latent_dist: "FlaxDiagonalGaussianDistribution"
 
 
-class FlaxUpsample2D(nn.Module):
+class FlaxUpsample2DCircular(nn.Module):
     """
     Flax implementation of 2D Upsample layer
 
@@ -90,6 +90,40 @@ class FlaxUpsample2D(nn.Module):
         )
         hidden_states = self.conv(hidden_states)
         return hidden_states
+
+class FlaxUpsample2D(nn.Module):
+    """
+    Flax implementation of 2D Upsample layer
+
+    Args:
+        in_channels (`int`):
+            Input channels
+        dtype (:obj:`jnp.dtype`, *optional*, defaults to jnp.float32):
+            Parameters `dtype`
+    """
+
+    in_channels: int
+    dtype: jnp.dtype = jnp.float32
+
+    def setup(self):
+        self.conv = nn.Conv(
+            self.in_channels,
+            kernel_size=(3, 3),
+            strides=(1, 1),
+            padding=((1,1),(1,1)),
+            dtype=self.dtype,
+        )
+
+    def __call__(self, hidden_states):
+        batch, height, width, channels = hidden_states.shape
+        hidden_states = jax.image.resize(
+            hidden_states,
+            shape=(batch, height * 2, width * 2, channels),
+            method="nearest",
+        )
+        hidden_states = self.conv(hidden_states)
+        return hidden_states
+
 
 
 class FlaxDownsample2D(nn.Module):
@@ -445,7 +479,7 @@ class FlaxUpDecoderBlock2D(nn.Module):
         self.resnets = resnets
 
         if self.add_upsample:
-            self.upsamplers_0 = FlaxUpsample2D(self.out_channels, dtype=self.dtype)
+            self.upsamplers_0 = FlaxUpsample2DCircular(self.out_channels, dtype=self.dtype)
 
     def __call__(self, hidden_states, deterministic=True):
         for resnet in self.resnets:
