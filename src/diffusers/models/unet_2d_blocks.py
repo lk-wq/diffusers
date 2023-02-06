@@ -1863,8 +1863,9 @@ class UpDecoderBlock2DCircular(nn.Module):
 
         if self.upsamplers is not None:
             for upsampler in self.upsamplers:
+                print("before upsampler")
                 hidden_states = upsampler(hidden_states)
-
+                print("after upsampler")
         return hidden_states
 
 
