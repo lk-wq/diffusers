@@ -1853,7 +1853,7 @@ class UpDecoderBlock2DCircular(nn.Module):
         self.resnets = nn.ModuleList(resnets)
 
         if add_upsample:
-            self.upsamplers = nn.ModuleList([Upsample2D(out_channels, use_conv=True, out_channels=out_channels)])
+            self.upsamplers = nn.ModuleList([Upsample2DCircular(out_channels, use_conv=True, out_channels=out_channels)])
         else:
             self.upsamplers = None
 
