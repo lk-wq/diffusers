@@ -136,9 +136,14 @@ class Upsample2D(nn.Module):
         # TODO(Suraj, Patrick) - clean up after weight dicts are correctly renamed
         if self.use_conv:
             if self.name == "conv":
-                hidden_states = self.conv(hidden_states)
+#                 hidden_states = self.conv(hidden_states)
+                slice_fraction = min(32,self.conv.out_channels)
+                hidden_states = conv_slice(self.conv , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+
             else:
-                hidden_states = self.Conv2d_0(hidden_states)
+                slice_fraction = min(32,self.Conv2d_0.out_channels)
+                hidden_states = conv_slice(self.Conv2d_0 , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+
 
         return hidden_states
 
@@ -204,9 +209,15 @@ class Upsample2DCircular(nn.Module):
         # TODO(Suraj, Patrick) - clean up after weight dicts are correctly renamed
         if self.use_conv:
             if self.name == "conv":
-                hidden_states = self.conv(hidden_states)
+#                 hidden_states = self.conv(hidden_states)
+                slice_fraction = min(32,self.conv.out_channels)
+                hidden_states = conv_slice(self.conv , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+
             else:
-                hidden_states = self.Conv2d_0(hidden_states)
+                slice_fraction = min(32,self.Conv2d_0.out_channels)
+                hidden_states = conv_slice(self.Conv2d_0 , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+
+#                 hidden_states = self.Conv2d_0(hidden_states)
 
         return hidden_states
 
