@@ -188,25 +188,28 @@ class Upsample2DCircular(nn.Module):
         # TODO(Suraj): Remove this cast once the issue is fixed in PyTorch
         # https://github.com/pytorch/pytorch/issues/86679
         dtype = hidden_states.dtype
+        print("pre cast")
         if dtype == torch.bfloat16:
             hidden_states = hidden_states.to(torch.float32)
-
+        print("post cast")
         # upsample_nearest_nhwc fails with large batch sizes. see https://github.com/huggingface/diffusers/issues/984
         if hidden_states.shape[0] >= 64:
             hidden_states = hidden_states.contiguous()
 
         # if `output_size` is passed we force the interpolation output
         # size and do not make use of `scale_factor=2`
+        print("pre interp")
         if output_size is None:
             hidden_states = F.interpolate(hidden_states, scale_factor=2.0, mode="nearest")
         else:
             hidden_states = F.interpolate(hidden_states, size=output_size, mode="nearest")
-
+        print("post interp")
         # If the input is bfloat16, we cast back to bfloat16
         if dtype == torch.bfloat16:
             hidden_states = hidden_states.to(dtype)
 
         # TODO(Suraj, Patrick) - clean up after weight dicts are correctly renamed
+        print("pre conv")
         if self.use_conv:
             if self.name == "conv":
 #                 hidden_states = self.conv(hidden_states)
