@@ -18,7 +18,7 @@ from torch import nn
 from .attention import AttentionBlock
 from .cross_attention import CrossAttention, CrossAttnAddedKVProcessor
 from .dual_transformer_2d import DualTransformer2DModel
-from .resnet import Downsample2D, FirDownsample2D, FirUpsample2D, ResnetBlock2D, Upsample2D, ResnetBlock2DCircular
+from .resnet import Downsample2D, FirDownsample2D, FirUpsample2D, ResnetBlock2D, Upsample2D, ResnetBlock2DCircular, Upsample2DCircular
 from .transformer_2d import Transformer2DModel
 
 
