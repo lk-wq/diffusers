@@ -1859,6 +1859,7 @@ class UpDecoderBlock2DCircular(nn.Module):
 
     def forward(self, hidden_states):
         for resnet in self.resnets:
+            print("in res")
             hidden_states = resnet(hidden_states, temb=None)
 
         if self.upsamplers is not None:
