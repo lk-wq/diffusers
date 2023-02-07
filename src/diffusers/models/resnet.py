@@ -214,11 +214,17 @@ class Upsample2DCircular(nn.Module):
             if self.name == "conv":
 #                 hidden_states = self.conv(hidden_states)
                 slice_fraction = min(32,self.conv.out_channels)
-                hidden_states = conv_slice(self.conv , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+                if hidden_states.size()[-1] > 3072:
+                    hidden_states = conv_slice(self.conv , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+                else:
+                    hidden_states = self.conv(hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
 
             else:
                 slice_fraction = min(32,self.Conv2d_0.out_channels)
-                hidden_states = conv_slice(self.Conv2d_0 , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+                if hidden_states.size()[-1] > 3072:
+                    hidden_states = conv_slice(self.Conv2d_0 , slice_fraction,hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
+                else:
+                    hidden_states = self.Conv2d_0(hidden_states)#torch.cat([hidden_states0, hidden_states1, hidden_states2,hidden_states3],dim=1) #torch.zeros(1,256,6144,6144,dtype=torch.bfloat16)
 
 #                 hidden_states = self.Conv2d_0(hidden_states)
 
