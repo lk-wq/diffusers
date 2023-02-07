@@ -631,6 +631,7 @@ def conv_slice(conv , slice_fraction,input):
     n00 = nn.Conv2d(conv.in_channels,slice_size,kernel_size=conv.kernel_size,stride=conv.stride,bias=None,padding=conv.padding,padding_mode=conv.padding_mode)
     n00.weight.data.copy_(c00)
     n00.weight.data = n00.weight.to(input.dtype)
+    n00.to(input.device)
     hidden_states_temp = n00(input)
     h.append(hidden_states_temp)
   return torch.cat(h,dim=1) + conv.bias.data.unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
