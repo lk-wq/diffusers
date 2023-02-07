@@ -251,7 +251,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         encoder_hidden_states,
         return_dict: bool = True,
         train: bool = False,
-        class_embed = None,
+        class_embed,
     ) -> Union[FlaxUNet2DConditionOutput, Tuple]:
         r"""
         Args:
