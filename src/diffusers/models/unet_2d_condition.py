@@ -132,7 +132,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
 
         self.sample_size = sample_size
         time_embed_dim = block_out_channels[0] * 4
-
+#         self.class_embe
         # input
         self.conv_in = nn.Conv2d(in_channels, block_out_channels[0], kernel_size=3, padding=(1, 1))
 
@@ -476,6 +476,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 class_labels = self.time_proj(class_labels)
 
             class_emb = self.class_embedding(class_labels).to(dtype=self.dtype)
+            torch.save(class_emb,"ce.pt")
             emb = emb + class_emb
 
         # 2. pre-process
