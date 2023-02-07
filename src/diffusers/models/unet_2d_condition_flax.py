@@ -249,9 +249,9 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         sample,
         timesteps,
         encoder_hidden_states,
+        class_embed,
         return_dict: bool = True,
         train: bool = False,
-        class_embed,
     ) -> Union[FlaxUNet2DConditionOutput, Tuple]:
         r"""
         Args:
