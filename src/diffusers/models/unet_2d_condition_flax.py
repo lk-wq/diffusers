@@ -278,8 +278,8 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
         t_emb = self.time_proj(timesteps)
         t_emb = self.time_embedding(t_emb)
-        if class_embed:
-            t_emb = t_emb + class_embed
+#         if class_embed:
+        t_emb = t_emb + class_embed
 
         # 2. pre-process
         sample = jnp.transpose(sample, (0, 2, 3, 1))
