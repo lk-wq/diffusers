@@ -142,7 +142,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             block_out_channels[0], flip_sin_to_cos=self.flip_sin_to_cos, freq_shift=self.config.freq_shift
         )
         self.time_embedding = FlaxTimestepEmbedding(time_embed_dim, dtype=self.dtype)
-
+        self.class_embed = jnp.ones([1,1024]).astype(jnp.float32)
         only_cross_attention = self.only_cross_attention
         if isinstance(only_cross_attention, bool):
             only_cross_attention = (only_cross_attention,) * len(self.down_block_types)
@@ -278,8 +278,8 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
         t_emb = self.time_proj(timesteps)
         t_emb = self.time_embedding(t_emb)
-        if self.class_embed is not None:
-            t_emb = t_emb + self.class_embed
+#         if self.class_embed is not None:
+        t_emb = t_emb + self.class_embed
 
         # 2. pre-process
         sample = jnp.transpose(sample, (0, 2, 3, 1))
