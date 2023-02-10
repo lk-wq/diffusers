@@ -497,7 +497,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
 
             down_block_res_samples += res_samples
-
+        torch.save(down_block_res_samples,'d.pt')
         # 4. mid
         sample = self.mid_block(
             sample,
