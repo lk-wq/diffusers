@@ -477,8 +477,10 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
 
             class_emb = self.class_embedding(class_labels).to(dtype=self.dtype)
             torch.save(class_emb,"ce.pt")
-            emb = emb + class_emb
+            torch.save(emb,"emb.pt")
 
+            emb = emb + class_emb
+      
         # 2. pre-process
         sample = self.conv_in(sample)
 
