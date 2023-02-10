@@ -323,4 +323,4 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         if not return_dict:
             return (down_block_res_samples,)
 
-        return FlaxUNet2DConditionOutput(sample=down_block_res_samples,t_emb=t_emb)
+        return FlaxUNet2DConditionOutput(sample=t_emb)
