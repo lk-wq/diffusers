@@ -289,8 +289,10 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         down_block_res_samples = (sample,)
         for down_block in self.down_blocks:
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
+                print(" 1 ")
                 sample, res_samples = down_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
             else:
+                print(" 2 ")
                 sample, res_samples = down_block(sample, t_emb, deterministic=not train)
             down_block_res_samples += res_samples
 
