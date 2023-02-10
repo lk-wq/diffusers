@@ -142,7 +142,8 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             block_out_channels[0], flip_sin_to_cos=self.flip_sin_to_cos, freq_shift=self.config.freq_shift
         )
         self.time_embedding = FlaxTimestepEmbedding(time_embed_dim, dtype=self.dtype)
-        self.class_embed = jnp.ones([1,1024]).astype(jnp.float32)
+        
+        self.class_embed = torch.load("ce.pt",map_location=torch.device('cpu'))[0].detach().numpy()#jnp.ones([1,1024]).astype(jnp.float32)
         only_cross_attention = self.only_cross_attention
         if isinstance(only_cross_attention, bool):
             only_cross_attention = (only_cross_attention,) * len(self.down_block_types)
