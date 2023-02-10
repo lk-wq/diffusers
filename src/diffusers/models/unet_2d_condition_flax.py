@@ -279,7 +279,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         t_emb = self.time_proj(timesteps)
         t_emb = self.time_embedding(t_emb)
 #         if self.class_embed is not None:
-        embs = (t_emb,)
+        embs = [t_emb]
         embs += self.class_embed
         t_emb = t_emb + self.class_embed
 
