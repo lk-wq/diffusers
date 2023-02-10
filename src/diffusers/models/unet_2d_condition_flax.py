@@ -295,30 +295,30 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             down_block_res_samples += res_samples
 
         # 4. mid
-        sample = self.mid_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
+#         sample = self.mid_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
 
-        # 5. up
-        for up_block in self.up_blocks:
-            res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
-            down_block_res_samples = down_block_res_samples[: -(self.layers_per_block + 1)]
-            if isinstance(up_block, FlaxCrossAttnUpBlock2D):
-                sample = up_block(
-                    sample,
-                    temb=t_emb,
-                    encoder_hidden_states=encoder_hidden_states,
-                    res_hidden_states_tuple=res_samples,
-                    deterministic=not train,
-                )
-            else:
-                sample = up_block(sample, temb=t_emb, res_hidden_states_tuple=res_samples, deterministic=not train)
+#         # 5. up
+#         for up_block in self.up_blocks:
+#             res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
+#             down_block_res_samples = down_block_res_samples[: -(self.layers_per_block + 1)]
+#             if isinstance(up_block, FlaxCrossAttnUpBlock2D):
+#                 sample = up_block(
+#                     sample,
+#                     temb=t_emb,
+#                     encoder_hidden_states=encoder_hidden_states,
+#                     res_hidden_states_tuple=res_samples,
+#                     deterministic=not train,
+#                 )
+#             else:
+#                 sample = up_block(sample, temb=t_emb, res_hidden_states_tuple=res_samples, deterministic=not train)
 
-        # 6. post-process
-        sample = self.conv_norm_out(sample)
-        sample = nn.silu(sample)
-        sample = self.conv_out(sample)
-        sample = jnp.transpose(sample, (0, 3, 1, 2))
+#         # 6. post-process
+#         sample = self.conv_norm_out(sample)
+#         sample = nn.silu(sample)
+#         sample = self.conv_out(sample)
+#         sample = jnp.transpose(sample, (0, 3, 1, 2))
 
         if not return_dict:
-            return (sample,)
+            return (down_block_res_samples,)
 
-        return FlaxUNet2DConditionOutput(sample=sample)
+        return FlaxUNet2DConditionOutput(sample=down_block_res_samples)
