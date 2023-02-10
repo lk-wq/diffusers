@@ -279,6 +279,8 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         t_emb = self.time_proj(timesteps)
         t_emb = self.time_embedding(t_emb)
 #         if self.class_embed is not None:
+        embs = (t_emb,)
+        embs += self.class_embed
         t_emb = t_emb + self.class_embed
 
         # 2. pre-process
@@ -287,6 +289,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
         # 3. down
         down_block_res_samples = (sample,)
+        
         for down_block in self.down_blocks:
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
                 print(" 1 ")
@@ -323,4 +326,4 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         if not return_dict:
             return (down_block_res_samples,)
 
-        return FlaxUNet2DConditionOutput(sample=t_emb)
+        return FlaxUNet2DConditionOutput(sample=embs)
