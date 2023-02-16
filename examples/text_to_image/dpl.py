@@ -623,7 +623,7 @@ def main():
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
     )
-    optimizer_2 = optax.MultiSteps(
+    optimizer = optax.MultiSteps(
         optimizer_, args.accumulation_frequency
     )
     def flattened_traversal(fn):
@@ -640,8 +640,8 @@ def main():
         return True
       return False
     
-    optimizer = optax.multi_transform(
-      {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
+#     optimizer = optax.multi_transform(
+#       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
 
     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
@@ -761,7 +761,7 @@ def main():
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
     global_step = args.restart_from
-    @jax.jit
+#     @jax.jit
     def ema_update(params, avg_params, decay):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
       step = 1 - decay
