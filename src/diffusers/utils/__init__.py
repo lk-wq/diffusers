@@ -16,8 +16,6 @@
 import os
 
 from .deprecation_utils import deprecate
-from .hub_utils import HF_HUB_OFFLINE, http_user_agent
-
 from .import_utils import (
     ENV_VARS_TRUE_AND_AUTO_VALUES,
     ENV_VARS_TRUE_VALUES,
