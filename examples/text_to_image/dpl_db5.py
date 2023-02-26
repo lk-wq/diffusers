@@ -97,6 +97,7 @@ class FolderData(Dataset):
             # captions = {x["file_name"]: x["text"].strip("\n") for x in lines}
         # rs = restart_from % len(lines)
         import glob
+        print("stuff--------------------->",root_dir+if_+'/*')
         l = glob.glob(root_dir+if_+'/*')
         import random
         random.shuffle(l)
@@ -128,7 +129,7 @@ class FolderData(Dataset):
         data = {}
 #         print("fn",self.captions[index])
         filename = self.captions[index % len(self.captions)]#['file_name']
-
+        
         im = Image.open(self.root_dir+filename)
         im = self.process_im(im)
         data["image"] = im
