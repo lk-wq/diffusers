@@ -188,6 +188,8 @@ def parse_args():
             " must exist to provide the captions for the images. Ignored if `dataset_name` is specified."
         ),
     )
+    parser.add_argument("--train_text_encoder", action="store_true", help="Whether to train the text encoder")
+
     parser.add_argument(
         "--image_column", type=str, default="image", help="The column of the dataset containing an image."
     )
