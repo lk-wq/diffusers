@@ -749,7 +749,7 @@ def main():
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
 
     # Replicate the train state on each device
-    unet_state = jax_utils.replicate(unet_state)
+    state = jax_utils.replicate(state)
     # avg_state = jax_utils.replicate(avg_state)
 #     text_encoder_state = jax_utils.replicate(text_encoder_state)
 
