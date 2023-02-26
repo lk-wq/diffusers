@@ -867,7 +867,7 @@ def main():
                         params={
                             "text_encoder": get_params_to_save(text_encoder_params),
                             "vae": get_params_to_save(vae_params),
-                            "unet": unet_avg,
+                            "unet": avg,
                             "safety_checker": safety_checker.params,
 
                         },
@@ -929,7 +929,7 @@ def main():
             params={
                 "text_encoder": get_params_to_save(text_encoder_params),
                 "vae": get_params_to_save(vae_params),
-                "unet": unet_avg,
+                "unet": avg,
                 "safety_checker": safety_checker.params,
 
             },
