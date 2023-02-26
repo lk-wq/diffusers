@@ -109,7 +109,7 @@ class FolderData(Dataset):
         image_transforms = transforms.Compose(image_transforms)
         self.tform = transforms.Compose(
             [
-        interpolation=transforms.InterpolationMode.BILINEAR),
+        interpolation=transforms.Interpolation(Mode.BILINEAR),
         transforms.RandomCrop(resolution),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
