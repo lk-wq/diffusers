@@ -676,73 +676,6 @@ def main():
     # Initialize our training
     rng = jax.random.PRNGKey(args.seed)
     train_rngs = jax.random.split(rng, jax.local_device_count())
-    def train_step(state, text_encoder_params, vae_params, batch, train_rng):
-        dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-
-        def compute_loss(params):
-            # Convert images to latent space
-            vae_outputs = vae.apply(
-                {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
-            )
-            latents = vae_outputs.latent_dist.sample(sample_rng)
-            # (NHWC) -> (NCHW)
-            latents = jnp.transpose(latents, (0, 3, 1, 2))
-            latents = latents * 0.18215
-
-            # Sample noise that we'll add to the latents
-            noise_rng, timestep_rng = jax.random.split(sample_rng)
-            noise = jax.random.normal(noise_rng, latents.shape)
-            # Sample a random timestep for each image
-            bsz = latents.shape[0]
-            timesteps = jax.random.randint(
-                timestep_rng,
-                (bsz,),
-                0,
-                noise_scheduler.config.num_train_timesteps,
-            )
-
-            # Add noise to the latents according to the noise magnitude at each timestep
-            # (this is the forward diffusion process)
-            noisy_latents, alpha, sigma = noise_scheduler.add_noise(latents, noise, timesteps)
-
-            # Get the text embedding for conditioning
-            # print("batch", batch["input_ids"])
-            encoder_hidden_states = text_encoder(
-                batch["input_ids"],
-                params=text_encoder_params,
-                train=False,
-            )[0]
-            #unc = tokenizer([""]*len(batch['input_ids']), max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
-            # print("unc",unc)
-
-            # encoder_hidden_states_unc = text_encoder(
-            #     batch['unc'],
-            #     params=text_encoder_params,
-            #     train=False,
-            # )[0]
-
-            # Predict the noise residual and compute loss
-            unet_outputs = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True)
-            # unet_outputs_unc = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states_unc, train=True)
-
-            noise_pred = unet_outputs.sample
-            # noise_pred_unc = unet_outputs_unc.sample
-            # noise_pred_use = noise_pred_unc + 3*( noise_pred - noise_pred_unc )
-            v = alpha*noise - sigma * latents
-            loss = (v - noise_pred) ** 2
-            loss = loss.mean()
-
-            return loss
-
-        grad_fn = jax.value_and_grad(compute_loss)
-        loss, grad = grad_fn(state.params)
-        grad = jax.lax.pmean(grad, "batch")
-
-        new_state = state.apply_gradients(grads=grad)
-        metrics = {"loss": loss}
-        metrics = jax.lax.pmean(metrics, axis_name="batch")
-
-        return new_state, metrics, new_train_rng 
 
     def train_step(unet_state, text_encoder_state, vae_params, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
@@ -794,7 +727,7 @@ def main():
             )
             noise_pred = unet_outputs.sample
 
-            if args.with_prior_preservation:
+            if False:
                 # Chunk the noise and noise_pred into two parts and compute the loss on each part separately.
                 noise_pred, noise_pred_prior = jnp.split(noise_pred, 2, axis=0)
                 noise, noise_prior = jnp.split(noise, 2, axis=0)
@@ -818,7 +751,22 @@ def main():
                 loss = loss.mean()
 
             return loss
-    
+
+        grad_fn = jax.value_and_grad(compute_loss)
+        loss, grad = grad_fn(params)
+        grad = jax.lax.pmean(grad, "batch")
+
+        new_unet_state = unet_state.apply_gradients(grads=grad["unet"])
+        if args.train_text_encoder:
+            new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
+        else:
+            new_text_encoder_state = text_encoder_state
+
+        metrics = {"loss": loss}
+        metrics = jax.lax.pmean(metrics, axis_name="batch")
+
+        return new_unet_state, new_text_encoder_state, metrics, new_train_rng
+
     # Create parallel version of the train step
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
 
