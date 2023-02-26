@@ -78,6 +78,8 @@ class FolderData(Dataset):
         restart_from=0,
         section0=0,
         section1=0,
+        if_=None,
+        ip=None,
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -95,7 +97,7 @@ class FolderData(Dataset):
             # captions = {x["file_name"]: x["text"].strip("\n") for x in lines}
         # rs = restart_from % len(lines)
         import glob
-        l = glob.glob(root_dir+args.img_folder+'/*')
+        l = glob.glob(root_dir+if_+'/*')
         import random
         random.shuffle(l)
         self.captions = l  #[rs:] + lines[:rs]
@@ -117,7 +119,7 @@ class FolderData(Dataset):
         )
         self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
         self.negative_prompt = negative_prompt
-        self.instance_prompt = args.instance_prompt
+        self.instance_prompt = ip
 
     def __len__(self):
         return len(self.captions)
@@ -480,7 +482,7 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
