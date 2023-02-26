@@ -662,10 +662,10 @@ def main():
     
 #     optimizer = optax.multi_transform(
 #       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
-    unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
-    text_encoder_state = train_state.TrainState.create(
-        apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
-    )
+    state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+#     text_encoder_state = train_state.TrainState.create(
+#         apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
+#     )
 
 #     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
@@ -677,13 +677,8 @@ def main():
     rng = jax.random.PRNGKey(args.seed)
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
-    def train_step(unet_state, text_encoder_state, vae_params, batch, train_rng):
+    def train_step(state, text_encoder_params, vae_params, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-
-        if args.train_text_encoder:
-            params = {"text_encoder": text_encoder_state.params, "unet": unet_state.params}
-        else:
-            params = {"unet": unet_state.params}
 
         def compute_loss(params):
             # Convert images to latent space
@@ -712,60 +707,43 @@ def main():
             noisy_latents, alpha, sigma = noise_scheduler.add_noise(latents, noise, timesteps)
 
             # Get the text embedding for conditioning
-            if args.train_text_encoder:
-                encoder_hidden_states = text_encoder_state.apply_fn(
-                    batch["input_ids"], params=params["text_encoder"], dropout_rng=dropout_rng, train=True
-                )[0]
-            else:
-                encoder_hidden_states = text_encoder(
-                    batch["input_ids"], params=text_encoder_state.params, train=False
-                )[0]
+            # print("batch", batch["input_ids"])
+            encoder_hidden_states = text_encoder(
+                batch["input_ids"],
+                params=text_encoder_params,
+                train=False,
+            )[0]
+            #unc = tokenizer([""]*len(batch['input_ids']), max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
+            # print("unc",unc)
 
-            # Predict the noise residual
-            unet_outputs = unet.apply(
-                {"params": params["unet"]}, noisy_latents, timesteps, encoder_hidden_states, train=True
-            )
+            # encoder_hidden_states_unc = text_encoder(
+            #     batch['unc'],
+            #     params=text_encoder_params,
+            #     train=False,
+            # )[0]
+
+            # Predict the noise residual and compute loss
+            unet_outputs = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True)
+            # unet_outputs_unc = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states_unc, train=True)
+
             noise_pred = unet_outputs.sample
-
-            if False:
-                # Chunk the noise and noise_pred into two parts and compute the loss on each part separately.
-                noise_pred, noise_pred_prior = jnp.split(noise_pred, 2, axis=0)
-                noise, noise_prior = jnp.split(noise, 2, axis=0)
-                v = alpha*noise - sigma * latents
-                vp = alpha*noise - sigma * latents
-
-                # Compute instance loss
-                loss = (v - noise_pred) ** 2
-                loss = loss.mean()
-
-                # Compute prior loss
-                prior_loss = (vp - noise_pred_prior) ** 2
-                prior_loss = prior_loss.mean()
-
-                # Add the prior loss to the instance loss.
-                loss = loss + args.prior_loss_weight * prior_loss
-            else:
-                v = alpha*noise - sigma * latents
-
-                loss = (v - noise_pred) ** 2
-                loss = loss.mean()
+            # noise_pred_unc = unet_outputs_unc.sample
+            # noise_pred_use = noise_pred_unc + 3*( noise_pred - noise_pred_unc )
+            v = alpha*noise - sigma * latents
+            loss = (v - noise_pred) ** 2
+            loss = loss.mean()
 
             return loss
 
         grad_fn = jax.value_and_grad(compute_loss)
-        loss, grad = grad_fn(params)
+        loss, grad = grad_fn(state.params)
         grad = jax.lax.pmean(grad, "batch")
 
-        new_unet_state = unet_state.apply_gradients(grads=grad["unet"])
-        if args.train_text_encoder:
-            new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
-        else:
-            new_text_encoder_state = text_encoder_state
-
+        new_state = state.apply_gradients(grads=grad)
         metrics = {"loss": loss}
         metrics = jax.lax.pmean(metrics, axis_name="batch")
 
-        return new_unet_state, new_text_encoder_state, metrics, new_train_rng
+        return new_state, metrics, new_train_rng 
 
     # Create parallel version of the train step
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
@@ -773,9 +751,9 @@ def main():
     # Replicate the train state on each device
     unet_state = jax_utils.replicate(unet_state)
     # avg_state = jax_utils.replicate(avg_state)
-    text_encoder_state = jax_utils.replicate(text_encoder_state)
+#     text_encoder_state = jax_utils.replicate(text_encoder_state)
 
-#     text_encoder_params = jax_utils.replicate(text_encoder.params)
+    text_encoder_params = jax_utils.replicate(text_encoder.params)
     vae_params = jax_utils.replicate(vae_params)
 
     # Train!
@@ -816,8 +794,8 @@ def main():
       return optax.incremental_update(params, avg_params, step_size=step)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
-    unet_avg = get_params_to_save(unet_state.params)
-    text_avg = get_params_to_save(text_encoder_state.params)
+    avg = get_params_to_save(state.params)
+#     text_avg = get_params_to_save(text_encoder_state.params)
 
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
@@ -838,9 +816,7 @@ def main():
         for batch in train_dataloader:
             batch = shard(batch)
             # batch = shard(batch)
-            unet_state, text_encoder_state, train_metric, train_rngs = p_train_step(
-                unet_state, text_encoder_state, vae_params, batch, train_rngs
-            )
+            state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
 
 #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
@@ -854,8 +830,8 @@ def main():
                   decay = 0.999
                   decay = min(decay,(1 + it) / (10 + it))
 
-                  unet_avg = ema_update( get_params_to_save(unet_state.params) , avg, decay )
-                  text_avg = ema_update( get_params_to_save(text_encoder_state.params) , text_avg, decay )
+                  avg = ema_update( get_params_to_save(state.params) , avg, decay )
+#                   text_avg = ema_update( get_params_to_save(text_encoder_state.params) , text_avg, decay )
 
     #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                 if global_step % args.save_frequency == 0:
@@ -889,7 +865,7 @@ def main():
                     pipeline.save_pretrained(
                         args.output_dir,
                         params={
-                            "text_encoder": text_avg,
+                            "text_encoder": get_params_to_save(text_encoder_params),
                             "vae": get_params_to_save(vae_params),
                             "unet": unet_avg,
                             "safety_checker": safety_checker.params,
@@ -951,7 +927,7 @@ def main():
         pipeline.save_pretrained(
             args.output_dir,
             params={
-                "text_encoder": text_avg,
+                "text_encoder": get_params_to_save(text_encoder_params),
                 "vae": get_params_to_save(vae_params),
                 "unet": unet_avg,
                 "safety_checker": safety_checker.params,
