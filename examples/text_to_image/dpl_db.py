@@ -86,14 +86,16 @@ class FolderData(Dataset):
         self.root_dir = root_dir
         self.default_caption = default_caption
         self.return_paths = return_paths
-        l = []
-        for i in range(9):
-          with open(root_dir+'metadata'+str(section0)+'_'+str(i)+'.jsonl', "rt") as f:
-              lines = f.readlines()
-              lines = [json.loads(x) for x in lines]
-              l.extend(lines)
+#         l = []
+#         for i in range(9):
+#           with open(root_dir+args.img_folder, "r") as f:
+#               l = f.readlines()
+#               lines = [json.loads(x) for x in lines]
+#               l.extend(lines)
             # captions = {x["file_name"]: x["text"].strip("\n") for x in lines}
         # rs = restart_from % len(lines)
+        import glob
+        l = glob.glob(root_dir+args.img_folder+'/*')
         import random
         random.shuffle(l)
         self.captions = l  #[rs:] + lines[:rs]
@@ -116,7 +118,7 @@ class FolderData(Dataset):
         )
         self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
         self.negative_prompt = negative_prompt
-
+        self.instance_prompt = args.instance_prompt
 
     def __len__(self):
         return len(self.captions)
@@ -124,12 +126,12 @@ class FolderData(Dataset):
     def __getitem__(self, index):
         data = {}
 #         print("fn",self.captions[index])
-        filename = self.captions[index]['file_name']
+        filename = self.captions[index % len(self.captions)]#['file_name']
 
         im = Image.open(self.root_dir+filename)
         im = self.process_im(im)
         data["image"] = im
-        caption = self.captions[index]['text']
+        caption = self.instance_prompt #self.captions[index]['text']
         
         data["txt"] = self.tokenize_captions(caption)
 
@@ -208,6 +210,22 @@ def parse_args():
         default="sd-model-finetuned",
         help="The output directory where the model predictions and checkpoints will be written.",
     )
+    
+    parser.add_argument(
+        "--instance_prompt",
+        type=str,
+        default="a beautiful art work by mmdd111",
+        help="instance prompt.",
+    )
+
+    parser.add_argument(
+        "--img_folder",
+        type=str,
+        default="images",
+        help="instance prompt.",
+    )
+
+
     parser.add_argument(
         "--cache_dir",
         type=str,
@@ -258,6 +276,13 @@ def parse_args():
         default=None,
         help="Total number of training steps to perform.  If provided, overrides num_train_epochs.",
     )
+    parser.add_argument(
+        "--instance_prompt",
+        type=str,
+        default=None,
+        help="The prompt with identifier specifying the instance",
+    )
+
     parser.add_argument(
         "--learning_rate",
         type=float,
@@ -362,7 +387,6 @@ def get_full_repo_name(model_id: str, organization: Optional[str] = None, token:
 dataset_name_mapping = {
     "lambdalabs/pokemon-blip-captions": ("image", "text"),
 }
-
 
 def get_params_to_save(params):
     return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], params))
