@@ -821,10 +821,11 @@ def main():
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
 
     # Replicate the train state on each device
-    state = jax_utils.replicate(state)
+    unet_state = jax_utils.replicate(unet_state)
     # avg_state = jax_utils.replicate(avg_state)
+    text_encoder_state = jax_utils.replicate(text_encoder_state)
 
-    text_encoder_params = jax_utils.replicate(text_encoder.params)
+#     text_encoder_params = jax_utils.replicate(text_encoder.params)
     vae_params = jax_utils.replicate(vae_params)
 
     # Train!
