@@ -330,6 +330,12 @@ def parse_args():
         ),
     )
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
+    parser.add_argument(
+        "--with_prior_preservation",
+        default=False,
+        action="store_true",
+        help="Flag to add prior preservation loss.",
+    )
 
     args = parser.parse_args()
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
@@ -488,38 +494,30 @@ def main():
         # Set the training transforms
         train_dataset = dataset#["train"]#.with_transform(preprocess_train)
     import random
+    
     def collate_fn(examples):
-        pixel_values = torch.stack([example["image"] for example in examples])
+        pixel_values = torch.stack([example["image"] for example in examples] )#+ [example['class_images'] for example in examples] )
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
         input_ids = [example["txt"] for example in examples]
 
-        padded_tokens = tokenizer.pad(
+        # Concat class and instance examples for prior preservation.
+        # We do this to avoid doing two forward passes.
+#         if args.with_prior_preservation:
+#             input_ids += [example["class_prompt_ids"] for example in examples]
+#             pixel_values += [example["class_images"] for example in examples]
+
+#         pixel_values = torch.stack(pixel_values)
+#         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
+
+        input_ids = tokenizer.pad(
             {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
-        )
+        ).input_ids
 
-        input_ids = tokenize_captions([args.negative_prompt for example in range(len(examples)) ])
-        ids = [ids for ids in input_ids ]
-
-        padded_tokens2 = tokenizer.pad(
-            {"input_ids": ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
-        )
-        unc = padded_tokens2.input_ids
-        a = [0,1,2,3,4,5,6,7,8,9]
-        random.shuffle(a)
-        if a[0] == 0:
-
-          batch = {
-              "pixel_values": pixel_values,
-              "input_ids": unc,
-          }
-        else:
-            batch = {
-              "pixel_values": pixel_values,
-              "input_ids": padded_tokens.input_ids,
-          }
-
+        batch = {
+            "input_ids": input_ids,
+            "pixel_values": pixel_values,
+        }
         batch = {k: v.numpy() for k, v in batch.items()}
-
         return batch
 
     total_train_batch_size = args.train_batch_size * jax.local_device_count()
@@ -642,8 +640,12 @@ def main():
     
 #     optimizer = optax.multi_transform(
 #       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
+    unet_state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+    text_encoder_state = train_state.TrainState.create(
+        apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
+    )
 
-    state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+#     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
@@ -720,6 +722,81 @@ def main():
 
         return new_state, metrics, new_train_rng 
 
+    def train_step(unet_state, text_encoder_state, vae_params, batch, train_rng):
+        dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+
+        if args.train_text_encoder:
+            params = {"text_encoder": text_encoder_state.params, "unet": unet_state.params}
+        else:
+            params = {"unet": unet_state.params}
+
+        def compute_loss(params):
+            # Convert images to latent space
+            vae_outputs = vae.apply(
+                {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
+            )
+            latents = vae_outputs.latent_dist.sample(sample_rng)
+            # (NHWC) -> (NCHW)
+            latents = jnp.transpose(latents, (0, 3, 1, 2))
+            latents = latents * 0.18215
+
+            # Sample noise that we'll add to the latents
+            noise_rng, timestep_rng = jax.random.split(sample_rng)
+            noise = jax.random.normal(noise_rng, latents.shape)
+            # Sample a random timestep for each image
+            bsz = latents.shape[0]
+            timesteps = jax.random.randint(
+                timestep_rng,
+                (bsz,),
+                0,
+                noise_scheduler.config.num_train_timesteps,
+            )
+
+            # Add noise to the latents according to the noise magnitude at each timestep
+            # (this is the forward diffusion process)
+            noisy_latents, alpha, sigma = noise_scheduler.add_noise(latents, noise, timesteps)
+
+            # Get the text embedding for conditioning
+            if args.train_text_encoder:
+                encoder_hidden_states = text_encoder_state.apply_fn(
+                    batch["input_ids"], params=params["text_encoder"], dropout_rng=dropout_rng, train=True
+                )[0]
+            else:
+                encoder_hidden_states = text_encoder(
+                    batch["input_ids"], params=text_encoder_state.params, train=False
+                )[0]
+
+            # Predict the noise residual
+            unet_outputs = unet.apply(
+                {"params": params["unet"]}, noisy_latents, timesteps, encoder_hidden_states, train=True
+            )
+            noise_pred = unet_outputs.sample
+
+            if args.with_prior_preservation:
+                # Chunk the noise and noise_pred into two parts and compute the loss on each part separately.
+                noise_pred, noise_pred_prior = jnp.split(noise_pred, 2, axis=0)
+                noise, noise_prior = jnp.split(noise, 2, axis=0)
+                v = alpha*noise - sigma * latents
+                vp = alpha*noise - sigma * latents
+
+                # Compute instance loss
+                loss = (v - noise_pred) ** 2
+                loss = loss.mean()
+
+                # Compute prior loss
+                prior_loss = (vp - noise_pred_prior) ** 2
+                prior_loss = prior_loss.mean()
+
+                # Add the prior loss to the instance loss.
+                loss = loss + args.prior_loss_weight * prior_loss
+            else:
+                v = alpha*noise - sigma * latents
+
+                loss = (v - noise_pred) ** 2
+                loss = loss.mean()
+
+            return loss
+    
     # Create parallel version of the train step
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
 
@@ -768,7 +845,9 @@ def main():
       return optax.incremental_update(params, avg_params, step_size=step)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
-    avg = get_params_to_save(state.params)
+    unet_avg = get_params_to_save(unet_state.params)
+    text_avg = get_params_to_save(text_encoder_state.params)
+
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
     
@@ -788,8 +867,11 @@ def main():
         for batch in train_dataloader:
             batch = shard(batch)
             # batch = shard(batch)
+            unet_state, text_encoder_state, train_metric, train_rngs = p_train_step(
+                unet_state, text_encoder_state, vae_params, batch, train_rngs
+            )
 
-            state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+#             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
             train_metrics.append(train_metric)
 
@@ -801,7 +883,8 @@ def main():
                   decay = 0.999
                   decay = min(decay,(1 + it) / (10 + it))
 
-                  avg = ema_update( get_params_to_save(state.params) , avg, decay )
+                  unet_avg = ema_update( get_params_to_save(unet_state.params) , avg, decay )
+                  text_avg = ema_update( get_params_to_save(text_encoder_state.params) , text_avg, decay )
 
     #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                 if global_step % args.save_frequency == 0:
@@ -835,9 +918,9 @@ def main():
                     pipeline.save_pretrained(
                         args.output_dir,
                         params={
-                            "text_encoder": get_params_to_save(text_encoder_params),
+                            "text_encoder": text_avg,
                             "vae": get_params_to_save(vae_params),
-                            "unet": avg,
+                            "unet": unet_avg,
                             "safety_checker": safety_checker.params,
 
                         },
@@ -897,9 +980,9 @@ def main():
         pipeline.save_pretrained(
             args.output_dir,
             params={
-                "text_encoder": get_params_to_save(text_encoder_params),
+                "text_encoder": text_avg,
                 "vae": get_params_to_save(vae_params),
-                "unet": avg,
+                "unet": unet_avg,
                 "safety_checker": safety_checker.params,
 
             },
