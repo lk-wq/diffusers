@@ -275,12 +275,6 @@ def parse_args():
         default=None,
         help="Total number of training steps to perform.  If provided, overrides num_train_epochs.",
     )
-    parser.add_argument(
-        "--instance_prompt",
-        type=str,
-        default=None,
-        help="The prompt with identifier specifying the instance",
-    )
 
     parser.add_argument(
         "--learning_rate",
