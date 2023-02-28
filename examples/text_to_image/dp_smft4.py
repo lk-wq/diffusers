@@ -98,7 +98,7 @@ class FolderData(Dataset):
         # rs = restart_from % len(lines)
         with open(root_dir+if_, "r") as f:
           l = f.readlines()
-          lines = [json.loads(x) for x in lines]
+          lines = [json.loads(x) for x in l]
 #         captions = {x["file_name"]: x["text"].strip("\n") for x in lines}
 
         import glob
