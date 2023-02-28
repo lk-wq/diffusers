@@ -762,7 +762,7 @@ def main():
     logger.info(f"  Total train batch size (w. parallel & distributed) = {total_train_batch_size}")
     logger.info(f"  Total optimization steps = {args.max_train_steps}")
 
-    global_step = args.restart_from
+    global_step = 0#args.restart_from
 #     @jax.jit
     def ema_update(params, avg_params, decay):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
@@ -799,7 +799,7 @@ def main():
 
             if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
                 if global_step % args.ema_frequency == 0:
-                  it = global_step//args.accumulation_frequency
+                  it = (global_step+args.restart_from)//args.accumulation_frequency
                   decay = 0.99
                   decay = min(decay,(1 + it) / (10 + it))
 
