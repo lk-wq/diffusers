@@ -80,6 +80,7 @@ class FolderData(Dataset):
         section1=0,
         if_=None,
         ip=None,
+        resolution=768,
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -115,6 +116,7 @@ class FolderData(Dataset):
         image_transforms.extend([transforms.ToTensor(),
                                  transforms.Lambda(lambda x: rearrange(x * 2. - 1., 'c h w -> h w c'))])
         image_transforms = transforms.Compose(image_transforms)
+        print("resolution ", resolution)
         self.tform = transforms.Compose(
             [
        transforms.RandomCrop(resolution),
