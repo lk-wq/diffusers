@@ -105,6 +105,7 @@ class FolderData(Dataset):
         image_transforms.extend([transforms.ToTensor(),
                                  transforms.Lambda(lambda x: rearrange(x * 2. - 1., 'c h w -> h w c'))])
         image_transforms = transforms.Compose(image_transforms)
+        resolution = 768
         print("resolution ---->",resolution)
         self.tform = transforms.Compose(
             [
