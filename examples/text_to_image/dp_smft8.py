@@ -127,7 +127,7 @@ class FolderData(Dataset):
         transforms.Normalize([0.5], [0.5]),
             ]
         )
-       self.tform1 = transforms.Compose(
+        self.tform1 = transforms.Compose(
             [
         transforms.RandomCrop(resolution),
         transforms.RandomHorizontalFlip(),
