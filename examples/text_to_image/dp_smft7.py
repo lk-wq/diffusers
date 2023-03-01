@@ -117,14 +117,25 @@ class FolderData(Dataset):
                                  transforms.Lambda(lambda x: rearrange(x * 2. - 1., 'c h w -> h w c'))])
         image_transforms = transforms.Compose(image_transforms)
         print("resolution ", resolution)
-        self.tform = transforms.Compose(
+        resolution = 768
+        self.tform0 = transforms.Compose(
             [
-       transforms.RandomCrop(resolution),
+        transforms.Resize((resolution, resolution), interpolation=transforms.InterpolationMode.BILINEAR),
+        transforms.CenterCrop(resolution),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize([0.5], [0.5]),
             ]
         )
+       self.tform1 = transforms.Compose(
+            [
+        transforms.RandomCrop(resolution),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5], [0.5]),
+            ]
+        )
+
         self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
         self.negative_prompt = negative_prompt
         self.instance_prompt = ip
@@ -155,10 +166,16 @@ class FolderData(Dataset):
         return input_ids
     
     def process_im(self, im):
-        im = im.convert("RGB")
-        return self.tform(im)     
-logger = logging.getLogger(__name__)
+        i = random.choice([0,1])
+        if i == 0:
+            im = im.convert("RGB")
+            return self.tform0(im)     
+        else:
+            im = im.convert("RGB")
+            return self.tform1(im)     
 
+logger = logging.getLogger(__name__)
+import random
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Simple example of a training script.")
