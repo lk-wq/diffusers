@@ -190,7 +190,7 @@ class FlaxResnetBlock2D(nn.Module):
             out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding='CIRCULAR',
+            padding=((1,1),(1,1)),
             dtype=self.dtype,
         )
 
@@ -200,7 +200,7 @@ class FlaxResnetBlock2D(nn.Module):
             out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding='CIRCULAR',
+            padding=((1,1),(1,1)),
             dtype=self.dtype,
         )
 
