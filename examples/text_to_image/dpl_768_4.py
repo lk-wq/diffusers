@@ -846,7 +846,7 @@ def main():
                     )
     #                     blob = bucket.blob(args.output_dir+str(global_step))
                     try:
-                        upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir)
+                        upload_local_directory_to_gcs(args.output_dir+str(global_step), bucket, args.bucketdir)
                         print("upload SUCCESS ===============================================>")
                     except:
                         print("upload fail =================>")
