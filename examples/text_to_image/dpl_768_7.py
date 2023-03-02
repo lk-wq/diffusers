@@ -234,7 +234,7 @@ def parse_args():
     parser.add_argument(
         "--resolution",
         type=int,
-        default=512,
+        default=768,
         help=(
             "The resolution for input images, all the images in the train/validation dataset will be resized to this"
             " resolution"
@@ -271,6 +271,12 @@ def parse_args():
         type=float,
         default=1e-6,
         help="Initial learning rate before warmup.",
+    )
+    parser.add_argument(
+        "--ema",
+        type=float,
+        default=.99,
+        help="ema constant.",
     )
 
     parser.add_argument(
@@ -799,9 +805,9 @@ def main():
 
             if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
                 if global_step % args.ema_frequency == 0:
-                  it = (global_step+args.restart_from)//args.accumulation_frequency
-                  decay = 0.999
-#                   decay = min(decay,(1 + it) / (10 + it))
+                  it = (global_step+args.restart_from)//(args.ema_frequency)
+                  decay = args.ema
+                  decay = min(decay,(1 + it) / (10 + it))
 
                   avg = ema_update( get_params_to_save(state.params) , avg, decay )
 
