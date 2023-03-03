@@ -854,7 +854,7 @@ def main():
                   decay = 0.0
                   decay = min(decay,(1 + it) / (10 + it))
 
-                  avg = ema_update( get_params_to_save(state.params) , avg, decay )
+#                   avg = ema_update( get_params_to_save(state.params) , avg, decay )
 #                   text_avg = ema_update( get_params_to_save(text_encoder_state.params) , text_avg, decay )
 
     #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
@@ -891,7 +891,7 @@ def main():
                         params={
                             "text_encoder": get_params_to_save(text_encoder_params),
                             "vae": get_params_to_save(vae_params),
-                            "unet": avg,
+                            "unet": get_params_to_save(state.params),
                             "safety_checker": safety_checker.params,
 
                         },
@@ -953,7 +953,7 @@ def main():
             params={
                 "text_encoder": get_params_to_save(text_encoder_params),
                 "vae": get_params_to_save(vae_params),
-                "unet": avg,
+                "unet": get_params_to_save(state.params),
                 "safety_checker": safety_checker.params,
 
             },
