@@ -169,7 +169,7 @@ class FolderData(Dataset):
         i = random.choice([0,1])
         if i == 0:
             im = im.convert("RGB")
-            return self.tform0(im)     
+            return self.tform1(im)     
         else:
             im = im.convert("RGB")
             return self.tform1(im)     
