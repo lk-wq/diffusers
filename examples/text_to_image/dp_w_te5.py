@@ -736,7 +736,7 @@ def main():
             # Get the text embedding for conditioning
             # print("batch", batch["input_ids"])
             encoder_hidden_states = text_encoder_state.apply_fn(
-                batch["input_ids"], params=params["text_encoder"], dropout_rng=dropout_rng, train=False
+                batch["input_ids"], params=text_encoder_state.params, dropout_rng=dropout_rng, train=False
             )[0]
             #unc = tokenizer([""]*len(batch['input_ids']), max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
             # print("unc",unc)
