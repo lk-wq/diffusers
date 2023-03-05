@@ -704,7 +704,8 @@ def main():
     def train_step(unet_state, text_encoder_state, vae_params, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
 
-        params = {"text_encoder": text_encoder_state.params, "unet": unet_state.params}
+#         params = {"text_encoder": text_encoder_state.params, "unet": unet_state.params}
+        params = {"unet": unet_state.params}
 
         def compute_loss(params):
             # Convert images to latent space
@@ -735,7 +736,7 @@ def main():
             # Get the text embedding for conditioning
             # print("batch", batch["input_ids"])
             encoder_hidden_states = text_encoder_state.apply_fn(
-                batch["input_ids"], params=params["text_encoder"], dropout_rng=dropout_rng, train=True
+                batch["input_ids"], params=params["text_encoder"], dropout_rng=dropout_rng, train=False
             )[0]
             #unc = tokenizer([""]*len(batch['input_ids']), max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
             # print("unc",unc)
@@ -767,10 +768,10 @@ def main():
         grad = jax.lax.pmean(grad, "batch")
 
         new_unet_state = unet_state.apply_gradients(grads=grad["unet"])
-        if args.train_text_encoder:
-            new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
-        else:
-            new_text_encoder_state = text_encoder_state
+#         if args.train_text_encoder:
+#             new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
+#         else:
+        new_text_encoder_state = text_encoder_state
 
         metrics = {"loss": loss}
         metrics = jax.lax.pmean(metrics, axis_name="batch")
