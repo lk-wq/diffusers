@@ -747,7 +747,10 @@ def main():
             # )[0]
 
             # Predict the noise residual and compute loss
-            unet_outputs = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True)
+            unet_outputs = unet.apply(
+                {"params": params["unet"]}, noisy_latents, timesteps, encoder_hidden_states, train=True
+            )
+
             # unet_outputs_unc = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states_unc, train=True)
 
             noise_pred = unet_outputs.sample
