@@ -97,17 +97,17 @@ class FolderData(Dataset):
 #               l.extend(lines)
             # captions = {x["file_name"]: x["text"].strip("\n") for x in lines}
         # rs = restart_from % len(lines)
-        with open(root_dir+if_, "r") as f:
-          l = f.readlines()
-          lines = [json.loads(x) for x in l]
+#         with open(root_dir+if_, "r") as f:
+#           l = f.readlines()
+#           lines = [json.loads(x) for x in l]
 #         captions = {x["file_name"]: x["text"].strip("\n") for x in lines}
 
         import glob
         print("stuff--------------------->",root_dir+if_+'/*')
-#         l = glob.glob(root_dir+if_+'/*')
+        self.captions = glob.glob(root_dir+if_+'/*')
         import random
 #         random.shuffle(l)
-        self.captions = lines  #[rs:] + lines[:rs]
+#         self.captions = lines  #[rs:] + lines[:rs]
 
         # Only used if there is no caption file
         # self.paths = []
@@ -146,7 +146,7 @@ class FolderData(Dataset):
     def __getitem__(self, index):
         data = {}
 #         print("fn",self.captions[index])
-        filename = self.captions[index]['file_name']
+        filename = self.captions[index]#['file_name']
         
         im = Image.open(self.root_dir+filename)
         im = self.process_im(im)
