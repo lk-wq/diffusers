@@ -128,7 +128,7 @@ class FolderData(Dataset):
         )
         self.tform1 = transforms.Compose(
             [
-        transforms.Resize((3072, 3072), interpolation=transforms.InterpolationMode.BILINEAR),
+        transforms.Resize( resolution, interpolation=transforms.InterpolationMode.BILINEAR),
         transforms.RandomCrop(resolution),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
@@ -169,10 +169,10 @@ class FolderData(Dataset):
         i = random.choice([0,1])
         if i == 0:
             im = im.convert("RGB")
-            return self.tform0(im)     
+            return self.tform1(im)     
         else:
             im = im.convert("RGB")
-            return self.tform0(im)     
+            return self.tform1(im)     
 
 logger = logging.getLogger(__name__)
 import random
@@ -851,10 +851,10 @@ def main():
             if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
                 if global_step % args.ema_frequency == 0:
                   it = global_step//args.ema_frequency
-                  decay = 0.0
+                  decay = 0.9999
                   decay = min(decay,(1 + it) / (10 + it))
 
-#                   avg = ema_update( get_params_to_save(state.params) , avg, decay )
+                  avg = ema_update( get_params_to_save(state.params) , avg, decay )
 #                   text_avg = ema_update( get_params_to_save(text_encoder_state.params) , text_avg, decay )
 
     #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
@@ -891,7 +891,7 @@ def main():
                         params={
                             "text_encoder": get_params_to_save(text_encoder_params),
                             "vae": get_params_to_save(vae_params),
-                            "unet": get_params_to_save(state.params),
+                            "unet": avg,
                             "safety_checker": safety_checker.params,
 
                         },
@@ -953,7 +953,7 @@ def main():
             params={
                 "text_encoder": get_params_to_save(text_encoder_params),
                 "vae": get_params_to_save(vae_params),
-                "unet": get_params_to_save(state.params),
+                "unet": avg,
                 "safety_checker": safety_checker.params,
 
             },
