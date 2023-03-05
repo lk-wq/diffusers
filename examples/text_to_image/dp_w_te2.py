@@ -851,7 +851,7 @@ def main():
         for batch in train_dataloader:
             batch = shard(batch)
             # batch = shard(batch)
-            state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+            state, train_metric, train_rngs = p_train_step(state, text_encoder_state, vae_params, batch, train_rngs)
 
 #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
