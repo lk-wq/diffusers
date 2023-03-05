@@ -120,7 +120,6 @@ class FolderData(Dataset):
         resolution = 768
         self.tform0 = transforms.Compose(
             [
-        transforms.Resize((resolution, resolution), interpolation=transforms.InterpolationMode.BILINEAR),
         transforms.CenterCrop(resolution),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
@@ -170,10 +169,10 @@ class FolderData(Dataset):
         i = random.choice([0,1])
         if i == 0:
             im = im.convert("RGB")
-            return self.tform1(im)     
+            return self.tform0(im)     
         else:
             im = im.convert("RGB")
-            return self.tform1(im)     
+            return self.tform0(im)     
 
 logger = logging.getLogger(__name__)
 import random
