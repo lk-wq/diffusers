@@ -78,6 +78,7 @@ class FolderData(Dataset):
         restart_from=0,
         section0=0,
         section1=0,
+        ip="",
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -105,6 +106,7 @@ class FolderData(Dataset):
         image_transforms.extend([transforms.ToTensor(),
                                  transforms.Lambda(lambda x: rearrange(x * 2. - 1., 'c h w -> h w c'))])
         image_transforms = transforms.Compose(image_transforms)
+        self.instance_prompt = ip
         resolution = 768
         print("resolution ---->",resolution)
         self.tform = transforms.Compose(
@@ -133,7 +135,7 @@ class FolderData(Dataset):
         data["image"] = im
         caption = self.captions[index]['text']
         
-        data["txt"] = self.tokenize_captions(caption)
+        data["txt"] = self.instance_prompt + self.tokenize_captions(caption)
 
         # if self.postprocess is not None:
         #     data = self.postprocess(data)
@@ -225,6 +227,7 @@ def parse_args():
     parser.add_argument("--accumulation_frequency", type=int, default=1, help="How frequently to save")
     parser.add_argument("--ema_frequency", type=int, default=10, help="How frequently to perform ema")
     parser.add_argument("--negative_prompt", type=str, default="", help="Negative prompt for unconditional generation")
+    parser.add_argument("--instance_prompt", type=str, default="", help="instance prompt")
 
     parser.add_argument("--scheduling", type=str, default="constant", help="scheduling")
     parser.add_argument("--warmup_steps", type=int, default=0, help="warm up steps")
@@ -465,7 +468,7 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,ip=args.instance_prompt)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
