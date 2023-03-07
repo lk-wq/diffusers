@@ -734,7 +734,7 @@ def main():
             # print("batch", batch["input_ids"])
             encoder_hidden_states = text_encoder(
                 batch["input_ids"],
-                params=text_encoder_params,
+                params={"params": params},
                 train=True,
             )[0]
             #unc = tokenizer([""]*len(batch['input_ids']), max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
@@ -747,7 +747,7 @@ def main():
             # )[0]
 
             # Predict the noise residual and compute loss
-            unet_outputs = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=False)
+            unet_outputs = unet.apply(unet_params, noisy_latents, timesteps, encoder_hidden_states, train=False)
             # unet_outputs_unc = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states_unc, train=True)
 
             noise_pred = unet_outputs.sample
