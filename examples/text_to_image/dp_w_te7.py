@@ -777,7 +777,7 @@ def main():
     # avg_state = jax_utils.replicate(avg_state)
 #     text_encoder_state = jax_utils.replicate(text_encoder_state)
 
-    unet_params = jax_utils.replicate(unet.params)
+    unet_params = jax_utils.replicate(unet_params)
     vae_params = jax_utils.replicate(vae_params)
 
     # Train!
