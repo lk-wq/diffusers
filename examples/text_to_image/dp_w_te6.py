@@ -128,7 +128,7 @@ class FolderData(Dataset):
         )
         self.tform1 = transforms.Compose(
             [
-        transforms.Resize( resolution, interpolation=transforms.InterpolationMode.BILINEAR),
+        transforms.Resize( 1536, interpolation=transforms.InterpolationMode.BILINEAR),
         transforms.RandomCrop(resolution),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
@@ -686,8 +686,8 @@ def main():
     
 #     optimizer = optax.multi_transform(
 #       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
-    state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
-    text_encoder_state = train_state.TrainState.create(
+#     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+    state = train_state.TrainState.create(
         apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
     )
 
@@ -701,11 +701,8 @@ def main():
     rng = jax.random.PRNGKey(args.seed)
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
-    def train_step(unet_state, text_encoder_state, vae_params, batch, train_rng):
+    def train_step(state, unet_params, vae_params, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-
-#         params = {"text_encoder": text_encoder_state.params, "unet": unet_state.params}
-        params = {"unet": unet_state.params}
 
         def compute_loss(params):
             # Convert images to latent space
@@ -735,8 +732,10 @@ def main():
 
             # Get the text embedding for conditioning
             # print("batch", batch["input_ids"])
-            encoder_hidden_states = text_encoder_state.apply_fn(
-                batch["input_ids"], params=text_encoder_state.params, dropout_rng=dropout_rng, train=False
+            encoder_hidden_states = text_encoder(
+                batch["input_ids"],
+                params=text_encoder_params,
+                train=True,
             )[0]
             #unc = tokenizer([""]*len(batch['input_ids']), max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
             # print("unc",unc)
@@ -748,10 +747,7 @@ def main():
             # )[0]
 
             # Predict the noise residual and compute loss
-            unet_outputs = unet.apply(
-                {"params": params["unet"]}, noisy_latents, timesteps, encoder_hidden_states, train=True
-            )
-
+            unet_outputs = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=False)
             # unet_outputs_unc = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states_unc, train=True)
 
             noise_pred = unet_outputs.sample
@@ -764,36 +760,25 @@ def main():
             return loss
 
         grad_fn = jax.value_and_grad(compute_loss)
-        loss, grad = grad_fn(params)
+        loss, grad = grad_fn(state.params)
         grad = jax.lax.pmean(grad, "batch")
 
-        new_unet_state = unet_state.apply_gradients(grads=grad["unet"])
-#         if args.train_text_encoder:
-#             new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
-#         else:
-        new_text_encoder_state = text_encoder_state
-
+        new_state = state.apply_gradients(grads=grad)
         metrics = {"loss": loss}
         metrics = jax.lax.pmean(metrics, axis_name="batch")
 
-        return new_unet_state, new_text_encoder_state, metrics, new_train_rng
+        return new_state, metrics, new_train_rng 
 
     # Create parallel version of the train step
-#     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
-
-    # Replicate the train state on each device
-#     state = jax_utils.replicate(state)
-    # avg_state = jax_utils.replicate(avg_state)
-#     text_encoder_state = jax_utils.replicate(text_encoder_state)
-    p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
+    p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
 
     # Replicate the train state on each device
     state = jax_utils.replicate(state)
-    text_encoder_state = jax_utils.replicate(text_encoder_state)
-    vae_params = jax_utils.replicate(vae_params)
+    # avg_state = jax_utils.replicate(avg_state)
+#     text_encoder_state = jax_utils.replicate(text_encoder_state)
 
-#     text_encoder_params = jax_utils.replicate(text_encoder.params)
-#     vae_params = jax_utils.replicate(vae_params)
+    unet_params = jax_utils.replicate(unet.params)
+    vae_params = jax_utils.replicate(vae_params)
 
     # Train!
     num_update_steps_per_epoch = math.ceil(len(train_dataloader))
@@ -829,12 +814,12 @@ def main():
 #     @jax.jit
     def ema_update(params, avg_params, decay):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
-      step = 1 - decay
+      step = (1 - decay**(args.ema_frequency))
       return optax.incremental_update(params, avg_params, step_size=step)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
     avg = get_params_to_save(state.params)
-    text_avg = get_params_to_save(text_encoder_state.params)
+#     text_avg = get_params_to_save(text_encoder_state.params)
 
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
@@ -855,7 +840,7 @@ def main():
         for batch in train_dataloader:
             batch = shard(batch)
             # batch = shard(batch)
-            state, train_metric, train_rngs = p_train_step(state, text_encoder_state, vae_params, batch, train_rngs)
+            state, train_metric, train_rngs = p_train_step(state, unet_params, vae_params, batch, train_rngs)
 
 #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
@@ -865,12 +850,12 @@ def main():
 
             if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
                 if global_step % args.ema_frequency == 0:
-                  it = global_step//args.ema_frequency
+                  it = global_step#//args.ema_frequency
                   decay = 0.9999
                   decay = min(decay,(1 + it) / (10 + it))
 
                   avg = ema_update( get_params_to_save(state.params) , avg, decay )
-                  text_avg = ema_update( get_params_to_save(text_encoder_state.params) , text_avg, decay )
+#                   text_avg = ema_update( get_params_to_save(text_encoder_state.params) , text_avg, decay )
 
     #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                 if global_step % args.save_frequency == 0:
@@ -904,9 +889,9 @@ def main():
                     pipeline.save_pretrained(
                         args.output_dir,
                         params={
-                            "text_encoder": text_avg,
+                            "text_encoder": avg,
                             "vae": get_params_to_save(vae_params),
-                            "unet": avg,
+                            "unet": get_params_to_save(unet_params),
                             "safety_checker": safety_checker.params,
 
                         },
@@ -966,9 +951,9 @@ def main():
         pipeline.save_pretrained(
             args.output_dir,
             params={
-                "text_encoder": text_avg,
+                "text_encoder": avg,
                 "vae": get_params_to_save(vae_params),
-                "unet": avg,
+                "unet": get_params_to_save(unet_params),
                 "safety_checker": safety_checker.params,
 
             },
