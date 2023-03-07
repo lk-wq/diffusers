@@ -468,7 +468,8 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,ip=args.instance_prompt)
+    instance_prompt = args.instance_prompt.replace('_'," ")
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,ip=instance_prompt)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
