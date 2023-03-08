@@ -830,6 +830,8 @@ def main():
 #         # ======================== Training ================================
     for ix , epoch in enumerate(epochs):
         # ======================== Training ================================
+        if global_step >= args.max_train_steps:
+            break
 
         train_metrics = []
 
