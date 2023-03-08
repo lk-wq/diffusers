@@ -133,9 +133,9 @@ class FolderData(Dataset):
         im = Image.open(self.root_dir+filename)
         im = self.process_im(im)
         data["image"] = im
-        caption = self.captions[index]['text']
+        caption = self.instance_prompt + self.captions[index]['text']
         
-        data["txt"] = self.instance_prompt + self.tokenize_captions(caption)
+        data["txt"] = self.tokenize_captions(caption)
 
         # if self.postprocess is not None:
         #     data = self.postprocess(data)
