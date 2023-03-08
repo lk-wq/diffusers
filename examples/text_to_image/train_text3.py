@@ -657,7 +657,7 @@ def main():
 #     optimizer = optax.multi_transform(
 #       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
 
-    state = train_state.TrainState.create(apply_fn=text_encoder.__call__, params=text_encoder_params, tx=optimizer)
+    state = train_state.TrainState.create(apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer)
 
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
