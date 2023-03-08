@@ -286,6 +286,16 @@ def parse_args():
         ),
     )
     parser.add_argument(
+        "--resolution2",
+        type=int,
+        default=768,
+        help=(
+            "The resolution for input images, all the images in the train/validation dataset will be resized to this"
+            " resolution"
+        ),
+    )
+
+    parser.add_argument(
         "--center_crop",
         action="store_true",
         help="Whether to center crop images before resizing to resolution (if not set, random crop will be used)",
