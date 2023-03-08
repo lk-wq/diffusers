@@ -89,6 +89,8 @@ class FolderData(Dataset):
         self.return_paths = return_paths
         l = []
         for i in range(9):
+          print("pulling from ??" ,root_dir+'metadata'+str(section0)+'_'+str(i)+'.jsonl')
+
           with open(root_dir+'metadata'+str(section0)+'_'+str(i)+'.jsonl', "rt") as f:
               lines = f.readlines()
               lines = [json.loads(x) for x in lines]
