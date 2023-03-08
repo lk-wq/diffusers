@@ -81,6 +81,7 @@ class FolderData(Dataset):
         if_=None,
         ip=None,
         resolution=768,
+        resolution2=768,
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -128,7 +129,7 @@ class FolderData(Dataset):
         )
         self.tform1 = transforms.Compose(
             [
-        transforms.Resize( 1536, interpolation=transforms.InterpolationMode.BILINEAR),
+        transforms.Resize( resolution2, interpolation=transforms.InterpolationMode.BILINEAR),
         transforms.RandomCrop(resolution),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
@@ -284,6 +285,16 @@ def parse_args():
             " resolution"
         ),
     )
+    parser.add_argument(
+        "--resolution2",
+        type=int,
+        default=768,
+        help=(
+            "The resolution for input images, all the images in the train/validation dataset will be resized to this"
+            " resolution"
+        ),
+    )
+
     parser.add_argument(
         "--center_crop",
         action="store_true",
@@ -510,7 +521,7 @@ def main():
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
     instance_prompt = args.instance_prompt.replace('_'," ")
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=instance_prompt)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=instance_prompt,resolution2=args.resolution2)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
