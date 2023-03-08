@@ -468,6 +468,7 @@ def main():
 #         inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
 #         input_ids = inputs.input_ids
 #         return input_ids
+    print("?? ------------------------> ",args.pretrained_model_name_or_path)
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
     instance_prompt = args.instance_prompt.replace('_'," ")
