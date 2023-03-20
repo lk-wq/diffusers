@@ -701,8 +701,9 @@ def main():
     rng = jax.random.PRNGKey(args.seed)
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
-    def train_step(state, text_encoder_params, vae_params, batch, train_rng):
+    def train_step(state, text_encoder_state, vae_params, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+        params = {"text_encoder": text_encoder_state.params, "unet": unet_state.params}
 
         def compute_loss(params):
             # Convert images to latent space
@@ -734,8 +735,8 @@ def main():
             # print("batch", batch["input_ids"])
             encoder_hidden_states = text_encoder(
                 batch["input_ids"],
-                params=text_encoder_params,
-                train=False,
+                params=params["text_encoder"],
+                train=True,
             )[0]
             #unc = tokenizer([""]*len(batch['input_ids']), max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
             # print("unc",unc)
@@ -760,14 +761,16 @@ def main():
             return loss
 
         grad_fn = jax.value_and_grad(compute_loss)
-        loss, grad = grad_fn(state.params)
+        loss, grad = grad_fn(params)
         grad = jax.lax.pmean(grad, "batch")
 
         new_state = state.apply_gradients(grads=grad)
+        new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
+
         metrics = {"loss": loss}
         metrics = jax.lax.pmean(metrics, axis_name="batch")
 
-        return new_state, metrics, new_train_rng 
+        return new_state,new_text_encoder_state, metrics, new_train_rng 
 
     # Create parallel version of the train step
     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
@@ -819,7 +822,7 @@ def main():
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
     avg = get_params_to_save(state.params)
-#     text_avg = get_params_to_save(text_encoder_state.params)
+    text_avg = get_params_to_save(text_encoder_state.params)
 
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
@@ -840,7 +843,7 @@ def main():
         for batch in train_dataloader:
             batch = shard(batch)
             # batch = shard(batch)
-            state, train_metric, train_rngs = p_train_step(state, text_encoder_state.params, vae_params, batch, train_rngs)
+            state, text_encoder_state, train_metric, train_rngs = p_train_step(state, text_encoder_state.params, vae_params, batch, train_rngs)
 
 #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
@@ -855,7 +858,7 @@ def main():
                   decay = min(decay,(1 + it) / (10 + it))
 
                   avg = ema_update( get_params_to_save(state.params) , avg, decay )
-#                   text_avg = ema_update( get_params_to_save(text_encoder_state.params) , text_avg, decay )
+                  text_avg = ema_update( get_params_to_save(text_encoder_state.params) , text_avg, decay )
 
     #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                 if global_step % args.save_frequency == 0:
@@ -889,7 +892,7 @@ def main():
                     pipeline.save_pretrained(
                         args.output_dir,
                         params={
-                            "text_encoder": get_params_to_save(text_encoder_state.params),
+                            "text_encoder": text_avg,
                             "vae": get_params_to_save(vae_params),
                             "unet": avg,
                             "safety_checker": safety_checker.params,
@@ -951,7 +954,7 @@ def main():
         pipeline.save_pretrained(
             args.output_dir,
             params={
-                "text_encoder": get_params_to_save(text_encoder_state.params),
+                "text_encoder": text_avg,
                 "vae": get_params_to_save(vae_params),
                 "unet": avg,
                 "safety_checker": safety_checker.params,
