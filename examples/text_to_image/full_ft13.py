@@ -104,7 +104,11 @@ class FolderData(Dataset):
 
         import glob
         print("stuff--------------------->",root_dir+if_+'/*')
-        self.captions = glob.glob(root_dir+if_+'/*')
+#         self.captions = glob.glob(root_dir+if_+'/*')
+        with open('wm0.jsonl', "r") as f:
+          l = f.readlines()
+          self.captions = [json.loads(x) for x in l]
+
         import random
 #         random.shuffle(l)
 #         self.captions = lines  #[rs:] + lines[:rs]
@@ -151,7 +155,7 @@ class FolderData(Dataset):
         im = Image.open(self.root_dir+filename)
         im = self.process_im(im)
         data["image"] = im
-        caption = self.instance_prompt# + ' ' + self.captions[index]['text']
+        caption = self.captions[index]['text']
         
         data["txt"] = self.tokenize_captions(caption)
 
@@ -167,7 +171,7 @@ class FolderData(Dataset):
     
     def process_im(self, im):
         i = random.choice([0,1])
-        if i == 0:
+        if False:
             im = im.convert("RGB")
             return self.tform1(im)     
         else:
