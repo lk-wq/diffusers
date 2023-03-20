@@ -667,7 +667,7 @@ def main():
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
     )
-    optimizer = optax.MultiSteps(
+    optimizer_2 = optax.MultiSteps(
         optimizer_, args.accumulation_frequency
     )
     def flattened_traversal(fn):
@@ -684,8 +684,8 @@ def main():
         return True
       return False
     
-#     optimizer = optax.multi_transform(
-#       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
+    optimizer = optax.multi_transform(
+      {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
     text_encoder_state = train_state.TrainState.create(
         apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
