@@ -105,7 +105,7 @@ class FolderData(Dataset):
         import glob
         print("stuff--------------------->",root_dir+if_+'/*')
 #         self.captions = glob.glob(root_dir+if_+'/*')
-        with open(ip, "r") as f:
+        with open(if_, "r") as f:
           l = f.readlines()
           self.captions = [json.loads(x) for x in l]
 
@@ -152,7 +152,7 @@ class FolderData(Dataset):
 #         print("fn",self.captions[index])
         filename = self.captions[index]#['file_name']
         
-        im = Image.open(self.root_dir+filename)
+        im = Image.open(filename)
         im = self.process_im(im)
         data["image"] = im
         caption = self.captions[index]['text']
