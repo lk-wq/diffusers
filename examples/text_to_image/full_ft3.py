@@ -703,7 +703,7 @@ def main():
 
     def train_step(state, text_encoder_state, vae_params, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-        params = {"text_encoder": text_encoder_state.params, "unet": unet_state.params}
+        params = {"text_encoder": text_encoder_state.params, "unet": state.params}
 
         def compute_loss(params):
             # Convert images to latent space
@@ -843,7 +843,7 @@ def main():
         for batch in train_dataloader:
             batch = shard(batch)
             # batch = shard(batch)
-            state, text_encoder_state, train_metric, train_rngs = p_train_step(state, text_encoder_state.params, vae_params, batch, train_rngs)
+            state, text_encoder_state, train_metric, train_rngs = p_train_step(state, text_encoder_state, vae_params, batch, train_rngs)
 
 #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
