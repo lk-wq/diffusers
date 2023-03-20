@@ -117,7 +117,7 @@ class FolderData(Dataset):
                                  transforms.Lambda(lambda x: rearrange(x * 2. - 1., 'c h w -> h w c'))])
         image_transforms = transforms.Compose(image_transforms)
         print("resolution ", resolution)
-        resolution = 768
+#         resolution = 768
         self.tform0 = transforms.Compose(
             [
         transforms.CenterCrop(resolution),
