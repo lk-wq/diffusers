@@ -105,7 +105,7 @@ class FolderData(Dataset):
         import glob
         print("stuff--------------------->",root_dir+if_+'/*')
 #         self.captions = glob.glob(root_dir+if_+'/*')
-        with open('wm0.jsonl', "r") as f:
+        with open(ip, "r") as f:
           l = f.readlines()
           self.captions = [json.loads(x) for x in l]
 
