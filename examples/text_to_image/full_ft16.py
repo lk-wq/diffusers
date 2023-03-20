@@ -150,7 +150,7 @@ class FolderData(Dataset):
     def __getitem__(self, index):
         data = {}
 #         print("fn",self.captions[index])
-        filename = self.captions[index]#['file_name']
+        filename = self.captions[index]['file_name']
         
         im = Image.open(filename)
         im = self.process_im(im)
