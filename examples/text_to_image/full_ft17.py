@@ -157,7 +157,7 @@ class FolderData(Dataset):
         data["image"] = im
         caption = self.captions[index]['text']
         
-        data["txt"] = self.tokenize_captions(caption)
+        data["txt"] = self.instance_prompt + self.tokenize_captions(caption)
 
         # if self.postprocess is not None:
         #     data = self.postprocess(data)
