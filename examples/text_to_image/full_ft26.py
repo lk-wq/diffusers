@@ -768,7 +768,7 @@ def main():
         grad_fn = jax.value_and_grad(compute_loss)
         loss, grad = grad_fn(params)
         grad = jax.lax.pmean(grad, "batch")
-        print("g -------------> ", type(grad['text_encoder']), type(grad['unet']) )
+        print(" g -------------> ", type(grad['text_encoder']) , type(grad['unet']) )
         new_state = state.apply_gradients(grads=grad['unet'])
         new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
 
@@ -778,7 +778,7 @@ def main():
         return new_state,new_text_encoder_state, metrics, new_train_rng 
 
     # Create parallel version of the train step
-    p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
+    p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
 
     # Replicate the train state on each device
     state = jax_utils.replicate(state)
