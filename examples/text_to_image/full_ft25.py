@@ -584,7 +584,7 @@ def main():
     # Load models and create wrapper for stable diffusion
     print("weight type ----->",weight_dtype)
     text_encoder = FlaxCLIPTextModel.from_pretrained(
-        "stabilityai/stable-diffusion-2", subfolder="text_encoder", from_pt=True, dtype=weight_dtype
+        args.pretrained_model_name_or_path, subfolder="text_encoder",revision='bf16', dtype=weight_dtype
     )
     
     import flatdict
@@ -620,18 +620,18 @@ def main():
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",  revision='bf16',dtype=weight_dtype
     )
-    unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
-    for r in unet_param_dict.items():
-      k , v = r[0], r[1]
-      try:
-        if True:#v.dtype == jnp.float32:
-          v2= v.astype(jnp.float32)
-          unet_param_dict[k] = v2
-          del v
-      except:
-        print("f",k)
-    unet_params = unflatten(unet_param_dict)
-    del unet_param_dict
+#     unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
+#     for r in unet_param_dict.items():
+#       k , v = r[0], r[1]
+#       try:
+#         if True:#v.dtype == jnp.float32:
+#           v2= v.astype(jnp.float32)
+#           unet_param_dict[k] = v2
+#           del v
+#       except:
+#         print("f",k)
+#     unet_params = unflatten(unet_param_dict)
+#     del unet_param_dict
 
     # Optimization
     if args.scale_lr:
@@ -685,7 +685,7 @@ def main():
     label_fn = flattened_traversal(
         lambda path, _: 'adam' if any([check_str(i) for i in path]) else 'none')
     def check_str(s):
-      if 'attn' in s or 'norm' in s or 'text_model' in s or 'atte' in s or 'bias' in s:
+      if 'attn' in s or 'norm' in s or 'text' in s or 'att' in s or 'bias' in s:
         return True
       return False
     
@@ -768,7 +768,7 @@ def main():
         grad_fn = jax.value_and_grad(compute_loss)
         loss, grad = grad_fn(params)
         grad = jax.lax.pmean(grad, "batch")
-        print("g",grad['text_encoder'])
+        print("g -------------> ", len(grad['text_encoder']), len(grad['unet']) )
         new_state = state.apply_gradients(grads=grad['unet'])
         new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
 
