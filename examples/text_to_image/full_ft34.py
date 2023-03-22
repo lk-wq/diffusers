@@ -686,7 +686,7 @@ def main():
         lambda path, _: 'adam' if check_str(path) else 'none')
     def check_str(path):
       for s in path:
-        if 'down' in s or 'norm' in s or 'text' in s or 'att' in s or 'bias' in s:
+        if 'up' in s or 'norm' in s or 'text' in s or 'att' in s or 'bias' in s:
             print("success ---> " , path )
             return True
       print("fail ----> ", path )      
