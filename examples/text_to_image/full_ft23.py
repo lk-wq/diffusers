@@ -624,7 +624,7 @@ def main():
     for r in unet_param_dict.items():
       k , v = r[0], r[1]
       try:
-        if True:"#v.dtype == jnp.float32:
+        if True:#v.dtype == jnp.float32:
           v2= v.astype(jnp.float32)
           unet_param_dict[k] = v2
           del v
