@@ -768,7 +768,7 @@ def main():
         grad_fn = jax.value_and_grad(compute_loss)
         loss, grad = grad_fn(params)
         grad = jax.lax.pmean(grad, "batch")
-        print("g -------------> ", len(grad['text_encoder']), len(grad['unet']) )
+        print("g -------------> ", type(grad['text_encoder']), type(grad['unet']) )
         new_state = state.apply_gradients(grads=grad['unet'])
         new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
 
