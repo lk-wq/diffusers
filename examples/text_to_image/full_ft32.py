@@ -683,12 +683,13 @@ def main():
             {k: fn(k, v) for k, v in flat.items()})
       return mask
     label_fn = flattened_traversal(
-        lambda path, _: 'adam' if any([check_str(i) for i in path]) else 'none')
-    def check_str(s):
-      if True:#'attn' in s or 'norm' in s or 'text' in s or 'att' in s or 'bias' in s:
-#         if 'text' in s:
-#             print(s)
-        return True
+        lambda path, _: 'adam' if check_str(path) else 'none')
+    def check_str(path):
+      for s in path:
+        if 'attn' in s or 'norm' in s or 'text' in s or 'att' in s or 'bias' in s:
+            print("success ---> " , path )
+            return True
+      print("fail ----> ", path )      
       return False
     
     optimizer = optax.multi_transform(
