@@ -685,9 +685,9 @@ def main():
     label_fn = flattened_traversal(
         lambda path, _: 'adam' if any([check_str(i) for i in path]) else 'none')
     def check_str(s):
-      if 'attn' in s or 'norm' in s or 'text' in s or 'att' in s or 'bias' in s:
-        if 'text' in s:
-            print(s)
+      if True:#'attn' in s or 'norm' in s or 'text' in s or 'att' in s or 'bias' in s:
+#         if 'text' in s:
+#             print(s)
         return True
       return False
     
