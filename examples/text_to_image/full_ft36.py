@@ -604,34 +604,34 @@ def main():
         args.pretrained_model_name_or_path, subfolder="vae",revision='bf16',dtype=weight_dtype
     )
 
-    vae_param_dict = dict(flatdict.FlatDict(vae_params, delimiter='.'))
-    for r in vae_param_dict.items():
-      k , v = r[0], r[1]
-      try:
-        if v.dtype == jnp.float32:
-          v2= v.astype(jnp.bfloat16)
-          vae_param_dict[k] = v2
-          del v
-      except:
-        print("f",k)
-    vae_params = unflatten(vae_param_dict)
-    del vae_param_dict
+#     vae_param_dict = dict(flatdict.FlatDict(vae_params, delimiter='.'))
+#     for r in vae_param_dict.items():
+#       k , v = r[0], r[1]
+#       try:
+#         if v.dtype == jnp.float32:
+#           v2= v.astype(jnp.bfloat16)
+#           vae_param_dict[k] = v2
+#           del v
+#       except:
+#         print("f",k)
+#     vae_params = unflatten(vae_param_dict)
+#     del vae_param_dict
      
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",  revision='bf16',dtype=weight_dtype
     )
-    unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
-    for r in unet_param_dict.items():
-      k , v = r[0], r[1]
-      try:
-        if True:#v.dtype == jnp.float32:
-          v2= v.astype(jnp.float32)
-          unet_param_dict[k] = v2
-          del v
-      except:
-        print("f",k)
-    unet_params = unflatten(unet_param_dict)
-    del unet_param_dict
+#     unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
+#     for r in unet_param_dict.items():
+#       k , v = r[0], r[1]
+#       try:
+#         if True:#v.dtype == jnp.float32:
+#           v2= v.astype(jnp.float32)
+#           unet_param_dict[k] = v2
+#           del v
+#       except:
+#         print("f",k)
+#     unet_params = unflatten(unet_param_dict)
+#     del unet_param_dict
 
     # Optimization
     if args.scale_lr:
