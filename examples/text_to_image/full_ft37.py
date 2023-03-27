@@ -81,6 +81,7 @@ class FolderData(Dataset):
         if_=None,
         ip=None,
         resolution=768,
+        resolution2=1536,
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -132,7 +133,7 @@ class FolderData(Dataset):
         )
         self.tform1 = transforms.Compose(
             [
-        transforms.Resize( 1536, interpolation=transforms.InterpolationMode.BILINEAR),
+        transforms.Resize( resolution2, interpolation=transforms.InterpolationMode.BILINEAR),
         transforms.RandomCrop(resolution),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
@@ -337,6 +338,16 @@ def parse_args():
             ' "constant", "constant_with_warmup"]'
         ),
     )
+    parser.add_argument(
+        "--resolution2",
+        type=int,
+        default=1536,
+        help=(
+            "The resolution for input images, all the images in the train/validation dataset will be resized to this"
+            " resolution"
+        ),
+    )
+
     parser.add_argument("--adam_beta1", type=float, default=0.9, help="The beta1 parameter for the Adam optimizer.")
     parser.add_argument("--adam_beta2", type=float, default=0.999, help="The beta2 parameter for the Adam optimizer.")
     parser.add_argument("--adam_weight_decay", type=float, default=1e-2, help="Weight decay to use.")
@@ -513,7 +524,7 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution,resolution=args.resolution2)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
