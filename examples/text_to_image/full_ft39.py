@@ -133,7 +133,7 @@ class FolderData(Dataset):
         )
         self.tform1 = transforms.Compose(
             [
-        transforms.Resize( resolution2, interpolation=transforms.InterpolationMode.BILINEAR),
+#         transforms.Resize( resolution2, interpolation=transforms.InterpolationMode.BILINEAR),
         transforms.RandomCrop(resolution),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
