@@ -83,6 +83,7 @@ class FolderData(Dataset):
         resolution=768,
         resolution2=1536,
         drop=False,
+        resize=False,
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -132,15 +133,27 @@ class FolderData(Dataset):
         transforms.Normalize([0.5], [0.5]),
             ]
         )
-        self.tform1 = transforms.Compose(
-            [
-#         transforms.Resize( resolution2, interpolation=transforms.InterpolationMode.BILINEAR),
-        transforms.RandomCrop(resolution),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize([0.5], [0.5]),
-            ]
-        )
+        if resize:
+            self.tform1 = transforms.Compose(
+                [
+            transforms.Resize( resolution2, interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.RandomCrop(resolution),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5]),
+                ]
+            )
+
+        else:
+            self.tform1 = transforms.Compose(
+                [
+    #         transforms.Resize( resolution2, interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.RandomCrop(resolution),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5]),
+                ]
+            )
 
         self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
         self.negative_prompt = negative_prompt
@@ -305,6 +318,12 @@ def parse_args():
         action="store_true",
         help="Whether to prompt drop",
     )
+    parser.add_argument(
+        "--resize",
+        action="store_true",
+        help="Whether to prompt drop",
+    )
+
 
     parser.add_argument(
         "--random_flip",
@@ -536,7 +555,7 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution,resolution2=args.resolution2,drop=args.drop)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution,resolution2=args.resolution2,drop=args.drop,resize=args.resize)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
