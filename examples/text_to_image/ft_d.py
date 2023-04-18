@@ -82,6 +82,7 @@ class FolderData(Dataset):
         ip=None,
         resolution=768,
         resolution2=1536,
+        drop=False,
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -144,6 +145,7 @@ class FolderData(Dataset):
         self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
         self.negative_prompt = negative_prompt
         self.instance_prompt = ip
+        self.drop = drop
 
     def __len__(self):
         return len(self.captions)
@@ -159,8 +161,9 @@ class FolderData(Dataset):
         caption = self.instance_prompt + self.captions[index]['text']
         list_ = [i for i in range(100)] 
         choice = random.choice(list_)
-        if choice <= 15:
-          caption = ""
+        if self.drop:
+            if choice <= 15:
+              caption = ""
         data["txt"] = self.tokenize_captions(caption)
 
         # if self.postprocess is not None:
@@ -297,6 +300,12 @@ def parse_args():
         action="store_true",
         help="Whether to center crop images before resizing to resolution (if not set, random crop will be used)",
     )
+    parser.add_argument(
+        "--drop",
+        action="store_true",
+        help="Whether to prompt drop",
+    )
+
     parser.add_argument(
         "--random_flip",
         action="store_true",
@@ -527,7 +536,7 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution,resolution2=args.resolution2)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution,resolution2=args.resolution2,drop=args.drop)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
@@ -923,7 +932,7 @@ def main():
                     )
     #                     blob = bucket.blob(args.output_dir+str(global_step))
                     try:
-                        upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir)
+                        upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir+str(global_step))
                         print("upload SUCCESS ===============================================>")
                     except:
                         print("upload fail =================>")
