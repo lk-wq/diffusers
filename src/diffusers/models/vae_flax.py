@@ -559,6 +559,76 @@ class FlaxUNetMidBlock2D(nn.Module):
             hidden_states = resnet(hidden_states, deterministic=deterministic)
 
         return hidden_states
+    
+class FlaxUNetMidBlock2DCircularNoAt(nn.Module):
+    r"""
+    Flax Unet Mid-Block module.
+    Parameters:
+        in_channels (:obj:`int`):
+            Input channels
+        dropout (:obj:`float`, *optional*, defaults to 0.0):
+            Dropout rate
+        num_layers (:obj:`int`, *optional*, defaults to 1):
+            Number of Resnet layer block
+        resnet_groups (:obj:`int`, *optional*, defaults to `32`):
+            The number of groups to use for the Resnet and Attention block group norm
+        attn_num_head_channels (:obj:`int`, *optional*, defaults to `1`):
+            Number of attention heads for each attention block
+        dtype (:obj:`jnp.dtype`, *optional*, defaults to jnp.float32):
+            Parameters `dtype`
+    """
+    in_channels: int
+    dropout: float = 0.0
+    num_layers: int = 1
+    resnet_groups: int = 32
+    attn_num_head_channels: int = 1
+    dtype: jnp.dtype = jnp.float32
+
+    def setup(self):
+        resnet_groups = self.resnet_groups if self.resnet_groups is not None else min(self.in_channels // 4, 32)
+
+        # there is always at least one resnet
+        resnets = [
+            FlaxResnetBlock2DCircular(
+                in_channels=self.in_channels,
+                out_channels=self.in_channels,
+                dropout=self.dropout,
+                groups=resnet_groups,
+                dtype=self.dtype,
+            )
+        ]
+
+        attentions = []
+
+        for _ in range(self.num_layers):
+            attn_block = FlaxAttentionBlock(
+                channels=self.in_channels,
+                num_head_channels=self.attn_num_head_channels,
+                num_groups=resnet_groups,
+                dtype=self.dtype,
+            )
+            attentions.append(attn_block)
+
+            res_block = FlaxResnetBlock2DCircular(
+                in_channels=self.in_channels,
+                out_channels=self.in_channels,
+                dropout=self.dropout,
+                groups=resnet_groups,
+                dtype=self.dtype,
+            )
+            resnets.append(res_block)
+
+        self.resnets = resnets
+        self.attentions = attentions
+
+    def __call__(self, hidden_states, deterministic=True):
+        hidden_states = self.resnets[0](hidden_states, deterministic=deterministic)
+        for attn, resnet in zip(self.attentions, self.resnets[1:]):
+#             hidden_states = attn(hidden_states)
+            hidden_states = resnet(hidden_states, deterministic=deterministic)
+
+        return hidden_states
+
 class FlaxUNetMidBlock2DCircular(nn.Module):
     r"""
     Flax Unet Mid-Block module.
@@ -798,7 +868,7 @@ class FlaxDecoder(nn.Module):
         )
 
         # middle
-        self.mid_block = FlaxUNetMidBlock2DCircular(
+        self.mid_block = FlaxUNetMidBlock2DCircularNoAt(
             in_channels=block_out_channels[-1],
             resnet_groups=self.norm_num_groups,
             attn_num_head_channels=None,
