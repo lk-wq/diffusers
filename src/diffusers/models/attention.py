@@ -182,6 +182,8 @@ class AttentionBlock(nn.Module):
             hidden_states = self.attn_fn( query_proj.squeeze().unsqueeze(0).unsqueeze(0), key_proj.squeeze().unsqueeze(0).unsqueeze(0), value_proj.squeeze().unsqueeze(0).unsqueeze(0) ).squeeze().unsqueeze(0)
 #             hidden_states = torch.cat(h,dim=1).squeeze().unsqueeze(0)
         # reshape hidden_states
+        if len(hidden_states.size()) > 3:
+            hidden_states = hidden_states.squeeze()
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
 
         # compute next hidden_states
