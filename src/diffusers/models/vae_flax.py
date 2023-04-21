@@ -868,7 +868,7 @@ class FlaxDecoder(nn.Module):
         )
 
         # middle
-        self.mid_block = FlaxUNetMidBlock2DCircularNoAt(
+        self.mid_block = FlaxUNetMidBlock2DCircular(
             in_channels=block_out_channels[-1],
             resnet_groups=self.norm_num_groups,
             attn_num_head_channels=None,
