@@ -58,7 +58,7 @@ class FlaxAutoencoderKLOutput(BaseOutput):
     latent_dist: "FlaxDiagonalGaussianDistribution"
 
 
-class FlaxUpsample2DCircular(nn.Module):
+class FlaxUpsample2D(nn.Module):
     """
     Flax implementation of 2D Upsample layer
 
@@ -77,7 +77,7 @@ class FlaxUpsample2DCircular(nn.Module):
             self.in_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding='CIRCULAR',
+            padding=((1, 1), (1, 1)),
             dtype=self.dtype,
         )
 
@@ -232,7 +232,7 @@ class FlaxResnetBlock2D(nn.Module):
 
         return hidden_states + residual
 
-class FlaxResnetBlock2DCircular(nn.Module):
+class FlaxResnetBlock2D(nn.Module):
     """
     Flax implementation of 2D Resnet Block.
     Args:
@@ -265,7 +265,7 @@ class FlaxResnetBlock2DCircular(nn.Module):
             out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding="CIRCULAR",
+            padding=((1, 1), (1, 1)),
             dtype=self.dtype,
         )
 
@@ -275,7 +275,7 @@ class FlaxResnetBlock2DCircular(nn.Module):
             out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding="CIRCULAR",
+            padding=((1, 1), (1, 1)),
             dtype=self.dtype,
         )
 
@@ -413,7 +413,7 @@ class FlaxDownEncoderBlock2D(nn.Module):
         for i in range(self.num_layers):
             in_channels = self.in_channels if i == 0 else self.out_channels
 
-            res_block = FlaxResnetBlock2DCircular(
+            res_block = FlaxResnetBlock2D(
                 in_channels=in_channels,
                 out_channels=self.out_channels,
                 dropout=self.dropout,
@@ -467,7 +467,7 @@ class FlaxUpDecoderBlock2D(nn.Module):
         resnets = []
         for i in range(self.num_layers):
             in_channels = self.in_channels if i == 0 else self.out_channels
-            res_block = FlaxResnetBlock2DCircular(
+            res_block = FlaxResnetBlock2D(
                 in_channels=in_channels,
                 out_channels=self.out_channels,
                 dropout=self.dropout,
@@ -479,7 +479,7 @@ class FlaxUpDecoderBlock2D(nn.Module):
         self.resnets = resnets
 
         if self.add_upsample:
-            self.upsamplers_0 = FlaxUpsample2DCircular(self.out_channels, dtype=self.dtype)
+            self.upsamplers_0 = FlaxUpsample2D(self.out_channels, dtype=self.dtype)
 
     def __call__(self, hidden_states, deterministic=True):
         for resnet in self.resnets:
@@ -589,7 +589,7 @@ class FlaxUNetMidBlock2DCircularNoAt(nn.Module):
 
         # there is always at least one resnet
         resnets = [
-            FlaxResnetBlock2DCircular(
+            FlaxResnetBlock2D(
                 in_channels=self.in_channels,
                 out_channels=self.in_channels,
                 dropout=self.dropout,
@@ -609,7 +609,7 @@ class FlaxUNetMidBlock2DCircularNoAt(nn.Module):
             )
             attentions.append(attn_block)
 
-            res_block = FlaxResnetBlock2DCircular(
+            res_block = FlaxResnetBlock2D(
                 in_channels=self.in_channels,
                 out_channels=self.in_channels,
                 dropout=self.dropout,
@@ -658,7 +658,7 @@ class FlaxUNetMidBlock2DCircular(nn.Module):
 
         # there is always at least one resnet
         resnets = [
-            FlaxResnetBlock2DCircular(
+            FlaxResnetBlock2D(
                 in_channels=self.in_channels,
                 out_channels=self.in_channels,
                 dropout=self.dropout,
@@ -678,7 +678,7 @@ class FlaxUNetMidBlock2DCircular(nn.Module):
             )
             attentions.append(attn_block)
 
-            res_block = FlaxResnetBlock2DCircular(
+            res_block = FlaxResnetBlock2D(
                 in_channels=self.in_channels,
                 out_channels=self.in_channels,
                 dropout=self.dropout,
@@ -775,7 +775,7 @@ class FlaxEncoder(nn.Module):
         self.down_blocks = down_blocks
 
         # middle
-        self.mid_block = FlaxUNetMidBlock2DCircular(
+        self.mid_block = FlaxUNetMidBlock2D(
             in_channels=block_out_channels[-1],
             resnet_groups=self.norm_num_groups,
             attn_num_head_channels=None,
@@ -789,7 +789,7 @@ class FlaxEncoder(nn.Module):
             conv_out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding='CIRCULAR',
+            padding=((1, 1), (1, 1)),
             dtype=self.dtype,
         )
 
