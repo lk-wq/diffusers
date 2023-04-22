@@ -555,7 +555,7 @@ class FlaxUNetMidBlock2D(nn.Module):
     def __call__(self, hidden_states, deterministic=True):
         hidden_states = self.resnets[0](hidden_states, deterministic=deterministic)
         for attn, resnet in zip(self.attentions, self.resnets[1:]):
-            hidden_states = attn(hidden_states)
+#             hidden_states = attn(hidden_states)
             hidden_states = resnet(hidden_states, deterministic=deterministic)
 
         return hidden_states
@@ -751,7 +751,7 @@ class FlaxEncoder(nn.Module):
             block_out_channels[0],
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding='CIRCULAR',
+            padding=((1, 1), (1, 1)),
             dtype=self.dtype,
         )
 
@@ -863,12 +863,12 @@ class FlaxDecoder(nn.Module):
             block_out_channels[-1],
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding='CIRCULAR',
+            padding=((1, 1), (1, 1)),
             dtype=self.dtype,
         )
 
         # middle
-        self.mid_block = FlaxUNetMidBlock2DCircular(
+        self.mid_block = FlaxUNetMidBlock2D(
             in_channels=block_out_channels[-1],
             resnet_groups=self.norm_num_groups,
             attn_num_head_channels=None,
@@ -904,7 +904,7 @@ class FlaxDecoder(nn.Module):
             self.out_channels,
             kernel_size=(3, 3),
             strides=(1, 1),
-            padding='CIRCULAR',
+            padding=((1, 1), (1, 1)),
             dtype=self.dtype,
         )
 
