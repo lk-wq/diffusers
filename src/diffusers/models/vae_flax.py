@@ -555,7 +555,9 @@ class FlaxUNetMidBlock2D(nn.Module):
     def __call__(self, hidden_states, deterministic=True):
         hidden_states = self.resnets[0](hidden_states, deterministic=deterministic)
         for attn, resnet in zip(self.attentions, self.resnets[1:]):
+            print("attn",hidden_states)
 #             hidden_states = attn(hidden_states)
+
             hidden_states = resnet(hidden_states, deterministic=deterministic)
 
         return hidden_states
