@@ -627,10 +627,10 @@ class FlaxUNetMidBlock2DCircularNoAt(nn.Module):
         hidden_states = self.resnets[0](hidden_states, deterministic=deterministic)
         for attn, resnet in zip(self.attentions, self.resnets[1:]):
 #             hidden_states = attn(hidden_states)
-            attn00 = hidden_states[:,:192,:192,:]
-            attn01 = hidden_states[:,:192,192:,:]
-            attn10 = hidden_states[:,192:,:192,:]
-            attn11 = hidden_states[:,192:,192:,:]
+            attn00 = attn(hidden_states[:,:192,:192,:])
+            attn01 = attn(hidden_states[:,:192,192:,:])
+            attn10 = attn(hidden_states[:,192:,:192,:])
+            attn11 = attn(hidden_states[:,192:,192:,:])
 
             attn0 = jnp.concatenate([attn00,attn01],axis=2)
             attn1 = jnp.concatenate([attn10,attn11],axis=2)
