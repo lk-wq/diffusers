@@ -867,7 +867,7 @@ def main():
 #     @jax.jit
     def ema_update(params, avg_params, decay):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
-      step = (1 - decay**(args.ema_frequency))
+      step = (1 - decay**(args.ema_frequency/args.accumulation_frequency))
       return optax.incremental_update(params, avg_params, step_size=step)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
