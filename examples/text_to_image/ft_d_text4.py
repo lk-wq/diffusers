@@ -902,7 +902,7 @@ def main():
             train_step_progress_bar.update(1)
 
             if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
-                if global_step % args.ema_frequency == 0:
+                if args.ema_frequency > -1 and global_step % args.ema_frequency == 0:
                   it = global_step#//args.ema_frequency
                   decay = 0.999
                   decay = min(decay,(1 + it) / (10 + it))
@@ -938,17 +938,29 @@ def main():
                         safety_checker=safety_checker,
                         feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
                     )
+                    if args.ema_frequency > -1:
+                        pipeline.save_pretrained(
+                            args.output_dir,
+                            params={
+                                "text_encoder": text_avg,
+                                "vae": get_params_to_save(vae_params),
+                                "unet": avg,
+                                "safety_checker": safety_checker.params,
 
-                    pipeline.save_pretrained(
-                        args.output_dir,
-                        params={
-                            "text_encoder": text_avg,
-                            "vae": get_params_to_save(vae_params),
-                            "unet": avg,
-                            "safety_checker": safety_checker.params,
+                            },
+                        )
+                    else:
+                        pipeline.save_pretrained(
+                            args.output_dir,
+                            params={
+                                "text_encoder": get_params_to_save(text_encoder_state.params),
+                                "vae": get_params_to_save(vae_params),
+                                "unet": get_params_to_save(state.params),
+                                "safety_checker": safety_checker.params,
 
-                        },
-                    )
+                            },
+                        )
+
     #                     blob = bucket.blob(args.output_dir+str(global_step))
                     try:
                         upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir+str(global_step))
@@ -1001,16 +1013,28 @@ def main():
             feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
         )
 
-        pipeline.save_pretrained(
-            args.output_dir,
-            params={
-                "text_encoder": text_avg,
-                "vae": get_params_to_save(vae_params),
-                "unet": avg,
-                "safety_checker": safety_checker.params,
+        if args.ema_frequency > -1:
+            pipeline.save_pretrained(
+                args.output_dir,
+                params={
+                    "text_encoder": text_avg,
+                    "vae": get_params_to_save(vae_params),
+                    "unet": avg,
+                    "safety_checker": safety_checker.params,
 
-            },
-        )
+                },
+            )
+        else:
+            pipeline.save_pretrained(
+                args.output_dir,
+                params={
+                    "text_encoder": get_params_to_save(text_encoder_state.params),
+                    "vae": get_params_to_save(vae_params),
+                    "unet": get_params_to_save(state.params),
+                    "safety_checker": safety_checker.params,
+
+                },
+            )
         upload_local_directory_to_gcs(args.output_dir , bucket, args.bucketdir)
 
         if args.push_to_hub:
