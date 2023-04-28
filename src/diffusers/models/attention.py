@@ -147,7 +147,6 @@ class AttentionBlock(nn.Module):
             )
             hidden_states = hidden_states.to(query_proj.dtype)
         else:
-            print("size q k v ",query_states.size(), key_states.size(), value_states.size() )
             a = []
             for i in range(16):
                 query_states, key_states, value_states = query_proj[:,i*query_states.size(1)//16:(i+1)*query_states.size(1)//16,:], key_proj[:,i*query_states.size(1)//16:(i+1)*query_states.size(1)//16,:], value_proj[:,i*query_states.size(1)//16:(i+1)*query_states.size(1)//16,:]
