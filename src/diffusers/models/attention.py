@@ -120,38 +120,47 @@ class AttentionBlock(nn.Module):
         self._attention_op = attention_op
 
     def forward(self, hidden_states):
-        residual = hidden_states
-        batch, channel, height, width = hidden_states.shape
+            residual = hidden_states
+            
+            batch, channel, height, width = hidden_states.shape
 
-        # norm
-        hidden_states = self.group_norm(hidden_states)
-        print("hidden_states -------------------------> ",hidden_states.size())
-        hidden_states = hidden_states.view(batch, channel, height * width).transpose(1, 2)
+            # norm
+      
+            hidden_states = self.group_norm(hidden_states)
+            print("hidden_states -------------------------> ",hidden_states.size())
+        c = []
+        for i in range(4):
+            if c == 0:
+                hidden_states = hidden_states[:,:,:768,:768]
+            if c == 1:
+                hidden_states = hidden_states[:,:,:768,768:]
+            if c == 2:
+                hidden_states = hidden_states[:,:,768:,:768]
+            if c == 3:
+                hidden_states = hidden_states[:,:,768:,768:]
 
-        # proj to q, k, v
-        query_proj = self.query(hidden_states)
-        key_proj = self.key(hidden_states)
-        value_proj = self.value(hidden_states)
+            hidden_states = hidden_states.view(batch, channel, height * width).transpose(1, 2)
 
-        scale = 1 / math.sqrt(self.channels / self.num_heads)
-        print("pre", query_proj.size())
-        query_proj = self.reshape_heads_to_batch_dim(query_proj)#.half()
-        key_proj = self.reshape_heads_to_batch_dim(key_proj)#.half()
-        value_proj = self.reshape_heads_to_batch_dim(value_proj)#.half()
-        
-        print("query / key",query_proj.size(), key_proj.size())
-        if False:#self._use_memory_efficient_attention_xformers:
-            # Memory efficient attention
-            hidden_states = xformers.ops.memory_efficient_attention(
-                query_proj, key_proj, value_proj, attn_bias=None, op=self._attention_op
-            )
-            hidden_states = hidden_states.to(query_proj.dtype)
-        else:
-            a = []
-            splits = 128
-            for i in range(splits):
-                print("splitting attn ------------------------->", i)
-                query_states, key_states, value_states = query_proj[:,i*query_proj.size(1)//splits:(i+1)*query_proj.size(1)//splits,:], key_proj[:,i*query_proj.size(1)//splits:(i+1)*query_proj.size(1)//splits,:], value_proj[:,i*query_proj.size(1)//splits:(i+1)*query_proj.size(1)//splits,:]
+            # proj to q, k, v
+            query_proj = self.query(hidden_states)
+            key_proj = self.key(hidden_states)
+            value_proj = self.value(hidden_states)
+
+            scale = 1 / math.sqrt(self.channels / self.num_heads)
+            print("pre", query_proj.size())
+            query_proj = self.reshape_heads_to_batch_dim(query_proj)#.half()
+            key_proj = self.reshape_heads_to_batch_dim(key_proj)#.half()
+            value_proj = self.reshape_heads_to_batch_dim(value_proj)#.half()
+
+            print("query / key",query_proj.size(), key_proj.size())
+            if False:#self._use_memory_efficient_attention_xformers:
+                # Memory efficient attention
+                hidden_states = xformers.ops.memory_efficient_attention(
+                    query_proj, key_proj, value_proj, attn_bias=None, op=self._attention_op
+                )
+                hidden_states = hidden_states.to(query_proj.dtype)
+            else:
+                query_states, key_states, value_states = query_proj, key_proj, value_proj
 
                 attention_scores = torch.baddbmm(
                     torch.empty(
@@ -166,49 +175,16 @@ class AttentionBlock(nn.Module):
                     beta=0,
                     alpha=scale,
                 )
-                a.append(attention_scores)
-        print("attention_scores",a[0].size())
-        attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
-        hidden_states = torch.bmm(attention_probs, value_proj).float()
+            attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
+            hidden_states = torch.bmm(attention_probs, value_proj).float()
+            if len(hidden_states.size()) > 3:
+                hidden_states = hidden_states.squeeze()
+            hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
 
-#             attention_scores = torch.baddbmm(
-#                 torch.empty(
-#                     query_proj.shape[0],
-#                     query_proj.shape[1],
-#                     key_proj.shape[1],
-#                     dtype=query_proj.dtype,
-#                     device=query_proj.device,
-#                 ),
-#                 query_proj,
-#                 key_proj.transpose(-1, -2),
-#                 beta=0,
-#                 alpha=scale,
-#             )
-#             attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
-#             hidden_states = torch.bmm(attention_probs, value_proj).float()
-#             h = []
-#             scaler = 256
-#             for _ in range(query_proj.size(1)//scaler + 1):
-#                 if _ % 1000 == 0:
-#                     print(_)
-#                 attention_scores = scale*(key_proj @ query_proj.transpose(-1,-2)[:,:,scaler*_:scaler*(_+1)].T).squeeze(-1)
-#                 attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
-#                 # print(attention_probs)
-#                 hidden_states = attention_probs @ value_proj
-#                 h.append(hidden_states) 
-#             hidden_states = torch.cat(h).squeeze().unsqueeze(0)
-#             print("efficient god? 2")
-#             query = torch.softmax(query_proj,dim=-1)
-#             key = torch.softmax(key_proj,dim=-2)
-#             kv = (key.T.squeeze() @ value_proj.squeeze())
-#             hidden_states = (query @ kv).squeeze().unsqueeze(0) 
-#             attn_fn = FastAttention(dim_heads=512, nb_features=512, causal=False, no_projection=True)
-#             hidden_states = self.attn_fn( query_proj.squeeze().unsqueeze(0).unsqueeze(0), key_proj.squeeze().unsqueeze(0).unsqueeze(0), value_proj.squeeze().unsqueeze(0).unsqueeze(0) ).squeeze().unsqueeze(0)
-#             hidden_states = torch.cat(h,dim=1).squeeze().unsqueeze(0)
-        # reshape hidden_states
-        if len(hidden_states.size()) > 3:
-            hidden_states = hidden_states.squeeze()
-        hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
+            c.append(hidden_states)
+        attn0 = torch.cat([c[0],c[1]],axis=3)
+        attn1 = torch.cat([c[2],c[3]],axis=3)
+        hidden_states = torch.cat([attn0,attn1],axis=2)
 
         # compute next hidden_states
         hidden_states = self.proj_attn(hidden_states)
