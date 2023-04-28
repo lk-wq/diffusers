@@ -120,14 +120,14 @@ class AttentionBlock(nn.Module):
         self._attention_op = attention_op
 
     def forward(self, hidden_states):
-            residual = hidden_states
-            
-            batch, channel, height, width = hidden_states.shape
+        residual = hidden_states
 
-            # norm
-      
-            hidden_states = self.group_norm(hidden_states)
-            print("hidden_states -------------------------> ",hidden_states.size())
+        batch, channel, height, width = hidden_states.shape
+
+        # norm
+
+        hidden_states = self.group_norm(hidden_states)
+        print("hidden_states -------------------------> ",hidden_states.size())
         c = []
         for i in range(4):
             if c == 0:
