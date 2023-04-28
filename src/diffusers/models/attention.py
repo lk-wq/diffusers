@@ -148,7 +148,7 @@ class AttentionBlock(nn.Module):
             hidden_states = hidden_states.to(query_proj.dtype)
         else:
             a = []
-            splits = 64
+            splits = 128
             for i in range(splits):
                 print("splitting attn ------------------------->", i)
                 query_states, key_states, value_states = query_proj[:,i*query_proj.size(1)//splits:(i+1)*query_proj.size(1)//splits,:], key_proj[:,i*query_proj.size(1)//splits:(i+1)*query_proj.size(1)//splits,:], value_proj[:,i*query_proj.size(1)//splits:(i+1)*query_proj.size(1)//splits,:]
