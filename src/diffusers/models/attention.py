@@ -139,7 +139,7 @@ class AttentionBlock(nn.Module):
             if i == 3:
                 hidden_states = hidden_states[:,:,768:,768:]
             print("hs --------->",i , hidden_states.size() )
-            hidden_states = hidden_states.view(batch, channel, 768 * 768).transpose(1, 2)
+            hidden_states = hidden_states.reshape(batch, channel, 768 * 768).transpose(1, 2)
 
             # proj to q, k, v
             query_proj = self.query(hidden_states)
