@@ -147,22 +147,26 @@ class AttentionBlock(nn.Module):
             )
             hidden_states = hidden_states.to(query_proj.dtype)
         else:
-            query_states, key_states, value_states = query_proj, key_proj, value_proj
             print("size q k v ",query_states.size(), key_states.size(), value_states.size() )
-            attention_scores = torch.baddbmm(
-                torch.empty(
-                    query_states.shape[0],
-                    query_states.shape[1],
-                    key_states.shape[1],
-                    dtype=query_states.dtype,
-                    device=query_states.device,
-                ),
-                query_states,
-                key_states.transpose(-1, -2),
-                beta=0,
-                alpha=scale,
-            )
+            a = []
+            for i in range(16):
+                query_states, key_states, value_states = query_proj[:,i*query_states.size(1)//16:(i+1)*query_states.size(1)//16,:], key_proj[:,i*query_states.size(1)//16:(i+1)*query_states.size(1)//16,:], value_proj[:,i*query_states.size(1)//16:(i+1)*query_states.size(1)//16,:]
 
+                attention_scores = torch.baddbmm(
+                    torch.empty(
+                        query_states.shape[0],
+                        query_states.shape[1],
+                        key_states.shape[1],
+                        dtype=query_states.dtype,
+                        device=query_states.device,
+                    ),
+                    query_states,
+                    key_states.transpose(-1, -2),
+                    beta=0,
+                    alpha=scale,
+                )
+                a.append(attention_scores)
+        print("attention_scores",a[0].size())
         attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
         hidden_states = torch.bmm(attention_probs, value_proj).float()
 
