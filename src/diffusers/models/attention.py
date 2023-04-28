@@ -125,7 +125,7 @@ class AttentionBlock(nn.Module):
 
         # norm
         hidden_states = self.group_norm(hidden_states)
-
+        print("hidden_states -------------------------> ",hidden_states.size())
         hidden_states = hidden_states.view(batch, channel, height * width).transpose(1, 2)
 
         # proj to q, k, v
