@@ -130,13 +130,13 @@ class AttentionBlock(nn.Module):
         print("hidden_states -------------------------> ",hidden_states.size())
         c = []
         for i in range(4):
-            if c == 0:
+            if i == 0:
                 hidden_states = hidden_states[:,:,:768,:768]
-            if c == 1:
+            if i == 1:
                 hidden_states = hidden_states[:,:,:768,768:]
-            if c == 2:
+            if i == 2:
                 hidden_states = hidden_states[:,:,768:,:768]
-            if c == 3:
+            if i == 3:
                 hidden_states = hidden_states[:,:,768:,768:]
 
             hidden_states = hidden_states.view(batch, channel, height * width).transpose(1, 2)
