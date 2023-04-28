@@ -147,6 +147,25 @@ class AttentionBlock(nn.Module):
             )
             hidden_states = hidden_states.to(query_proj.dtype)
         else:
+            query_states, key_states, value_states = query_proj, key_proj, value_proj
+            print("size q k v ",query_states.size(), key_states.size(), value_states.size() )
+            attention_scores = torch.baddbmm(
+                torch.empty(
+                    query_states.shape[0],
+                    query_states.shape[1],
+                    key_states.shape[1],
+                    dtype=query_states.dtype,
+                    device=query_states.device,
+                ),
+                query_states,
+                key_states.transpose(-1, -2),
+                beta=0,
+                alpha=scale,
+            )
+
+        attention_probs = torch.softmax(attention_scores.float(), dim=-1).type(attention_scores.dtype)
+        hidden_states = torch.bmm(attention_probs, value_proj).float()
+
 #             attention_scores = torch.baddbmm(
 #                 torch.empty(
 #                     query_proj.shape[0],
@@ -173,13 +192,13 @@ class AttentionBlock(nn.Module):
 #                 hidden_states = attention_probs @ value_proj
 #                 h.append(hidden_states) 
 #             hidden_states = torch.cat(h).squeeze().unsqueeze(0)
-            print("efficient god? 2")
+#             print("efficient god? 2")
 #             query = torch.softmax(query_proj,dim=-1)
 #             key = torch.softmax(key_proj,dim=-2)
 #             kv = (key.T.squeeze() @ value_proj.squeeze())
 #             hidden_states = (query @ kv).squeeze().unsqueeze(0) 
 #             attn_fn = FastAttention(dim_heads=512, nb_features=512, causal=False, no_projection=True)
-            hidden_states = self.attn_fn( query_proj.squeeze().unsqueeze(0).unsqueeze(0), key_proj.squeeze().unsqueeze(0).unsqueeze(0), value_proj.squeeze().unsqueeze(0).unsqueeze(0) ).squeeze().unsqueeze(0)
+#             hidden_states = self.attn_fn( query_proj.squeeze().unsqueeze(0).unsqueeze(0), key_proj.squeeze().unsqueeze(0).unsqueeze(0), value_proj.squeeze().unsqueeze(0).unsqueeze(0) ).squeeze().unsqueeze(0)
 #             hidden_states = torch.cat(h,dim=1).squeeze().unsqueeze(0)
         # reshape hidden_states
         if len(hidden_states.size()) > 3:
