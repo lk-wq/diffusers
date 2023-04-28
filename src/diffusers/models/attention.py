@@ -149,7 +149,7 @@ class AttentionBlock(nn.Module):
         else:
             a = []
             for i in range(16):
-                query_states, key_states, value_states = query_proj[:,i*query_states.size(1)//16:(i+1)*query_states.size(1)//16,:], key_proj[:,i*query_states.size(1)//16:(i+1)*query_states.size(1)//16,:], value_proj[:,i*query_states.size(1)//16:(i+1)*query_states.size(1)//16,:]
+                query_states, key_states, value_states = query_proj[:,i*query_proj.size(1)//16:(i+1)*query_proj.size(1)//16,:], key_proj[:,i*query_proj.size(1)//16:(i+1)*query_proj.size(1)//16,:], value_proj[:,i*query_proj.size(1)//16:(i+1)*query_proj.size(1)//16,:]
 
                 attention_scores = torch.baddbmm(
                     torch.empty(
