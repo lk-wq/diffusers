@@ -24,6 +24,8 @@ from diffusers import (
     FlaxUNet2DConditionModel,
     FlaxDDIMScheduler,
 )
+from transformers import CLIPFeatureExtractor, CLIPTokenizer, FlaxCLIPTextModel, set_seed
+
 from diffusers.pipelines.stable_diffusion import FlaxStableDiffusionSafetyChecker
 from flax import jax_utils
 from flax.training import train_state
