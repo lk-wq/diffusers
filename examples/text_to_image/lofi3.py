@@ -488,6 +488,10 @@ def main():
           unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
               i, subfolder="unet",  revision='bf16',dtype=weight_dtype
           )
+          text_encoder = FlaxCLIPTextModel.from_pretrained(
+                args.pretrained_model_name_or_path, subfolder="text_encoder",revision='bf16', dtype=weight_dtype
+            )
+
       except:
           print("couldn't load",i)
           continue
@@ -509,8 +513,11 @@ def main():
         unet_params = unflatten(unet_param_dict)
         step = 1-(count/(count+1))
         unet_params_avg = optax.incremental_update(unet_params, unet_params_avg, step_size=step)
+        ta = optax.incremental_update(text_encoder.params, ta, step_size=step)
+
       else:
         unet_params_avg = unflatten(unet_param_dict)
+        ta = text_encoder.params
       count += 1
 #     text_encoder_params = jax_utils.replicate(text_encoder.params)
 #     vae_params = jax_utils.replicate(vae_params)
@@ -547,7 +554,7 @@ def main():
       pipeline.save_pretrained(
             args.output_dir,
             params={
-                "text_encoder": text_encoder.params,
+                "text_encoder": ta,
                 "vae": vae_params,
                 "unet": unet_params_avg,
                 "safety_checker": safety_checker.params,
