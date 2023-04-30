@@ -440,7 +440,7 @@ def main():
             last_modified = blob.updated
             # We only need the unet and also we only want to use the local update if the last modification
             # to the local update happened after the last global update
-            print("filenames", last_modified > last_update_time, last_modified, last_update_time)
+#             print("filenames", last_modified > last_update_time, last_modified, last_update_time)
             if 'unet' in filename and last_modified > last_update_time:
                 try:
                     import os
@@ -456,7 +456,7 @@ def main():
                     if 'config' in filename and 'unet' in filename:
                         blob.download_to_filename(dir_+'/'+ 'config.json' )  # Download
                     elif 'config' in filename:
-                        blob.download_to_filename(dir_+'/'+ 'config.json' )  # Download
+                        blob.download_to_filename(dir2_+'/'+ 'config.json' )  # Download
                     elif 'unet' in filename:
                         blob.download_to_filename(dir_+'/'+ 'diffusion_flax_model.msgpack' )  # Download
                         
