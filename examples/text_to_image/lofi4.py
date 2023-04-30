@@ -446,15 +446,22 @@ def main():
                     import os
                     try:
                         dir_ = local_path+str(prefix)+'/unet'
+                        dir2_ = local_path+str(prefix)+'/text_encoder'
                         os.mkdir(local_path+str(prefix))
                         os.mkdir(dir_)
+                        os.mkdir(dir2_)
                     except:
                         pass
-                    print("file name and dir_ ", filename , dir_)
-                    if 'config' in filename:
+                    print("file name and dir_ ", filename , dir_, dir2_)
+                    if 'config' in filename and 'unet' in filename:
                         blob.download_to_filename(dir_+'/'+ 'config.json' )  # Download
-                    else:
+                    elif 'config' in filename:
+                        blob.download_to_filename(dir_+'/'+ 'config.json' )  # Download
+                    elif 'unet' in filename:
                         blob.download_to_filename(dir_+'/'+ 'diffusion_flax_model.msgpack' )  # Download
+                        
+                    else:
+                        blob.download_to_filename(dir2_+'/'+ 'flax_model.msgpack' )  # Download
                     update_list.append(local_path+prefix)   
                 except:
                     print("failed ---------------------------> ")
@@ -491,7 +498,7 @@ def main():
               i, subfolder="unet",  revision='bf16',dtype=weight_dtype
           )
           text_encoder = FlaxCLIPTextModel.from_pretrained(
-                args.pretrained_model_name_or_path, subfolder="text_encoder",revision='bf16', dtype=weight_dtype
+                i, subfolder="text_encoder",revision='bf16', dtype=weight_dtype
             )
 
       except:
