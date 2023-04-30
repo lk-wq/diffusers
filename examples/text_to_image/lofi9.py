@@ -495,10 +495,10 @@ def main():
 #           try: 
 #       try:
       unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-          i, subfolder="unet",  revision='bf16',dtype=weight_dtype
+          i+'/unet', subfolder="unet",  revision='bf16',dtype=weight_dtype
       )
       text_encoder = FlaxCLIPTextModel.from_pretrained(
-            i, subfolder="text_encoder",revision='bf16', dtype=weight_dtype
+            i+'/text_encoder', subfolder="text_encoder",revision='bf16', dtype=weight_dtype
         )
 
 #       except:
