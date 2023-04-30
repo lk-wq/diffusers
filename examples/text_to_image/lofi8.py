@@ -493,17 +493,17 @@ def main():
     count = 0
     for ix , i in enumerate(update_list):
 #           try: 
-      try:
-          unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-              i, subfolder="unet",  revision='bf16',dtype=weight_dtype
-          )
-          text_encoder = FlaxCLIPTextModel.from_pretrained(
-                i, subfolder="text_encoder",revision='bf16', dtype=weight_dtype
-            )
+#       try:
+      unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+          i, subfolder="unet",  revision='bf16',dtype=weight_dtype
+      )
+      text_encoder = FlaxCLIPTextModel.from_pretrained(
+            i, subfolder="text_encoder",revision='bf16', dtype=weight_dtype
+        )
 
-      except:
-          print("couldn't load",i)
-          continue
+#       except:
+#           print("couldn't load",i)
+#           continue
 
 #           except:
 #               print("load fail ------------------------------>",i) 
