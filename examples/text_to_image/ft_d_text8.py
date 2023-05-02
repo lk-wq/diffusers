@@ -240,7 +240,7 @@ class TrainState(struct.PyTreeNode):
   opt_state: optax.OptState = struct.field(pytree_node=True)
   rng: jax.random.PRNGKey = struct.field(pytree_node=False)
 
-  def apply_gradients(self, *, grads, **kwargs):
+  def apply_gradients(self, *, grads, rng,**kwargs):
     """Updates `step`, `params`, `opt_state` and `**kwargs` in return value.
 
     Note that internally this function calls `.tx.update()` followed by a call
@@ -257,8 +257,8 @@ class TrainState(struct.PyTreeNode):
     """
     updates, new_opt_state = self.tx.update(
         grads, self.opt_state, self.params)
-    self.rng , _= jax.random.split(self.rng,2)
-    new_params = tree_add( self.rng,self.params, updates,is_biased=False)
+    rng , _= jax.random.split(rng,2)
+    new_params = tree_add( rng,self.params, updates,is_biased=False)
     return self.replace(
         step=self.step + 1,
         params=new_params,
@@ -1037,8 +1037,8 @@ def main():
         loss, grad = grad_fn(params)
         grad = jax.lax.pmean(grad, "batch")
         print(" g -------------> ", type(grad['text_encoder']) , type(grad['unet']) )
-        new_state = state.apply_gradients(grads=grad['unet'])
-        new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
+        new_state = state.apply_gradients(grads=grad['unet'],rng=new_train_rng)
+        new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"],rng=new_train_rng)
 
         metrics = {"loss": loss}
         metrics = jax.lax.pmean(metrics, axis_name="batch")
