@@ -238,7 +238,6 @@ class TrainState(struct.PyTreeNode):
   params: core.FrozenDict[str, Any] = struct.field(pytree_node=True)
   tx: optax.GradientTransformation = struct.field(pytree_node=False)
   opt_state: optax.OptState = struct.field(pytree_node=True)
-  rng: jax.random.PRNGKey = struct.field(pytree_node=False)
 
   def apply_gradients(self, *, grads, rng,**kwargs):
     """Updates `step`, `params`, `opt_state` and `**kwargs` in return value.
@@ -257,7 +256,6 @@ class TrainState(struct.PyTreeNode):
     """
     updates, new_opt_state = self.tx.update(
         grads, self.opt_state, self.params)
-    rng , _= jax.random.split(rng,2)
     new_params = tree_add( rng,self.params, updates,is_biased=False)
     return self.replace(
         step=self.step + 1,
@@ -267,7 +265,7 @@ class TrainState(struct.PyTreeNode):
     )
 
   @classmethod
-  def create(cls, *, apply_fn, params, tx, rng,**kwargs):
+  def create(cls, *, apply_fn, params, tx,**kwargs):
     """Creates a new instance with `step=0` and initialized `opt_state`."""
     opt_state = tx.init(params)
     return cls(
@@ -275,7 +273,6 @@ class TrainState(struct.PyTreeNode):
         apply_fn=apply_fn,
         params=params,
         tx=tx,
-        rng=rng,
         opt_state=opt_state,
         **kwargs,
     )
