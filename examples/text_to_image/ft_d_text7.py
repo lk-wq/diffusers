@@ -238,7 +238,7 @@ class TrainState(struct.PyTreeNode):
   params: core.FrozenDict[str, Any] = struct.field(pytree_node=True)
   tx: optax.GradientTransformation = struct.field(pytree_node=False)
   opt_state: optax.OptState = struct.field(pytree_node=True)
-#   rng: jax.random.PRNGKey = struct.field(pytree_node=False)
+  rng: jax.random.PRNGKey = struct.field(pytree_node=False)
 
   def apply_gradients(self, *, grads, **kwargs):
     """Updates `step`, `params`, `opt_state` and `**kwargs` in return value.
