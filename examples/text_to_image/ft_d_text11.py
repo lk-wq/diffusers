@@ -256,7 +256,7 @@ class TrainState(struct.PyTreeNode):
     """
     updates, new_opt_state = self.tx.update(
         grads, self.opt_state, self.params)
-    new_params = tree_add( rng,self.params, updates,is_biased=False)
+    new_params = tree_add( rng,self.params, updates,is_biased=True)
     return self.replace(
         step=self.step + 1,
         params=new_params,
