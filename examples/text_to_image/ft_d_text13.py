@@ -1041,8 +1041,12 @@ def main():
         loss, grad = grad_fn(params)
         grad = jax.lax.pmean(grad, "batch")
         print(" g -------------> ", type(grad['text_encoder']) , type(grad['unet']) )
-        new_state = state.apply_gradients(grads=grad['unet'],rng=new_train_rng)
-        new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"],rng=new_train_rng)
+        if args.schochastic_rounding:
+            new_state = state.apply_gradients(grads=grad['unet'],rng=new_train_rng)
+            new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"],rng=new_train_rng)
+        else:
+            new_state = state.apply_gradients(grads=grad['unet'])
+            new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
 
         metrics = {"loss": loss}
         metrics = jax.lax.pmean(metrics, axis_name="batch")
