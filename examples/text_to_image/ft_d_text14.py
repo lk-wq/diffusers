@@ -1041,7 +1041,7 @@ def main():
         loss, grad = grad_fn(params)
         grad = jax.lax.pmean(grad, "batch")
         print(" g -------------> ", type(grad['text_encoder']) , type(grad['unet']) )
-        if args.schochastic_rounding:
+        if args.stochastic_rounding:
             new_state = state.apply_gradients(grads=grad['unet'],rng=new_train_rng)
             new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"],rng=new_train_rng)
         else:
@@ -1096,10 +1096,13 @@ def main():
 
     global_step = args.restart_from
 #     @jax.jit
-    def ema_update(params, avg_params, decay):
+    def ema_update(rng, params, avg_params, decay):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
       step = (1 - decay**(args.ema_frequency/args.accumulation_frequency))
-      return optax.incremental_update(params, avg_params, step_size=step)
+      if args.stochastic_rounding:
+        return tree_add( rng , params * (step) , avg_params * (1-step) )
+      else:
+        return optax.incremental_update(params, avg_params, step_size=step)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
     avg = get_params_to_save(state.params)
@@ -1135,11 +1138,12 @@ def main():
             if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
                 if args.ema_frequency > -1 and global_step % args.ema_frequency == 0:
                   it = global_step#//args.ema_frequency
-                  decay = 0.999
+                  decay = args.min_decay
                   decay = min(decay,(1 + it) / (10 + it))
+                  rng, _ = jax.random.split(rng, 2)
 
-                  avg = ema_update( get_params_to_save(state.params) , avg, decay )
-                  text_avg = ema_update( get_params_to_save(text_encoder_state.params) , text_avg, decay )
+                  avg = ema_update( rng, get_params_to_save(state.params) , avg, decay )
+                  text_avg = ema_update(rng, get_params_to_save(text_encoder_state.params) , text_avg, decay )
 
     #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                 if global_step % args.save_frequency == 0:
