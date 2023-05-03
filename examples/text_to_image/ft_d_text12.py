@@ -26,7 +26,7 @@ from diffusers import (
 )
 from diffusers.pipelines.stable_diffusion import FlaxStableDiffusionSafetyChecker
 from flax import jax_utils
-# from flax.training import train_state
+from flax.training import train_state
 from flax.training.common_utils import shard
 from huggingface_hub import HfFolder, Repository, whoami
 from torchvision import transforms
@@ -454,6 +454,7 @@ def parse_args():
         ),
     )
     parser.add_argument("--train_text_encoder", action="store_true", help="Whether to train the text encoder")
+    parser.add_argument("--stochastic_rounding", action="store_true", help="Whether to use stochastic rounding")
 
     parser.add_argument(
         "--image_column", type=str, default="image", help="The column of the dataset containing an image."
@@ -956,10 +957,16 @@ def main():
 
     optimizer = optax.multi_transform(
       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
-    state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
-    text_encoder_state = TrainState.create(
-        apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
-    )
+    if args.stochastic_rounding:
+        state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+        text_encoder_state = TrainState.create(
+            apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
+        )
+    else:
+        state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+        text_encoder_state = train_state.TrainState.create(
+            apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
+        )
 
 #     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
