@@ -571,6 +571,12 @@ def parse_args():
         default=1e-6,
         help="Initial learning rate before warmup.",
     )
+    parser.add_argument(
+        "--min_decay",
+        type=float,
+        default=.9999,
+        help="minimum decay",
+    )
 
     parser.add_argument(
         "--scale_lr",
