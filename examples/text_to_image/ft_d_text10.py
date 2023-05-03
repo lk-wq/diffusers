@@ -956,9 +956,9 @@ def main():
 
     optimizer = optax.multi_transform(
       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
-    state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer,rng=rng)
+    state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
     text_encoder_state = TrainState.create(
-        apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer,rng=rng
+        apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
     )
 
 #     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
