@@ -261,7 +261,7 @@ class TrainState(struct.PyTreeNode):
 #     new_params = tree_add( rng,self.params, updates,is_biased=True)
     updates = jax.tree_util.tree_map(
           lambda update, c: update - c,
-          updates, c0)
+          updates, self.c0)
     
     new_params = apply_updates(self.params, updates)
     ctemp = jax.tree_util.tree_map(
