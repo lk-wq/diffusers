@@ -1125,7 +1125,7 @@ def main():
 #     @jax.jit
     def ema_update(rng, new_tensors, old_tensors, decay):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
-      step_size = (1 - decay**(args.ema_frequency/args.accumulation_frequency))
+      step_size = (1 - decay**(args.ema_frequency))
 
       return jax.tree_util.tree_map(
           lambda new, old: step_size * new.astype(jnp.float32) + (1.0 - step_size) * old.astype(jnp.float32),
