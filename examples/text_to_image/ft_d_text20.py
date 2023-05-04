@@ -263,7 +263,7 @@ class TrainState(struct.PyTreeNode):
           lambda update, c: update - c,
           updates, self.c0)
     
-    new_params = apply_updates(self.params, updates)
+    new_params = optax.apply_updates(self.params, updates)
     ctemp = jax.tree_util.tree_map(
           lambda np, p: np - p,
           new_params, self.params)
