@@ -236,6 +236,8 @@ class TrainState(struct.PyTreeNode):
   step: int
   apply_fn: Callable = struct.field(pytree_node=False)
   params: core.FrozenDict[str, Any] = struct.field(pytree_node=True)
+  c0: core.FrozenDict[str, Any] = struct.field(pytree_node=True)
+
   tx: optax.GradientTransformation = struct.field(pytree_node=False)
   opt_state: optax.OptState = struct.field(pytree_node=True)
 
@@ -256,22 +258,35 @@ class TrainState(struct.PyTreeNode):
     """
     updates, new_opt_state = self.tx.update(
         grads, self.opt_state, self.params)
-    new_params = tree_add( rng,self.params, updates,is_biased=True)
+#     new_params = tree_add( rng,self.params, updates,is_biased=True)
+    updates = jax.tree_util.tree_map(
+          lambda update, c: update - c,
+          updates, c0)
+    
+    new_params = apply_updates(self.params, updates)
+    ctemp = jax.tree_util.tree_map(
+          lambda np, p: np - p,
+          new_params, self.params)
+    c0 = jax.tree_util.tree_map(
+          lambda ct, update: ct - update,
+          ctemp, updates)
     return self.replace(
         step=self.step + 1,
         params=new_params,
+        c0=c0,
         opt_state=new_opt_state,
         **kwargs,
     )
 
   @classmethod
-  def create(cls, *, apply_fn, params, tx,**kwargs):
+  def create(cls, *, apply_fn, params,c0, tx,**kwargs):
     """Creates a new instance with `step=0` and initialized `opt_state`."""
     opt_state = tx.init(params)
     return cls(
         step=0,
         apply_fn=apply_fn,
         params=params,
+        c0=c0,
         tx=tx,
         opt_state=opt_state,
         **kwargs,
@@ -686,6 +701,9 @@ def get_params_to_save(params):
 def get_params_to_avg(params):
     return jax.tree_util.tree_map(lambda x: x[0].astype(jnp.float32), params)
 
+def get_zero(params):
+    return jax.tree_util.tree_map(lambda x: x[0] * 0, params)
+
 
 def main():
     args = parse_args()
@@ -963,10 +981,13 @@ def main():
 
     optimizer = optax.multi_transform(
       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
+    c0p = get_zero(unet_params)
+    c0t = get_zero(text_encoder.params)
+
     if args.stochastic_rounding:
-        state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+        state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer,c0=c0p)
         text_encoder_state = TrainState.create(
-            apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
+            apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer,c0=c0t
         )
     else:
         state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
@@ -1048,8 +1069,8 @@ def main():
         grad = jax.lax.pmean(grad, "batch")
         print(" g -------------> ", type(grad['text_encoder']) , type(grad['unet']) )
         if args.stochastic_rounding:
-            new_state = state.apply_gradients(grads=grad['unet'],rng=new_train_rng)
-            new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"],rng=new_train_rng)
+            new_state = state.apply_gradients(grads=grad['unet'])
+            new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
         else:
             new_state = state.apply_gradients(grads=grad['unet'])
             new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
