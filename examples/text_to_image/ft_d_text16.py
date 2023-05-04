@@ -684,7 +684,7 @@ def get_params_to_save(params):
     return jax.device_get(jax.tree_util.tree_map(lambda x: x[0], params))
 
 def get_params_to_avg(params):
-    return jax.tree_util.tree_map(lambda x: x[0], params)
+    return jax.tree_util.tree_map(lambda x: x[0].astype(jnp.float32), params)
 
 
 def main():
@@ -1102,13 +1102,13 @@ def main():
 
     global_step = args.restart_from
 #     @jax.jit
-    def ema_update(rng, params, avg_params, decay):
+    def ema_update(rng, new_tensors, old_tensors, decay):
       # return (avg_params*(epoch_index+1)+params)/(epoch_index+2)  #
-      step = (1 - decay**(args.ema_frequency/args.accumulation_frequency))
-      if args.stochastic_rounding:
-        return tree_add( rng , params * (step) , avg_params * (1-step) )
-      else:
-        return optax.incremental_update(params, avg_params, step_size=step)
+      step_size = (1 - decay**(args.ema_frequency/args.accumulation_frequency))
+
+      return jax.tree_util.tree_map(
+          lambda new, old: step_size * new.astype(jnp.float32) + (1.0 - step_size) * old.astype(jnp.float32),
+          new_tensors, old_tensors)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
     avg = get_params_to_save(state.params)
