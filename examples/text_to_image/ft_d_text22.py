@@ -53,7 +53,6 @@ import chex
 
 """
 Stochastically rounded operations between JAX tensors.
-This code was written by Nestor Demeure and is licensed under the Apache 2.0 license.
 You can find an up-to-date source and full description here: https://github.com/nestordemeure/jochastic
 """
 import jax
@@ -316,6 +315,7 @@ class FolderData(Dataset):
         resolution2=1536,
         drop=False,
         resize=False,
+        center=False,
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -370,6 +370,14 @@ class FolderData(Dataset):
                 [
             transforms.Resize( resolution2, interpolation=transforms.InterpolationMode.BILINEAR),
             transforms.RandomCrop(resolution),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize([0.5], [0.5]),
+                ]
+            )
+        elif center:
+            self.tform1 = transforms.Compose(
+                [ transforms.CenterCrop(resolution),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             transforms.Normalize([0.5], [0.5]),
@@ -797,7 +805,7 @@ def main():
 #         return input_ids
     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution,resolution2=args.resolution2,drop=args.drop,resize=args.resize)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution,resolution2=args.resolution2,drop=args.drop,resize=args.resize,center=args.center_crop)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
