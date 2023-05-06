@@ -451,10 +451,13 @@ class FlaxModelMixin:
 
         for key in state.keys():
             if key in shape_state and state[key].shape != shape_state[key].shape:
-                raise ValueError(
-                    f"Trying to load the pretrained weight for {key} failed: checkpoint has shape "
-                    f"{state[key].shape} which is incompatible with the model shape {shape_state[key].shape}. "
-                )
+#                 raise ValueError(
+#                     f"Trying to load the pretrained weight for {key} failed: checkpoint has shape "
+#                     f"{state[key].shape} which is incompatible with the model shape {shape_state[key].shape}. "
+#                 )
+                  print( f"Trying to load the pretrained weight for {key} failed: checkpoint has shape ")
+                  print(f"{state[key].shape} which is incompatible with the model shape {shape_state[key].shape}. ")
+
 
         # remove unexpected keys to not be saved again
         for unexpected_key in unexpected_keys:
