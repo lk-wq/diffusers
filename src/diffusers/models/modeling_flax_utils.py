@@ -470,6 +470,10 @@ class FlaxModelMixin:
                 f" initializing {model.__class__.__name__} from the checkpoint of a model trained on another task or"
                 " with another architecture."
             )
+            l = list(unexpected_keys)
+            for i in l:
+                if 'down_blocks_0' in ".".join(i):
+                    print("MISSING ---------------------->" ,i )
         else:
             logger.info(f"All model checkpoint weights were used when initializing {model.__class__.__name__}.\n")
 
