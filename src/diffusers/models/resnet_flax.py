@@ -110,7 +110,7 @@ class FlaxResnetBlock2D(nn.Module):
         residual = hidden_states
         hidden_states = self.norm1(hidden_states)
         hidden_states = nn.swish(hidden_states)
-        if self.down:
+        if self.downsample:
             hidden_states = nn.avg_pool(hidden_states,window_shape=(2,2),strides=(2,2))
             input_tensor = nn.avg_pool(input_tensor,window_shape=(2,2),strides=(2,2))
         hidden_states = self.conv1(hidden_states)
