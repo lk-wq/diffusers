@@ -473,7 +473,13 @@ class FlaxModelMixin:
             l = list(unexpected_keys)
             for i in l:
                 if 'down_blocks_0' in ".".join(i):
-                    print("MISSING ---------------------->" ,i )
+                    print("not used from pytorch ---------------------->" ,i )
+                    
+            l = list(missing_keys)
+            for i in l:
+                if 'down_blocks_0' in ".".join(i):
+                    print("pytorch didnt have these ---------------------->" ,i )
+
         else:
             logger.info(f"All model checkpoint weights were used when initializing {model.__class__.__name__}.\n")
 
