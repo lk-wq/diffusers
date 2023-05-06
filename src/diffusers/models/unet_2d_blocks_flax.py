@@ -159,7 +159,7 @@ class FlaxDownBlock2D(nn.Module):
             output_states += (hidden_states,)
 
         if self.add_downsample:
-            hidden_states = self.downsamplers_0(hidden_states)
+            hidden_states = self.downsamplers_0(hidden_states,temb,deterministic=deterministic)
             output_states += (hidden_states,)
 
         return hidden_states, output_states
