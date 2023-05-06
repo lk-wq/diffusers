@@ -136,6 +136,7 @@ class FlaxDownBlock2D(nn.Module):
                 in_channels=in_channels,
                 out_channels=self.out_channels,
                 dropout_prob=self.dropout,
+                downsample=False,
                 dtype=self.dtype,
             )
             resnets.append(res_block)
