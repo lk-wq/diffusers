@@ -79,7 +79,7 @@ class FlaxResnetBlock2D(nn.Module):
             dtype=self.dtype,
         )
 
-        self.time_emb_proj = nn.Dense(out_channels, dtype=self.dtype)
+        self.time_emb_proj = nn.Dense(2*out_channels, dtype=self.dtype)
 
         self.norm2 = nn.GroupNorm(num_groups=32, epsilon=1e-5)
         self.dropout = nn.Dropout(self.dropout_prob)
