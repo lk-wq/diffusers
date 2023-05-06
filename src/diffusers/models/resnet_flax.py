@@ -110,10 +110,16 @@ class FlaxResnetBlock2D(nn.Module):
         hidden_states = self.conv1(hidden_states)
 
         temb = self.time_emb_proj(nn.swish(temb))
-        temb = jnp.expand_dims(jnp.expand_dims(temb, 1), 1)
-        hidden_states = hidden_states + temb
+        
+        
+
+#         temb = jnp.expand_dims(jnp.expand_dims(temb, 1), 1)
+#         hidden_states = hidden_states + temb
 
         hidden_states = self.norm2(hidden_states)
+        scale, shift = jnp.split(temb, 2, axis=1)
+        hidden_states = hidden_states * (1 + scale) + shift
+
         hidden_states = nn.swish(hidden_states)
         hidden_states = self.dropout(hidden_states, deterministic)
         hidden_states = self.conv2(hidden_states)
