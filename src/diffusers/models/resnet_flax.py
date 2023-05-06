@@ -59,13 +59,13 @@ class FlaxDownsample2D(nn.Module):
         hidden_states = self.conv(hidden_states)
         return hidden_states
 
-
 class FlaxResnetBlock2D(nn.Module):
     in_channels: int
     out_channels: int = None
     dropout_prob: float = 0.0
     use_nin_shortcut: bool = None
     dtype: jnp.dtype = jnp.float32
+    downsample: bool = False
 
     def setup(self):
         out_channels = self.in_channels if self.out_channels is None else self.out_channels
@@ -102,11 +102,17 @@ class FlaxResnetBlock2D(nn.Module):
                 padding="VALID",
                 dtype=self.dtype,
             )
+        if downsample:
+            self.downsample = FlaxDownsample2D(pool=True)
+            self.down = True
 
     def __call__(self, hidden_states, temb, deterministic=True):
         residual = hidden_states
         hidden_states = self.norm1(hidden_states)
         hidden_states = nn.swish(hidden_states)
+        if self.down:
+            hidden_states = nn.avg_pool(hidden_states,window_shape=(2,2),strides=(2,2))
+            input_tensor = nn.avg_pool(input_tensor,window_shape=(2,2),strides=(2,2))
         hidden_states = self.conv1(hidden_states)
 
         temb = self.time_emb_proj(nn.swish(temb))
