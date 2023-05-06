@@ -214,7 +214,7 @@ class ConfigMixin:
                 )
             deprecate("config-passed-as-path", "1.0.0", deprecation_message, standard_warn=False)
             config, kwargs = cls.load_config(pretrained_model_name_or_path=config, return_unused_kwargs=True, **kwargs)
-
+        print("config -------->", config)
         init_dict, unused_kwargs, hidden_dict = cls.extract_init_dict(config, **kwargs)
 
         # Allow dtype to be specified on initialization
