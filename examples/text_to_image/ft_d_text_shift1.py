@@ -422,7 +422,7 @@ class FolderData(Dataset):
         im = self.process_im(im)
         
         data["image"] = im
-        caption = '###RIGHT SHIFT ' + str(left) + ' ###DOWN SHIFT ' + str(top) '  + self.instance_prompt + self.captions[index]['text']
+        caption = '###RIGHT SHIFT ' + str(left) + ' ###DOWN SHIFT ' + str(top) + ' '  + self.instance_prompt + self.captions[index]['text']
         list_ = [i for i in range(100)] 
         choice = random.choice(list_)
         if self.drop:
