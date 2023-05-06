@@ -65,7 +65,7 @@ class FlaxResnetBlock2D(nn.Module):
     dropout_prob: float = 0.0
     use_nin_shortcut: bool = None
     dtype: jnp.dtype = jnp.float32
-    downsample: bool = False
+    downsample: bool = None
 
     def setup(self):
         out_channels = self.in_channels if self.out_channels is None else self.out_channels
@@ -102,8 +102,8 @@ class FlaxResnetBlock2D(nn.Module):
                 padding="VALID",
                 dtype=self.dtype,
             )
-        if downsample:
-            self.downsample = FlaxDownsample2D(pool=True)
+        if self.downsample:
+#             self.downsample = FlaxDownsample2D(pool=True)
             self.down = True
 
     def __call__(self, hidden_states, temb, deterministic=True):
