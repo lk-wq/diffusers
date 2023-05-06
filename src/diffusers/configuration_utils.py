@@ -615,7 +615,7 @@ def register_to_config(init):
 
 def flax_register_to_config(cls):
     original_init = cls.__init__
-
+    print("original init ???", original_init)
     @functools.wraps(original_init)
     def init(self, *args, **kwargs):
         if not isinstance(self, ConfigMixin):
