@@ -443,12 +443,12 @@ class FlaxModelMixin:
         unexpected_keys = set(state.keys()) - required_params
         l = list(unexpected_keys)
         for i in l:
-            if 'down_blocks_0' in ".".join(i):
+            if 'down' in ".".join(i):
                 print("not used from pytorch ---------------------->" ,i )
 
         l = list(missing_keys)
         for i in l:
-            if 'down_blocks_0' in ".".join(i):
+            if 'down' in ".".join(i):
                 print("pytorch didnt have these ---------------------->" ,i )
 
 
