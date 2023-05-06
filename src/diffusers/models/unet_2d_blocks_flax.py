@@ -143,7 +143,7 @@ class FlaxDownBlock2D(nn.Module):
 
         if self.add_downsample:
             self.downsamplers_0 = FlaxResnetBlock2D(
-                in_channels=resnet_in_channels + res_skip_channels,
+                in_channels=in_channels,
                 out_channels=self.out_channels,
                 dropout_prob=self.dropout,
                 downsample=True,
