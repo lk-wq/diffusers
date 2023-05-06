@@ -311,6 +311,8 @@ class FlaxModelMixin:
             dtype=dtype,
             **kwargs,
         )
+        
+        print("model_kwargs",model_kwargs)
 
         # Load model
         pretrained_path_with_subfolder = (
