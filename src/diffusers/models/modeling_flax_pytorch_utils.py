@@ -119,7 +119,7 @@ def convert_pytorch_state_dict_to_flax(pt_state_dict, flax_model, init_key=42):
             flax_state_dict[flax_key] = jnp.asarray(flax_tensor)
             print(f"PyTorch checkpoint seems to be incorrect. Weight {pt_key} was expected to be of shape ")
             print(f"{random_flax_state_dict[flax_key].shape}, but is {flax_tensor.shape}.")
-            print("size of pt tensor ", type(pt_tensor) )
+            print("size of pt tensor ", pt_tensor.shape )
             print(" ")
             print(" ")
 
