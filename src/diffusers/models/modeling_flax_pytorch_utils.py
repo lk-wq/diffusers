@@ -42,7 +42,7 @@ def rename_key(key):
 # and https://github.com/patil-suraj/stable-diffusion-jax/blob/main/stable_diffusion_jax/convert_diffusers_to_jax.py
 def rename_key_and_reshape_tensor(pt_tuple_key, pt_tensor, random_flax_state_dict):
     """Rename PT weight names to corresponding Flax weight names and reshape tensor if necessary"""
-
+    
     # conv norm or layer norm
     renamed_pt_tuple_key = pt_tuple_key[:-1] + ("scale",)
     if (
@@ -100,6 +100,7 @@ def convert_pytorch_state_dict_to_flax(pt_state_dict, flax_model, init_key=42):
     # Need to change some parameters name to match Flax names
     for pt_key, pt_tensor in pt_state_dict.items():
         renamed_pt_key = rename_key(pt_key)
+        print("key", renamed_pt_key)
         pt_tuple_key = tuple(renamed_pt_key.split("."))
 
         # Correctly rename weight parameters
