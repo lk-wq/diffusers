@@ -118,7 +118,7 @@ class FlaxResnetBlock2D(nn.Module):
 
         hidden_states = self.norm2(hidden_states)
         scale, shift = jnp.split(temb, 2, axis=1)
-        hidden_states = hidden_states * (1 + scale) + shift
+        hidden_states = hidden_states * (1 + scale) + jnp.expand_dims(jnp.expand_dims(shift,axis=1),axis=2)
 
         hidden_states = nn.swish(hidden_states)
         hidden_states = self.dropout(hidden_states, deterministic)
