@@ -100,12 +100,15 @@ def convert_pytorch_state_dict_to_flax(pt_state_dict, flax_model, init_key=42):
     # Need to change some parameters name to match Flax names
     for pt_key, pt_tensor in pt_state_dict.items():
         renamed_pt_key = rename_key(pt_key)
-        print("key", renamed_pt_key)
+        if 'down' in key:
+            print("key", renamed_pt_key)
         pt_tuple_key = tuple(renamed_pt_key.split("."))
 
         # Correctly rename weight parameters
         
         flax_key, flax_tensor = rename_key_and_reshape_tensor(pt_tuple_key, pt_tensor, random_flax_state_dict)
+        if 'down' in key:
+            print("flax key",flax_key)
         if flax_key in random_flax_state_dict:
             if flax_tensor.shape != random_flax_state_dict[flax_key].shape:
                 raise ValueError(
