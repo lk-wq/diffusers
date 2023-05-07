@@ -430,7 +430,7 @@ class AttentionPooling(nn.Module):
         
         # (bs*n_heads, class_token_length, dim_per_head)
         q = shape(self.q_proj(class_token))
-        print("q", q.size()
+        print("q", q.size())
         # (bs*n_heads, length+class_token_length, dim_per_head)
         k = shape(self.k_proj(x))
         print("k",k.size())
