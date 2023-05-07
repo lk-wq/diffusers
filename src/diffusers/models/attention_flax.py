@@ -276,7 +276,7 @@ class FlaxAttention2(nn.Module):
 #         key_proj = self.key(context)
 #         value_proj = self.value(context)
         
-
+        print("query " , query.shape)
         query_states = self.reshape_heads_to_batch_dim(query)
         key_states = self.reshape_heads_to_batch_dim(key)
 #         value_states = self.reshape_heads_to_batch_dim(value_proj)
