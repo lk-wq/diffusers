@@ -299,7 +299,10 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                 print("post down_block",sample.shape , res_sample.shape)
 
             else:
-                print("not cross pre down_block",sample.shape , res_sample.shape)
+                try:
+                    print("not cross pre down_block",sample.shape , res_sample.shape)
+                except:
+                     print("not cross pre down_block",sample.shape)
                 sample, res_samples = down_block(sample, t_emb, deterministic=not train)
                 print("not cross post down_block",sample.shape , res_sample.shape)
             down_block_res_samples += res_samples
