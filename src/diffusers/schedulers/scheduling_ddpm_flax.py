@@ -225,6 +225,8 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
             key = jax.random.PRNGKey(0)
 
         if model_output.shape[1] == sample.shape[1] * 2 and self.config.variance_type in ["learned", "learned_range"]:
+            print("sample shape", sample)
+            print("model output",model_output)
             model_output, predicted_variance = jnp.split(model_output, sample.shape[1], axis=1)
         else:
             predicted_variance = None
