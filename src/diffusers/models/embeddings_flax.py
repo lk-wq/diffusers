@@ -16,7 +16,7 @@ import math
 import flax.linen as nn
 import jax.numpy as jnp
 
-
+import numpy as np
 def get_sinusoidal_embeddings(
     timesteps: jnp.ndarray,
     embedding_dim: int,
