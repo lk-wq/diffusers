@@ -455,16 +455,30 @@ class FlaxBasicTransformerBlock2(nn.Module):
 
         encoder_hidden_states_key_proj = attn.add_k_proj(encoder_hidden_states)
         encoder_hidden_states_value_proj = attn.add_v_proj(encoder_hidden_states)
+        
+        print("encoder hidden key proj", encoder_hidden_states_key_proj.shape )
+        print("encoder hidden states value proj",encoder_hidden_states_value_proj.shape )
+        
         encoder_hidden_states_key_proj = self.head_to_batch_dim(encoder_hidden_states_key_proj, out_dim=4)
         encoder_hidden_states_value_proj = self.head_to_batch_dim(encoder_hidden_states_value_proj, out_dim=4)
+        print("encoder hidden key proj 2 ", encoder_hidden_states_key_proj.shape )
+        print("encoder hidden states value proj 2 ",encoder_hidden_states_value_proj.shape )
 
         key = attn.to_k(hidden_states)
         value = attn.to_v(hidden_states)
+        print("key proj 3 ", key.shape )
+        print("value 3 ",value.shape )
+
         key = self.head_to_batch_dim(key, out_dim=4)
         value = self.head_to_batch_dim(value, out_dim=4)
+        print("key proj 4 ", key.shape )
+        print("value 4 ",value.shape )
+
         key = jnp.concatenate([encoder_hidden_states_key_proj, key], axis=2)
         value = jnp.concatenate([encoder_hidden_states_value_proj, value], axis=2)
-        
+        print("key proj 5 ", key.shape )
+        print("value 5 ",value.shape )
+
         hidden_states = self.attn1(query, key, value)#attention_mask)
 
         hidden_states = batch_to_head_dim(hidden_states)
