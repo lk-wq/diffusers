@@ -153,8 +153,6 @@ class FlaxResnetBlock2D(nn.Module):
 #             if hidden_states.shape[0] >= 64:
 #                 input_tensor = input_tensor.contiguous()
 #                 hidden_states = hidden_states.contiguous()
-            input_tensor = self.upsample(input_tensor)
-            hidden_states = self.upsample(hidden_states)
 
         hidden_states = self.conv1(hidden_states)
 
