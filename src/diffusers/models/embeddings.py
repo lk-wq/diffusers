@@ -409,6 +409,7 @@ class AttentionPooling(nn.Module):
         self.dim_per_head = embed_dim // self.num_heads
 
     def forward(self, x):
+        print("raw incoming x",x.size() )
         bs, length, width = x.size()
         torch.save(self.positional_embedding,'position_embedding_vector.pth')
 
@@ -424,23 +425,31 @@ class AttentionPooling(nn.Module):
             return x
 
         class_token = x.mean(dim=1, keepdim=True) + self.positional_embedding.to(x.dtype)
+        print("class token size",class_token.size() )
         x = torch.cat([class_token, x], dim=1)  # (bs, length+1, width)
-
+        
         # (bs*n_heads, class_token_length, dim_per_head)
         q = shape(self.q_proj(class_token))
+        print("q", q.size()
         # (bs*n_heads, length+class_token_length, dim_per_head)
         k = shape(self.k_proj(x))
+        print("k",k.size())
         v = shape(self.v_proj(x))
+        print("v",v.size())
 
         # (bs*n_heads, class_token_length, length+class_token_length):
         scale = 1 / math.sqrt(math.sqrt(self.dim_per_head))
         weight = torch.einsum("bct,bcs->bts", q * scale, k * scale)  # More stable with f16 than dividing afterwards
+        print("weight 1", weight.size() )
         weight = torch.softmax(weight.float(), dim=-1).type(weight.dtype)
+        print("weight 2", weight.size() )
 
         # (bs*n_heads, dim_per_head, class_token_length)
         a = torch.einsum("bts,bcs->bct", weight, v)
+        print("a 1", a.size() )
 
         # (bs, length+1, width)
         a = a.reshape(bs, -1, 1).transpose(1, 2)
+        print("a 2", a.size() )
 
         return a[:, 0, :]  # cls_token
