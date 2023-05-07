@@ -486,7 +486,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
         print("key proj 5 ", key.shape )
         print("value 5 ",value.shape )
 
-        attn_weight = nn.softmax(query @ jnp.transpose(K,(0,1,3,2))/jnp.sqrt(query.shape[-1]), axis=-1)
+        attn_weight = nn.softmax(query @ jnp.transpose(key,(0,1,3,2))/jnp.sqrt(query.shape[-1]), axis=-1)
         hidden_states = attn_weight @ value
         
         
