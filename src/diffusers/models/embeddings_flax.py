@@ -149,6 +149,7 @@ class FlaxAttentionPooling(nn.Module):
         bs, length, width = x.shape#()
         print("pre length",length)
         def shape(x):
+            og = x
             bs, length, width = x.shape#()
 
             print("x in shape " , x.shape )
@@ -187,6 +188,9 @@ class FlaxAttentionPooling(nn.Module):
         a = jnp.einsum("bts,bcs->bct", weight, v)
 
         # (bs, length+1, width)
-        a = jnp.transpose(a.reshape(bs, length+1, width),transpose(0,2, 1))
+        try:
+            a = jnp.transpose(a.reshape(bs, length+1, width),transpose(0,2, 1))
 
-        return a[:, 0, :]  # cls_token
+            return a[:, 0, :]  # cls_token
+        except:
+            return og
