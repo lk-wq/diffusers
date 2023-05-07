@@ -623,9 +623,9 @@ class AttnAddedKVProcessor2_0:
             )
 
     def __call__(self, attn: Attention, hidden_states, encoder_hidden_states=None, attention_mask=None):
-        print("encoder hidden",encoder_hidden_states.size())
-        print("2")
-        print("attn mask ", attention_mask)
+#         print("encoder hidden",encoder_hidden_states.size())
+#         print("2")
+#         print("attn mask ", attention_mask)
         residual = hidden_states
         hidden_states = hidden_states.view(hidden_states.shape[0], hidden_states.shape[1], -1).transpose(1, 2)
         batch_size, sequence_length, _ = hidden_states.shape
@@ -648,6 +648,7 @@ class AttnAddedKVProcessor2_0:
         encoder_hidden_states_value_proj = attn.head_to_batch_dim(encoder_hidden_states_value_proj, out_dim=4)
 
         if not attn.only_cross_attention:
+            print("only cross")
             key = attn.to_k(hidden_states)
             value = attn.to_v(hidden_states)
             key = attn.head_to_batch_dim(key, out_dim=4)
@@ -655,11 +656,13 @@ class AttnAddedKVProcessor2_0:
             key = torch.cat([encoder_hidden_states_key_proj, key], dim=2)
             value = torch.cat([encoder_hidden_states_value_proj, value], dim=2)
         else:
+            print("not only cross")
             key = encoder_hidden_states_key_proj
             value = encoder_hidden_states_value_proj
 
         # the output of sdp = (batch, num_heads, seq_len, head_dim)
         # TODO: add support for attn.scale when we move to Torch 2.1
+        print("going in q k v", query.size(),key.size(),value.size())
         hidden_states = F.scaled_dot_product_attention(
             query, key, value, attn_mask=attention_mask, dropout_p=0.0, is_causal=False
         )
