@@ -788,6 +788,11 @@ class IFPipeline(DiffusionPipeline):
                 model_input = self.scheduler.scale_model_input(model_input, t)
 
                 # predict the noise residual
+                print("---------inputs-------------")
+                torch.save(model_input,'mi.pth')
+                print("t ------->",t)
+                torch.save(prompt_embeds,'prompt_embeds.pth')
+                print("ca kwargs",cross_attention_kwargs)
                 noise_pred = self.unet(
                     model_input,
                     t,
