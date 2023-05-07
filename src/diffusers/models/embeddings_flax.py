@@ -99,7 +99,7 @@ class FlaxTextTimeEmbedding(nn.Module):
         super().__init__()
         self.norm1 = nn.LayerNorm(encoder_dim)
         self.pool = FlaxAttentionPooling(num_heads, encoder_dim)
-        self.proj = nn.Linear(encoder_dim, time_embed_dim)
+        self.proj = nn.Dense(encoder_dim, time_embed_dim)
         self.norm2 = nn.LayerNorm(time_embed_dim)
 
     def forward(self, hidden_states):
