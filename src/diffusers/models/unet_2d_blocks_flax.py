@@ -230,9 +230,14 @@ class FlaxCrossAttnUpBlock2D(nn.Module):
 
         self.resnets = resnets
         self.attentions = attentions
-
         if self.add_upsample:
-            self.upsamplers_0 = FlaxUpsample2D(self.out_channels, dtype=self.dtype)
+            self.upsamplers_0 = FlaxResnetBlock2D(
+                in_channels=resnet_in_channels,
+                out_channels=self.out_channels,
+                dropout_prob=self.dropout,
+                upsample=True,
+                dtype=self.dtype,
+            )#FlaxUpsample2D(self.out_channels, dtype=self.dtype)
 
     def __call__(self, hidden_states, res_hidden_states_tuple, temb, encoder_hidden_states, deterministic=True):
         for resnet, attn in zip(self.resnets, self.attentions):
