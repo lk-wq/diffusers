@@ -749,6 +749,10 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
             down_block_res_samples = new_down_block_res_samples
 
         # 4. mid
+        print("entering mid")
+        torch.save(sample,'sample.pth')
+        torch.save(emb,'emb.pth')
+        torch.save(encoder_hidden_states,'enc.pth')
         if self.mid_block is not None:
             sample = self.mid_block(
                 sample,
