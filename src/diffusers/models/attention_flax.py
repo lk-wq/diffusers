@@ -460,7 +460,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
         key = jnp.concatenate([encoder_hidden_states_key_proj, key], axis=2)
         value = jnp.concatenate([encoder_hidden_states_value_proj, value], axis=2)
         
-        hidden_states = self.attn1(query, key, attention_mask)
+        hidden_states = self.attn1(query, key)#, attention_mask)
 
         hidden_states = batch_to_head_dim(hidden_states)
         
