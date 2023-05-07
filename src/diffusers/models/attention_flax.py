@@ -486,7 +486,11 @@ class FlaxBasicTransformerBlock2(nn.Module):
         print("key proj 5 ", key.shape )
         print("value 5 ",value.shape )
 
-        hidden_states = self.attn1(query, key, value)#attention_mask)
+        attn_weight = nn.softmax(query @ jnp.transpose(K,(0,1,3,2))/jnp.sqrt(query.shape[-1]), axis=-1)
+        hidden_states = attn_weight @ value
+        
+        
+        #self.attn1(query, key, value)#attention_mask)
         print("hidden after self attn1",hidden_states.shape)
         print("res shape",residual.shape)
         fill = 1
