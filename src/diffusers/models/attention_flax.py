@@ -276,8 +276,11 @@ class FlaxAttention2(nn.Module):
 #         key_proj = self.key(context)
 #         value_proj = self.value(context)
         
-        print("query " , query.shape)
+        print("query k v " , query.shape, key.shape, value.shape)
+        query = query.reshape(query.shape[0], query.shape[1],query.shape[2]*query.shape[3])
         query_states = self.reshape_heads_to_batch_dim(query)
+        key = key.reshape(key.shape[0], key.shape[1],key.shape[2]*key.shape[3])
+
         key_states = self.reshape_heads_to_batch_dim(key)
 #         value_states = self.reshape_heads_to_batch_dim(value_proj)
 
@@ -287,6 +290,8 @@ class FlaxAttention2(nn.Module):
         attention_probs = nn.softmax(attention_scores, axis=2)
 
             # attend to values
+        value = value.reshape(value.shape[0], value.shape[1],value.shape[2]*value.shape[3])
+
         hidden_states = jnp.einsum("b i j, b j d -> b i d", attention_probs, value)
 
 #         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
