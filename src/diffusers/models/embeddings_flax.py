@@ -112,7 +112,7 @@ class FlaxTextTimeEmbedding(nn.Module):
         self.proj = nn.Dense(encoder_dim, time_embed_dim)
         self.norm2 = nn.LayerNorm(time_embed_dim)
 
-    def forward(self, hidden_states):
+    def __call__(self, hidden_states):
         hidden_states = self.norm1(hidden_states)
         hidden_states = self.pool(hidden_states)
         hidden_states = self.proj(hidden_states)
@@ -144,7 +144,7 @@ class FlaxAttentionPooling(nn.Module):
         self.dim_per_head = embed_dim // self.num_heads
 
     
-    def forward(self, x):
+    def __call__(self, x):
         bs, length, width = x.shape#()
 
         def shape(x):
