@@ -410,6 +410,7 @@ class AttentionPooling(nn.Module):
 
     def forward(self, x):
         bs, length, width = x.size()
+        torch.save(self.positional_embedding,'position_embedding_vector.pth')
 
         def shape(x):
             # (bs, length, width) --> (bs, length, n_heads, dim_per_head)
