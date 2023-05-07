@@ -294,8 +294,10 @@ class FlaxAttention2(nn.Module):
 
             # attend to values
         value = jnp.transpose(value,(0,2,1,3)).reshape(value.shape[0], value.shape[1],value.shape[2]*value.shape[3])
-        print("a vs v",attention_probs.shape, value.shape)
-        hidden_states = jnp.einsum("b i j, b j d -> b i d", attention_probs, value)
+        value_states = self.reshape_heads_to_batch_dim(value)
+
+        print("a vs v",attention_probs.shape, value_states.shape)
+        hidden_states = jnp.einsum("b i j, b j d -> b i d", attention_probs, value_states)
 
 #         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
 #         hidden_states = self.proj_attn(hidden_states)
