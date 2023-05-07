@@ -21,7 +21,7 @@ from flax.core.frozen_dict import FrozenDict
 
 from ..configuration_utils import ConfigMixin, flax_register_to_config
 from ..utils import BaseOutput
-from .embeddings_flax import FlaxTimestepEmbedding, FlaxTimesteps
+from .embeddings_flax import FlaxTimestepEmbedding, FlaxTimesteps,FlaxTextTimeEmbedding
 from .modeling_flax_utils import FlaxModelMixin
 from .unet_2d_blocks_flax import (
     FlaxCrossAttnDownBlock2D,
@@ -240,6 +240,9 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             up_blocks.append(up_block)
             prev_output_channel = output_channel
         self.up_blocks = up_blocks
+        self.add_embedding = TextTimeEmbedding(
+            4096, 768, num_heads=64
+        )#fix hardcode
 
         # out
         self.conv_norm_out = nn.GroupNorm(num_groups=32, epsilon=1e-5)
