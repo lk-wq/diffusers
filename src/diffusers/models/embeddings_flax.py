@@ -95,8 +95,18 @@ class FlaxTimesteps(nn.Module):
         )
 
 class FlaxTextTimeEmbedding(nn.Module):
-    def __init__(self, encoder_dim: int, time_embed_dim: int, num_heads: int = 64):
-        super().__init__()
+#     def __init__(self, encoder_dim: int, time_embed_dim: int, num_heads: int = 64):
+#         super().__init__()
+#         self.norm1 = nn.LayerNorm(encoder_dim)
+#         self.pool = FlaxAttentionPooling(num_heads, encoder_dim)
+#         self.proj = nn.Dense(encoder_dim, time_embed_dim)
+#         self.norm2 = nn.LayerNorm(time_embed_dim)
+    
+    encoder_dim: int = 0
+    num_heads: int = 0
+    time_embed_dim: int = 0
+
+    def setup(self):
         self.norm1 = nn.LayerNorm(encoder_dim)
         self.pool = FlaxAttentionPooling(num_heads, encoder_dim)
         self.proj = nn.Dense(encoder_dim, time_embed_dim)
@@ -113,9 +123,19 @@ class FlaxTextTimeEmbedding(nn.Module):
 class FlaxAttentionPooling(nn.Module):
     # Copied from https://github.com/deep-floyd/IF/blob/2f91391f27dd3c468bf174be5805b4cc92980c0b/deepfloyd_if/model/nn.py#L54
 
-    def __init__(self, num_heads, embed_dim, dtype=None):
-        super().__init__()
-#         self.dtype = dtype
+#     def __init__(self, num_heads, embed_dim, dtype=None):
+#         super().__init__()
+# #         self.dtype = dtype
+#         self.positional_embedding = jnp.asarray(np.load('positional_embedding.npy'))#jax.random.normal(prng_seed, shape=latents_shape, dtype=jnp.float32) #nn.Parameter(torch.randn(1, embed_dim) / embed_dim**0.5)
+#         self.k_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
+#         self.q_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
+#         self.v_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
+#         self.num_heads = num_heads
+#         self.dim_per_head = embed_dim // self.num_heads
+    embed_dim: int = 0
+    num_heads: int = 0
+    
+    def setup(self):
         self.positional_embedding = jnp.asarray(np.load('positional_embedding.npy'))#jax.random.normal(prng_seed, shape=latents_shape, dtype=jnp.float32) #nn.Parameter(torch.randn(1, embed_dim) / embed_dim**0.5)
         self.k_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
         self.q_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
@@ -123,6 +143,7 @@ class FlaxAttentionPooling(nn.Module):
         self.num_heads = num_heads
         self.dim_per_head = embed_dim // self.num_heads
 
+    
     def forward(self, x):
         bs, length, width = x.shape#()
 
