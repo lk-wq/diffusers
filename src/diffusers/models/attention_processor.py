@@ -624,31 +624,38 @@ class AttnAddedKVProcessor2_0:
 
     def __call__(self, attn: Attention, hidden_states, encoder_hidden_states=None, attention_mask=None):
         print("encoder hidden",encoder_hidden_states.size())
+        print("hidden pre view",hidden_states.size())
+
 #         print("2")
 #         print("attn mask ", attention_mask)
         residual = hidden_states
         hidden_states = hidden_states.view(hidden_states.shape[0], hidden_states.shape[1], -1).transpose(1, 2)
         batch_size, sequence_length, _ = hidden_states.shape
-
+        print("hidden_states post view",hidden_states.size() )
         attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size, out_dim=4)
-
+        print("attn mask post",attention_mask.size() )
         if encoder_hidden_states is None:
             encoder_hidden_states = hidden_states
         elif attn.norm_cross:
             encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
-
+        
         hidden_states = attn.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
-
+        
         query = attn.to_q(hidden_states)
+        print("q 1", query.size() )
         query = attn.head_to_batch_dim(query, out_dim=4)
-
+        print("q 2",query.size() )
         encoder_hidden_states_key_proj = attn.add_k_proj(encoder_hidden_states)
+        print("e kp", encoder_hidden_states_key_proj.size() )
         encoder_hidden_states_value_proj = attn.add_v_proj(encoder_hidden_states)
+        print("e vp", encoder_hidden_states_value_proj.size() )
         encoder_hidden_states_key_proj = attn.head_to_batch_dim(encoder_hidden_states_key_proj, out_dim=4)
+        print("e kp 2", encoder_hidden_states_key_proj.size() )
+
         encoder_hidden_states_value_proj = attn.head_to_batch_dim(encoder_hidden_states_value_proj, out_dim=4)
+        print("e vp 2", encoder_hidden_states_value_proj.size() )
 
         if not attn.only_cross_attention:
-            print("only cross")
             key = attn.to_k(hidden_states)
             value = attn.to_v(hidden_states)
             key = attn.head_to_batch_dim(key, out_dim=4)
