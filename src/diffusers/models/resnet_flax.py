@@ -147,7 +147,12 @@ class FlaxResnetBlock2D(nn.Module):
                 shape=(batch, height * 2, width * 2, channels),
                 method="nearest",
             )
-        
+            residual = jax.image.resize(
+                residual,
+                shape=(batch, height * 2, width * 2, channels),
+                method="nearest",
+            )
+
 
             # upsample_nearest_nhwc fails with large batch sizes. see https://github.com/huggingface/diffusers/issues/984
 #             if hidden_states.shape[0] >= 64:
