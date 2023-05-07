@@ -151,7 +151,7 @@ class FlaxAttentionPooling(nn.Module):
         def shape(x):
             # (bs, length, width) --> (bs, length, n_heads, dim_per_head)
 #             fill = (bs*length *width)//(length*self.num_heads*self.dim_per_head)
-            x = x.reshape(bs, lenth, self.num_heads, self.dim_per_head)
+            x = x.reshape(bs, length, self.num_heads, self.dim_per_head)
             # (bs, length, n_heads, dim_per_head) --> (bs, n_heads, length, dim_per_head)
             x = jnp.transpose(x, (0, 2,1,3))
             # (bs, n_heads, length, dim_per_head) --> (bs*n_heads, length, dim_per_head)
