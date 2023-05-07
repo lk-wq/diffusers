@@ -448,6 +448,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
         residual = hidden_states
         print("hs",hidden_states.shape)
         hidden_states = hidden_states.reshape(hidden_states.shape[0], hidden_states.shape[1]*hidden_states.shape[2], hidden_states.shape[-1])#.transpose(1, 2)
+        r2 = hidden_states
         batch_size, sequence_length, _ = hidden_states.shape
         if encoder_hidden_states is None:
             encoder_hidden_states = hidden_states
@@ -488,13 +489,13 @@ class FlaxBasicTransformerBlock2(nn.Module):
         hidden_states = self.attn1(query, key, value)#attention_mask)
         print("hidden after self attn1",hidden_states.shape)
         print("res shape",residual.shape)
-        hidden_states = jnp.transpose(hidden_states,(0,2, 1)).reshape(batch_size, -1, residual.shape[1])
+        hidden_states = jnp.transpose(hidden_states,(0,2, 1)).reshape(batch_size, -1, residual.shape[-1])
 
 #         hidden_states = self.batch_to_head_dim(hidden_states)
         
         hidden_states = attn.to_out[0](hidden_states)
 
-        hidden_states = hidden_states + residual
+        hidden_states = hidden_states + r2
 
         return hidden_states
 
