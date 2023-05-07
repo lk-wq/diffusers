@@ -712,7 +712,9 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
             emb = self.time_embed_act(emb)
 
         if self.encoder_hid_proj is not None:
+            print("hidden projection !!!! ",encoder_hidden_states.size()  )
             encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
+            print("hidden projection post !!!! ",encoder_hidden_states.size()  )
 
         # 2. pre-process
         sample = self.conv_in(sample)
@@ -721,6 +723,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
         down_block_res_samples = (sample,)
         for downsample_block in self.down_blocks:
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
+                print("cross attn hit !")
                 sample, res_samples = downsample_block(
                     hidden_states=sample,
                     temb=emb,
@@ -729,6 +732,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                     cross_attention_kwargs=cross_attention_kwargs,
                 )
             else:
+                print("no cross attn!!")
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
 
             down_block_res_samples += res_samples
