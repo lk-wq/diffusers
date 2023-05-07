@@ -71,6 +71,11 @@ def rename_key_and_reshape_tensor(pt_tuple_key, pt_tensor, random_flax_state_dic
     # linear layer
     renamed_pt_tuple_key = pt_tuple_key[:-1] + ("kernel",)
     if pt_tuple_key[-1] == "weight":
+        if 'encoder_hid_proj' in "".join(list(pt_tuple_key)):
+            print(" ")
+            print("enoc hid proj -------------------------------------------------------------------------------------------------------->")
+            print(" ")
+            return renamed_pt_tuple_key, pt_tensor
         pt_tensor = pt_tensor.T
         return renamed_pt_tuple_key, pt_tensor
 
