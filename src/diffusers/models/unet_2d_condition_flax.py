@@ -157,6 +157,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         # down
         down_blocks = []
         output_channel = block_out_channels[0]
+        self.encoder_hid_proj = nn.Dense(768) #fix hardcode
         for i, down_block_type in enumerate(self.down_block_types):
             input_channel = output_channel
             output_channel = block_out_channels[i]
@@ -291,6 +292,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         sample = self.conv_in(sample)
 
         # 3. down
+        encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
         down_block_res_samples = (sample,)
         for down_block in self.down_blocks:
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
