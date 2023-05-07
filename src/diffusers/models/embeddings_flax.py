@@ -149,6 +149,8 @@ class FlaxAttentionPooling(nn.Module):
         bs, length, width = x.shape#()
         print("pre length",length)
         def shape(x):
+            bs, length, width = x.shape#()
+
             print("x in shape " , x.shape )
             print("length in shape", length)
             # (bs, length, width) --> (rrribs, length, n_heads, dim_per_head)
