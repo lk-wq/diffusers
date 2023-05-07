@@ -633,7 +633,7 @@ class AttnAddedKVProcessor2_0:
         batch_size, sequence_length, _ = hidden_states.shape
         print("hidden_states post view",hidden_states.size() )
         attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size, out_dim=4)
-        print("attn mask post",attention_mask.size() )
+#         print("attn mask post",attention_mask.size() )
         if encoder_hidden_states is None:
             encoder_hidden_states = hidden_states
         elif attn.norm_cross:
