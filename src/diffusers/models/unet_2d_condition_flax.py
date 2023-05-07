@@ -294,6 +294,10 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         # 3. down
         encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
         down_block_res_samples = (sample,)
+        print('sample.npy',sample)
+        print('t_emb.npy',t_emb)
+        print('encoder_hidden_states.npy',encoder_hidden_states)
+
         for down_block in self.down_blocks:
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
                 print("pre down_block",sample.shape )
@@ -327,9 +331,9 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 #         np.save('sample.npy',sample)
 #         np.save('t_emb.npy',t_emb)
 #         np.save('encoder_hidden_states.npy',encoder_hidden_states)
-        print('sample.npy',sample)
-        print('t_emb.npy',t_emb)
-        print('encoder_hidden_states.npy',encoder_hidden_states)
+#         print('sample.npy',sample)
+#         print('t_emb.npy',t_emb)
+#         print('encoder_hidden_states.npy',encoder_hidden_states)
         sample = self.mid_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
 
         if mid_block_additional_residual is not None:
