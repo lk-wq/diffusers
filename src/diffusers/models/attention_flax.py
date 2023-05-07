@@ -434,15 +434,15 @@ class FlaxBasicTransformerBlock2(nn.Module):
 
         return tensor
 
-    def __call__(self, hidden_states, encoder_hidden_states_key_proj,attn, deterministic=True):
+    def __call__(self, hidden_states, encoder_hidden_states,attn, deterministic=True):
         residual = hidden_states
         print("hs",hidden_states.shape)
         hidden_states = hidden_states.reshape(hidden_states.shape[0], hidden_states.shape[1]*hidden_states.shape[2], hidden_states.shape[-1])#.transpose(1, 2)
         batch_size, sequence_length, _ = hidden_states.shape
-        if encoder_hidden_states_key_proj is None:
-            encoder_hidden_states_key_proj = hidden_states
+        if encoder_hidden_states is None:
+            encoder_hidden_states = hidden_states
         else:
-            encoder_hidden_states_key_proj = attn.norm_cross(encoder_hidden_states_key_proj)
+            encoder_hidden_states = attn.norm_cross(encoder_hidden_states)
         hidden_states = attn.group_norm(hidden_states)#.transpose(1, 2)).transpose(1, 2)
 
         query = attn.to_q(hidden_states)
