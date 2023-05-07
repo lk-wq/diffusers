@@ -417,14 +417,14 @@ class FlaxBasicTransformerBlock2(nn.Module):
 #         self.norm2 = nn.LayerNorm(epsilon=1e-5, dtype=self.dtype)
 #         self.norm3 = nn.LayerNorm(epsilon=1e-5, dtype=self.dtype)
     def batch_to_head_dim(self, tensor):
-        head_size = self.heads
+        head_size = self.n_heads
         batch_size, seq_len, dim = tensor.shape
         tensor = tensor.reshape(batch_size // head_size, head_size, seq_len, dim)
         tensor = jnp.transpose(tensor,(0, 2, 1, 3)).reshape(batch_size // head_size, seq_len, dim * head_size)
         return tensor
 
     def head_to_batch_dim(self, tensor, out_dim=3):
-        head_size = self.heads
+        head_size = self.n_heads
         batch_size, seq_len, dim = tensor.shape
         tensor = tensor.reshape(batch_size, seq_len, head_size, dim // head_size)
         tensor = jnp.transpose(tensor,(0, 2, 1, 3))
@@ -446,17 +446,17 @@ class FlaxBasicTransformerBlock2(nn.Module):
         hidden_states = attn.group_norm(hidden_states)#.transpose(1, 2)).transpose(1, 2)
 
         query = attn.to_q(hidden_states)
-        query = head_to_batch_dim(query, out_dim=4)
+        query = self.head_to_batch_dim(query, out_dim=4)
 
         encoder_hidden_states_key_proj = attn.add_k_proj(encoder_hidden_states)
         encoder_hidden_states_value_proj = attn.add_v_proj(encoder_hidden_states)
-        encoder_hidden_states_key_proj = attn.head_to_batch_dim(encoder_hidden_states_key_proj, out_dim=4)
-        encoder_hidden_states_value_proj = attn.head_to_batch_dim(encoder_hidden_states_value_proj, out_dim=4)
+        encoder_hidden_states_key_proj = self.head_to_batch_dim(encoder_hidden_states_key_proj, out_dim=4)
+        encoder_hidden_states_value_proj = self.head_to_batch_dim(encoder_hidden_states_value_proj, out_dim=4)
 
         key = attn.to_k(hidden_states)
         value = attn.to_v(hidden_states)
-        key = attn.head_to_batch_dim(key, out_dim=4)
-        value = attn.head_to_batch_dim(value, out_dim=4)
+        key = self.head_to_batch_dim(key, out_dim=4)
+        value = self.head_to_batch_dim(value, out_dim=4)
         key = torch.cat([encoder_hidden_states_key_proj, key], dim=2)
         value = torch.cat([encoder_hidden_states_value_proj, value], dim=2)
         
