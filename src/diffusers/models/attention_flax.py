@@ -422,14 +422,14 @@ class FlaxBasicTransformerBlock2(nn.Module):
 #         self.norm2 = nn.LayerNorm(epsilon=1e-5, dtype=self.dtype)
 #         self.norm3 = nn.LayerNorm(epsilon=1e-5, dtype=self.dtype)
     def batch_to_head_dim(self, tensor):
-        head_size = self.n_heads
+        head_size = self.d_head
         batch_size, seq_len, dim = tensor.shape
         tensor = tensor.reshape(batch_size // head_size, head_size, seq_len, dim)
         tensor = jnp.transpose(tensor,(0, 2, 1, 3)).reshape(batch_size // head_size, seq_len, dim * head_size)
         return tensor
 
     def head_to_batch_dim(self, tensor, out_dim=3):
-        head_size = self.n_heads
+        head_size = self.d_head
         batch_size, seq_len, dim = tensor.shape
         tensor = tensor.reshape(batch_size, seq_len, head_size, dim // head_size)
         tensor = jnp.transpose(tensor,(0, 2, 1, 3))
