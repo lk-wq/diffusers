@@ -623,7 +623,7 @@ class AttnAddedKVProcessor2_0:
             )
 
     def __call__(self, attn: Attention, hidden_states, encoder_hidden_states=None, attention_mask=None):
-#         print("encoder hidden",encoder_hidden_states.size())
+        print("encoder hidden",encoder_hidden_states.size())
 #         print("2")
 #         print("attn mask ", attention_mask)
         residual = hidden_states
