@@ -232,7 +232,7 @@ class FlaxCrossAttnUpBlock2D(nn.Module):
         self.attentions = attentions
         if self.add_upsample:
             self.upsamplers_0 = FlaxResnetBlock2D(
-                in_channels=resnet_in_channels,
+                in_channels=self.out_channels,
                 out_channels=self.out_channels,
                 dropout_prob=self.dropout,
                 upsample=True,
@@ -305,6 +305,7 @@ class FlaxUpBlock2D(nn.Module):
                 in_channels=self.out_channels,
                 out_channels=self.out_channels,
                 dropout_prob=self.dropout,
+                upsample=True,
                 dtype=self.dtype,
             )
 
