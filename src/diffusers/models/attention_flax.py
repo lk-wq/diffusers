@@ -487,7 +487,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
 
         hidden_states = self.attn1(query, key, value)#attention_mask)
 
-        hidden_states = batch_to_head_dim(hidden_states)
+        hidden_states = self.batch_to_head_dim(hidden_states)
         
         hidden_states = attn.to_out[0](hidden_states)
 
