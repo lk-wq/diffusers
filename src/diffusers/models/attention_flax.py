@@ -600,7 +600,7 @@ class FlaxTransformer2DModel2(nn.Module):
 #         else:
 #             hidden_states = self.proj_in(hidden_states)
 #             hidden_states = hidden_states.reshape(batch, height * width, channels)
-
+        r = hidden_states
         for transformer_block in self.transformer_blocks:
             hidden_states = transformer_block(hidden_states, context,self, deterministic=deterministic)
 
@@ -612,7 +612,7 @@ class FlaxTransformer2DModel2(nn.Module):
 #             hidden_states = self.to_out(hidden_states)
 
 #         hidden_states = hidden_states + residual
-        return hidden_states
+        return hidden_states.reshape(r.shape)
 
 class FlaxTransformer2DModel(nn.Module):
     r"""
