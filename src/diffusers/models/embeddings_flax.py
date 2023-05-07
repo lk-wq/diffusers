@@ -161,7 +161,7 @@ class FlaxAttentionPooling(nn.Module):
             x = jnp.transpose(x,(0,2, 1))
             return x
 
-        class_token = x.mean(dim=1, keepdim=True) + self.positional_embedding
+        class_token = jnp.mean(x,axis=1, keepdim=True) + self.positional_embedding
         x = jnp.concatenate([class_token, x], axis=1)  # (bs, length+1, width)
 
         # (bs*n_heads, class_token_length, dim_per_head)
