@@ -250,7 +250,7 @@ class FlaxCrossAttnUpBlock2D(nn.Module):
             hidden_states = attn(hidden_states, encoder_hidden_states, deterministic=deterministic)
 
         if self.add_upsample:
-            hidden_states = self.upsamplers_0(hidden_states)
+            hidden_states = self.upsamplers_0(hidden_states,temb,deterministic=deterministic)
 
         return hidden_states
 
@@ -319,7 +319,7 @@ class FlaxUpBlock2D(nn.Module):
             hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
 
         if self.add_upsample:
-            hidden_states = self.upsamplers_0(hidden_states)
+            hidden_states = self.upsamplers_0(hidden_states,temb,deterministic=deterministic)
 
         return hidden_states
 
