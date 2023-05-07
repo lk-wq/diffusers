@@ -486,7 +486,7 @@ class FlaxTransformer2DModel2(nn.Module):
     use_memory_efficient_attention: bool = False
 
     def setup(self):
-        self.norm_cross = nn.GroupNorm(num_groups=32, epsilon=1e-5)
+#         self.norm_cross = nn.GroupNorm(num_groups=32, epsilon=1e-5)
 
         inner_dim = self.n_heads * self.d_head
 #         if self.use_linear_projection:
