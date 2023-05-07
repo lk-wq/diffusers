@@ -107,10 +107,10 @@ class FlaxTextTimeEmbedding(nn.Module):
     num_heads: int = 0
 
     def setup(self):
-        self.norm1 = nn.LayerNorm(encoder_dim)
-        self.pool = FlaxAttentionPooling(num_heads=num_heads, encoder_dim=encoder_him)
-        self.proj = nn.Dense(encoder_dim, time_embed_dim)
-        self.norm2 = nn.LayerNorm(time_embed_dim)
+        self.norm1 = nn.LayerNorm(self.encoder_dim)
+        self.pool = FlaxAttentionPooling(num_heads=self.num_heads, encoder_dim=self.encoder_him)
+        self.proj = nn.Dense(self.encoder_dim, self.time_embed_dim)
+        self.norm2 = nn.LayerNorm(self.time_embed_dim)
 
     def __call__(self, hidden_states):
         hidden_states = self.norm1(hidden_states)
@@ -137,11 +137,11 @@ class FlaxAttentionPooling(nn.Module):
     
     def setup(self):
         self.positional_embedding = jnp.asarray(np.load('positional_embedding.npy'))#jax.random.normal(prng_seed, shape=latents_shape, dtype=jnp.float32) #nn.Parameter(torch.randn(1, embed_dim) / embed_dim**0.5)
-        self.k_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
-        self.q_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
-        self.v_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
-        self.num_heads = num_heads
-        self.dim_per_head = embed_dim // self.num_heads
+        self.k_proj = nn.Dense(self.embed_dim)#, embed_dim, dtype=self.dtype)
+        self.q_proj = nn.Dense(self.embed_dim)#, embed_dim, dtype=self.dtype)
+        self.v_proj = nn.Denseself.(embed_dim)#, embed_dim, dtype=self.dtype)
+        self.num_heads = self.num_heads
+        self.dim_per_head = self.embed_dim // self.num_heads
 
     
     def __call__(self, x):
