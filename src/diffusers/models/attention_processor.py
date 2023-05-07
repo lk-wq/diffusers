@@ -673,14 +673,20 @@ class AttnAddedKVProcessor2_0:
         hidden_states = F.scaled_dot_product_attention(
             query, key, value, attn_mask=attention_mask, dropout_p=0.0, is_causal=False
         )
+        print("hidden post attn ", hidden_states.shape)
         hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, residual.shape[1])
+        print("hidden post attn 1 ", hidden_states.shape)
 
         # linear proj
         hidden_states = attn.to_out[0](hidden_states)
+        print("hidden post attn 2 ", hidden_states.shape)
+
         # dropout
         hidden_states = attn.to_out[1](hidden_states)
 
         hidden_states = hidden_states.transpose(-1, -2).reshape(residual.shape)
+        print("hidden post attn 3 ", hidden_states.shape)
+
         hidden_states = hidden_states + residual
 
         return hidden_states
