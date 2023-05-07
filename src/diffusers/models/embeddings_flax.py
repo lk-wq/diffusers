@@ -146,6 +146,7 @@ class FlaxAttentionPooling(nn.Module):
     
     def __call__(self, x):
         print("raw incoming",x.shape,self.embed_dim)
+        raw_width = width
         bs, length, width = x.shape#()
         og = x
         print("pre length",length)
@@ -189,7 +190,7 @@ class FlaxAttentionPooling(nn.Module):
         a = jnp.einsum("bts,bcs->bct", weight, v)
 
         # (bs, length+1, width)
-        try:
+        if raw_width > 768:
             a = jnp.transpose(a.reshape(bs, length+1, width),transpose(0,2, 1))
 
             return a[:, 0, :]  # cls_token
