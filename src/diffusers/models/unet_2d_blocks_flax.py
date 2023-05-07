@@ -353,7 +353,7 @@ class FlaxUNetMidBlock2DCrossAttn(nn.Module):
         attentions = []
 
         for _ in range(self.num_layers):
-            attn_block = FlaxTransformer2DModel(
+            attn_block = FlaxTransformer2DModel2(
                 in_channels=self.in_channels,
                 n_heads=self.attn_num_head_channels,
                 d_head=self.in_channels // self.attn_num_head_channels,
