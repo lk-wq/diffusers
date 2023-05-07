@@ -147,10 +147,11 @@ class FlaxAttentionPooling(nn.Module):
     def __call__(self, x):
         print("raw incoming",x.shape,self.embed_dim)
         bs, length, width = x.shape#()
-
+        print("pre length",length)
         def shape(x):
-            print("x in shape",x.shape)
-            # (bs, length, width) --> (bs, length, n_heads, dim_per_head)
+            print("x in shape " , x.shape )
+            print("length in shape", length)
+            # (bs, length, width) --> (rrribs, length, n_heads, dim_per_head)
 #             fill = (bs*length *width)//(length*self.num_heads*self.dim_per_head)
             x = x.reshape(bs, length, self.num_heads, self.dim_per_head)
             # (bs, length, n_heads, dim_per_head) --> (bs, n_heads, length, dim_per_head)
