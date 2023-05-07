@@ -486,8 +486,9 @@ class FlaxBasicTransformerBlock2(nn.Module):
         print("value 5 ",value.shape )
 
         hidden_states = self.attn1(query, key, value)#attention_mask)
+        hidden_states = jnp.transpose(hidden_states,(1, 2)).reshape(batch_size, -1, residual.shape[1])
 
-        hidden_states = self.batch_to_head_dim(hidden_states)
+#         hidden_states = self.batch_to_head_dim(hidden_states)
         
         hidden_states = attn.to_out[0](hidden_states)
 
