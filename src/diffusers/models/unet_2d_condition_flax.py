@@ -294,9 +294,9 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         down_block_res_samples = (sample,)
         for down_block in self.down_blocks:
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
-                print("pre down_block",sample.shape , res_samples.shape)
+                print("pre down_block",sample.shape )
                 sample, res_samples = down_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
-                print("post down_block",sample.shape , res_samples.shape)
+                print("post down_block",sample.shape)
 
             else:
                 try:
@@ -304,7 +304,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                 except:
                      print("not cross pre down_block",sample.shape)
                 sample, res_samples = down_block(sample, t_emb, deterministic=not train)
-                print("not cross post down_block",sample.shape , res_samples.shape)
+                print("not cross post down_block",sample.shape)
             down_block_res_samples += res_samples
 
         if down_block_additional_residuals is not None:
