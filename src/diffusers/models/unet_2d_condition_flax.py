@@ -324,10 +324,12 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         print("going into mid block sample v t_emb vs enc hs", sample.shape,t_emb.shape, encoder_hidden_states.shape)
         print("before mid_block")
         import numpy as np
-        np.save('sample.npy',sample)
-        np.save('t_emb.npy',t_emb)
-        np.save('encoder_hidden_states.npy',encoder_hidden_states)
-
+#         np.save('sample.npy',sample)
+#         np.save('t_emb.npy',t_emb)
+#         np.save('encoder_hidden_states.npy',encoder_hidden_states)
+        print('sample.npy',sample)
+        print('t_emb.npy',t_emb)
+        print('encoder_hidden_states.npy',encoder_hidden_states)
         sample = self.mid_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
 
         if mid_block_additional_residual is not None:
