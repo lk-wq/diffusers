@@ -194,5 +194,5 @@ class FlaxAttentionPooling(nn.Module):
             a = jnp.transpose(a.reshape(bs, length+1, width),transpose(0,2, 1))
 
             return a[:, 0, :]  # cls_token
-        except:
+        else:
             return og
