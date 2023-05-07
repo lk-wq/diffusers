@@ -720,6 +720,11 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
         sample = self.conv_in(sample)
 
         # 3. down
+        print("entering down")
+        torch.save(sample,'sample_down.pth')
+        torch.save(emb,'emb_down.pth')
+        torch.save(encoder_hidden_states,'enc_down.pth')
+
         down_block_res_samples = (sample,)
         for downsample_block in self.down_blocks:
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
@@ -750,9 +755,9 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
 
         # 4. mid
         print("entering mid")
-        torch.save(sample,'sample.pth')
-        torch.save(emb,'emb.pth')
-        torch.save(encoder_hidden_states,'enc.pth')
+#         torch.save(sample,'sample.pth')
+#         torch.save(emb,'emb.pth')
+#         torch.save(encoder_hidden_states,'enc.pth')
         if self.mid_block is not None:
             sample = self.mid_block(
                 sample,
