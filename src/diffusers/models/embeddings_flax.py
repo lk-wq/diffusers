@@ -103,8 +103,8 @@ class FlaxTextTimeEmbedding(nn.Module):
 #         self.norm2 = nn.LayerNorm(time_embed_dim)
     
     encoder_dim: int = 0
-    num_heads: int = 0
     time_embed_dim: int = 0
+    num_heads: int = 0
 
     def setup(self):
         self.norm1 = nn.LayerNorm(encoder_dim)
@@ -132,8 +132,8 @@ class FlaxAttentionPooling(nn.Module):
 #         self.v_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
 #         self.num_heads = num_heads
 #         self.dim_per_head = embed_dim // self.num_heads
-    embed_dim: int = 0
     num_heads: int = 0
+    embed_dim: int = 0
     
     def setup(self):
         self.positional_embedding = jnp.asarray(np.load('positional_embedding.npy'))#jax.random.normal(prng_seed, shape=latents_shape, dtype=jnp.float32) #nn.Parameter(torch.randn(1, embed_dim) / embed_dim**0.5)
