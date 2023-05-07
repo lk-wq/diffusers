@@ -39,6 +39,30 @@ class FlaxUpsample2D(nn.Module):
         hidden_states = self.conv(hidden_states)
         return hidden_states
 
+class FlaxUpsample2D2(nn.Module):
+    out_channels: int
+    dtype: jnp.dtype = jnp.float32
+
+    def setup(self):
+        self.conv = nn.Conv(
+            self.out_channels,
+            kernel_size=(3, 3),
+            strides=(1, 1),
+            padding=((1, 1), (1, 1)),
+            dtype=self.dtype,
+        )
+
+    def __call__(self, hidden_states):
+        batch, height, width, channels = hidden_states.shape
+        hidden_states = jax.image.resize(
+            hidden_states,
+            shape=(batch, height * 2, width * 2, channels),
+            method="nearest",
+        )
+        
+        
+        
+        return hidden_states
 
 class FlaxDownsample2D(nn.Module):
     out_channels: int
@@ -66,6 +90,7 @@ class FlaxResnetBlock2D(nn.Module):
     use_nin_shortcut: bool = None
     dtype: jnp.dtype = jnp.float32
     downsample: bool = None
+    upsample: bool = None
 
     def setup(self):
         out_channels = self.in_channels if self.out_channels is None else self.out_channels
@@ -105,6 +130,8 @@ class FlaxResnetBlock2D(nn.Module):
         if self.downsample:
 #             self.downsample = FlaxDownsample2D(pool=True)
             self.down = True
+        elif self.upsample:
+            self.up = True
 
     def __call__(self, hidden_states, temb, deterministic=True):
         residual = hidden_states
@@ -113,6 +140,22 @@ class FlaxResnetBlock2D(nn.Module):
         if self.downsample:
             hidden_states = nn.avg_pool(hidden_states,window_shape=(2,2),strides=(2,2))
             residual = nn.avg_pool(residual,window_shape=(2,2),strides=(2,2))
+        if self.upsample:
+            batch, height, width, channels = hidden_states.shape
+            hidden_states = jax.image.resize(
+                hidden_states,
+                shape=(batch, height * 2, width * 2, channels),
+                method="nearest",
+            )
+        
+
+            # upsample_nearest_nhwc fails with large batch sizes. see https://github.com/huggingface/diffusers/issues/984
+#             if hidden_states.shape[0] >= 64:
+#                 input_tensor = input_tensor.contiguous()
+#                 hidden_states = hidden_states.contiguous()
+            input_tensor = self.upsample(input_tensor)
+            hidden_states = self.upsample(hidden_states)
+
         hidden_states = self.conv1(hidden_states)
 
         temb = self.time_emb_proj(nn.swish(temb))
