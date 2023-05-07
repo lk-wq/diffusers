@@ -301,7 +301,12 @@ class FlaxUpBlock2D(nn.Module):
         self.resnets = resnets
 
         if self.add_upsample:
-            self.upsamplers_0 = FlaxUpsample2D(self.out_channels, dtype=self.dtype)
+            self.upsamplers_0 = FlaxResnetBlock2D(
+                in_channels=self.out_channels,
+                out_channels=self.out_channels,
+                dropout_prob=self.dropout,
+                dtype=self.dtype,
+            )
 
     def __call__(self, hidden_states, res_hidden_states_tuple, temb, deterministic=True):
         for resnet in self.resnets:
