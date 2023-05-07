@@ -498,8 +498,8 @@ class FlaxTransformer2DModel2(nn.Module):
 #                 strides=(1, 1),
 #                 padding="VALID",
 #                 dtype=self.dtype,
-        self.to_out = []
-        self.to_out.append(nn.Dense(query_dim))
+        self.to_out = [nn.Dense(768)]
+#         self.to_out.append()
 #         self.to_out.append(nn.Dropout(dropout))
         self.to_k = nn.Dense(768)
         self.to_q = nn.Dense(768)
