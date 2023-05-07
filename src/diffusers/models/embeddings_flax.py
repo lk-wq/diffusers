@@ -147,6 +147,7 @@ class FlaxAttentionPooling(nn.Module):
     def __call__(self, x):
         print("raw incoming",x.shape,self.embed_dim)
         bs, length, width = x.shape#()
+        og = x
         print("pre length",length)
         def shape(x):
             og = x
