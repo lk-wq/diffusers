@@ -419,7 +419,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
     def __call__(self, hidden_states, encoder_hidden_states_key_proj,attn, deterministic=True):
         residual = hidden_states
         print("hs",hidden_states.shape)
-        hidden_states = hidden_states.view(hidden_states.shape[0], hidden_states.shape[1], -1).transpose(1, 2)
+        hidden_states = hidden_states.reshape(hidden_states.shape[0], hidden_states.shape[1]*hidden_states.shape[2], hidden_states[-1])#.transpose(1, 2)
         batch_size, sequence_length, _ = hidden_states.shape
         if encoder_hidden_states_key_proj is None:
             encoder_hidden_states_key_proj = hidden_states
