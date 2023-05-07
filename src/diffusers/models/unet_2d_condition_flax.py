@@ -240,7 +240,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             up_blocks.append(up_block)
             prev_output_channel = output_channel
         self.up_blocks = up_blocks
-        self.add_embedding = TextTimeEmbedding(
+        self.add_embedding = FlaxTextTimeEmbedding(
             4096, 768, num_heads=64
         )#fix hardcode
 
