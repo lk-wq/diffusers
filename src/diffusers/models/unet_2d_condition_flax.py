@@ -293,6 +293,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         # 2. pre-process
         sample = jnp.transpose(sample, (0, 2, 3, 1))
         sample = self.conv_in(sample)
+        print("enc huuh",encoder_hidden_states.shape)
 #         try:
         t_emb = t_emb + self.add_embedding(encoder_hidden_states)
 #         except:
