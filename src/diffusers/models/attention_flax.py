@@ -285,6 +285,7 @@ class FlaxAttention2(nn.Module):
 #         value_states = self.reshape_heads_to_batch_dim(value_proj)
 
         # compute attentions
+        print("q s vs ks", query_states.size() , key_states.size() )
         attention_scores = jnp.einsum("b i d, b j d->b i j", query_states, key_states)
         attention_scores = attention_scores * self.scale
         attention_probs = nn.softmax(attention_scores, axis=2)
