@@ -109,12 +109,28 @@ def convert_pytorch_state_dict_to_flax(pt_state_dict, flax_model, init_key=42):
         flax_key, flax_tensor = rename_key_and_reshape_tensor(pt_tuple_key, pt_tensor, random_flax_state_dict)
         if True:
             print("flax key",flax_key)
-#         if flax_key in random_flax_state_dict:
-#             if flax_tensor.shape != random_flax_state_dict[flax_key].shape:
+#         try:
+        if flax_key in random_flax_state_dict:
+            if flax_tensor.shape != random_flax_state_dict[flax_key].shape:
+                print(" ")
+                print(" ")
+                print(" ")
+                print(" ")
+
+                print(f"PyTorch checkpoint seems to be incorrect. Weight {pt_key} was expected to be of shape ")
+                print(f"{random_flax_state_dict[flax_key].shape}, but is {flax_tensor.shape}.")
+                print(" ")
+                print(" ")
+                print(" ")
+                print(" ")
+
 #                 raise ValueError(
 #                     f"PyTorch checkpoint seems to be incorrect. Weight {pt_key} was expected to be of shape "
 #                     f"{random_flax_state_dict[flax_key].shape}, but is {flax_tensor.shape}."
 #                 )
+#         except Exception as e:
+#                         print(f"PyTorch checkpoint seems to be incorrect. Weight {pt_key} was expected to be of shape ")
+#                         print(f"{random_flax_state_dict[flax_key].shape}, but is {flax_tensor.shape}.")
 
             # also add unexpected weight so that warning is thrown
         flax_state_dict[flax_key] = jnp.asarray(flax_tensor)
