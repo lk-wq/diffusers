@@ -297,7 +297,9 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         if encoder_hidden_states.shape[-1] == 768:
             t_emb2 = t_emb + self.add_embedding(encoder_hidden_states)
         else:
+            print("pre t_emb",t_emb.shape)
             t_emb = t_emb + self.add_embedding(encoder_hidden_states)
+            print("post t_emb",t_emb.shape)
             
 #         except Exception as e:
 #             print("EXCEPTION",e)
