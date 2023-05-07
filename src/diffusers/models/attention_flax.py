@@ -451,6 +451,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
         hidden_states = attn.group_norm(hidden_states)#.transpose(1, 2)).transpose(1, 2)
 
         query = attn.to_q(hidden_states)
+        print("query v hs", query.shape, hidden_states.shape)
         query = self.head_to_batch_dim(query, out_dim=4)
 
         encoder_hidden_states_key_proj = attn.add_k_proj(encoder_hidden_states)
