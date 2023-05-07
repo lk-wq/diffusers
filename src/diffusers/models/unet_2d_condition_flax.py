@@ -157,7 +157,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         # down
         down_blocks = []
         output_channel = block_out_channels[0]
-        self.encoder_hid_proj = nn.Dense(4096,768) #fix hardcode
+        self.encoder_hid_proj = nn.Dense(4096) #fix hardcode
         for i, down_block_type in enumerate(self.down_block_types):
             input_channel = output_channel
             output_channel = block_out_channels[i]
