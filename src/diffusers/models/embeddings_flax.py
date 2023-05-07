@@ -140,7 +140,7 @@ class FlaxAttentionPooling(nn.Module):
         self.k_proj = nn.Dense(self.embed_dim)#, embed_dim, dtype=self.dtype)
         self.q_proj = nn.Dense(self.embed_dim)#, embed_dim, dtype=self.dtype)
         self.v_proj = nn.Dense(self.embed_dim)#, embed_dim, dtype=self.dtype)
-        self.num_heads = self.num_heads
+#         self.num_heads = self.num_heads
         self.dim_per_head = self.embed_dim // self.num_heads
 
     
