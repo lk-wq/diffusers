@@ -293,6 +293,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         # 2. pre-process
         sample = jnp.transpose(sample, (0, 2, 3, 1))
         sample = self.conv_in(sample)
+        t_emb = t_emb + self.add_embedding(encoder_hidden_states)
 
         # 3. down
         encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
@@ -300,7 +301,6 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         print('sample.npy',sample)
         print('t_emb.npy',t_emb)
         print('encoder_hidden_states.npy',encoder_hidden_states)
-
         for down_block in self.down_blocks:
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
                 print("pre down_block",sample.shape )
