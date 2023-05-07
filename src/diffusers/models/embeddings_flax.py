@@ -181,7 +181,7 @@ class FlaxAttentionPooling(nn.Module):
         # (bs*n_heads, class_token_length, length+class_token_length):
         scale = 1 / math.sqrt(math.sqrt(self.dim_per_head))
         weight = jnp.einsum("bct,bcs->bts", q * scale, k * scale)  # More stable with f16 than dividing afterwards
-        weight = nn.softmax(weight.float(), axis=-1)#.type(weight.dtype)
+        weight = nn.softmax(weight.astype(jnp.float32), axis=-1)#.type(weight.dtype)
 
         # (bs*n_heads, dim_per_head, class_token_length)
         a = jnp.einsum("bts,bcs->bct", weight, v)
