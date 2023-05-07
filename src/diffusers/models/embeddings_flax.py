@@ -114,7 +114,7 @@ class FlaxTextTimeEmbedding(nn.Module):
 
     def __call__(self, hidden_states):
         hidden_states = self.norm1(hidden_states)
-#         hidden_states = self.pool(hidden_states)
+        hidden_states = self.pool(hidden_states)
         hidden_states = self.proj(hidden_states)
         hidden_states = self.norm2(hidden_states)
         return hidden_states
