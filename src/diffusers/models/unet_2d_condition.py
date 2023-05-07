@@ -705,10 +705,12 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 emb = emb + class_emb
 
         if self.config.addition_embed_type == "text":
+            print("self config addition hitting !!!")
             aug_emb = self.add_embedding(encoder_hidden_states)
             emb = emb + aug_emb
 
         if self.time_embed_act is not None:
+            print("self time embed act")
             emb = self.time_embed_act(emb)
 
         if self.encoder_hid_proj is not None:
