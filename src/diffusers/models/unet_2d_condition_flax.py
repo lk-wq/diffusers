@@ -294,80 +294,153 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         sample = jnp.transpose(sample, (0, 2, 3, 1))
         sample = self.conv_in(sample)
         print("enc huuh",encoder_hidden_states.shape)
-#         try:
-        t_emb2 = t_emb + self.add_embedding(encoder_hidden_states)
+        try:
+            t_emb = t_emb + self.add_embedding(encoder_hidden_states)
 #         except Exception as e:
 #             print("EXCEPTION",e)
             
         # 3. down
-        encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
-        down_block_res_samples = (sample,)
-        print('sample.npy',sample)
-        print('t_emb.npy',t_emb)
-        print('encoder_hidden_states.npy',encoder_hidden_states)
-        for down_block in self.down_blocks:
-            if isinstance(down_block, FlaxCrossAttnDownBlock2D):
-                print("pre down_block",sample.shape )
-                sample, res_samples = down_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
-                print("post down_block",sample.shape)
+            encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
+            down_block_res_samples = (sample,)
+            print('sample.npy',sample)
+            print('t_emb.npy 1',t_emb)
+            print('encoder_hidden_states.npy',encoder_hidden_states)
+            for down_block in self.down_blocks:
+                if isinstance(down_block, FlaxCrossAttnDownBlock2D):
+                    print("pre down_block",sample.shape )
+                    sample, res_samples = down_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
+                    print("post down_block",sample.shape)
 
-            else:
-                try:
-                    print("not cross pre down_block",sample.shape , res_samples.shape)
-                except:
-                     print("not cross pre down_block",sample.shape)
-                sample, res_samples = down_block(sample, t_emb, deterministic=not train)
-                print("not cross post down_block",sample.shape)
-            down_block_res_samples += res_samples
+                else:
+                    try:
+                        print("not cross pre down_block",sample.shape , res_samples.shape)
+                    except:
+                         print("not cross pre down_block",sample.shape)
+                    sample, res_samples = down_block(sample, t_emb, deterministic=not train)
+                    print("not cross post down_block",sample.shape)
+                down_block_res_samples += res_samples
 
-        if down_block_additional_residuals is not None:
-            new_down_block_res_samples = ()
-            print("residuals ????")
-            for down_block_res_sample, down_block_additional_residual in zip(
-                down_block_res_samples, down_block_additional_residuals
-            ):
-                down_block_res_sample += down_block_additional_residual
-                new_down_block_res_samples += (down_block_res_sample,)
+            if down_block_additional_residuals is not None:
+                new_down_block_res_samples = ()
+                print("residuals ????")
+                for down_block_res_sample, down_block_additional_residual in zip(
+                    down_block_res_samples, down_block_additional_residuals
+                ):
+                    down_block_res_sample += down_block_additional_residual
+                    new_down_block_res_samples += (down_block_res_sample,)
 
-            down_block_res_samples = new_down_block_res_samples
+                down_block_res_samples = new_down_block_res_samples
 
-        # 4. mid
-        print("going into mid block sample v t_emb vs enc hs", sample.shape,t_emb.shape, encoder_hidden_states.shape)
-        print("before mid_block")
-        import numpy as np
-#         np.save('sample.npy',sample)
-#         np.save('t_emb.npy',t_emb)
-#         np.save('encoder_hidden_states.npy',encoder_hidden_states)
-#         print('sample.npy',sample)
-#         print('t_emb.npy',t_emb)
-#         print('encoder_hidden_states.npy',encoder_hidden_states)
-        sample = self.mid_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
+            # 4. mid
+            print("going into mid block sample v t_emb vs enc hs", sample.shape,t_emb.shape, encoder_hidden_states.shape)
+            print("before mid_block")
+            import numpy as np
+    #         np.save('sample.npy',sample)
+    #         np.save('t_emb.npy',t_emb)
+    #         np.save('encoder_hidden_states.npy',encoder_hidden_states)
+    #         print('sample.npy',sample)
+    #         print('t_emb.npy',t_emb)
+    #         print('encoder_hidden_states.npy',encoder_hidden_states)
+            sample = self.mid_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
 
-        if mid_block_additional_residual is not None:
-            sample += mid_block_additional_residual
+            if mid_block_additional_residual is not None:
+                sample += mid_block_additional_residual
 
-        # 5. up
-        for up_block in self.up_blocks:
-            res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
-            down_block_res_samples = down_block_res_samples[: -(self.layers_per_block + 1)]
-            if isinstance(up_block, FlaxCrossAttnUpBlock2D):
-                sample = up_block(
-                    sample,
-                    temb=t_emb,
-                    encoder_hidden_states=encoder_hidden_states,
-                    res_hidden_states_tuple=res_samples,
-                    deterministic=not train,
-                )
-            else:
-                sample = up_block(sample, temb=t_emb, res_hidden_states_tuple=res_samples, deterministic=not train)
+            # 5. up
+            for up_block in self.up_blocks:
+                res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
+                down_block_res_samples = down_block_res_samples[: -(self.layers_per_block + 1)]
+                if isinstance(up_block, FlaxCrossAttnUpBlock2D):
+                    sample = up_block(
+                        sample,
+                        temb=t_emb,
+                        encoder_hidden_states=encoder_hidden_states,
+                        res_hidden_states_tuple=res_samples,
+                        deterministic=not train,
+                    )
+                else:
+                    sample = up_block(sample, temb=t_emb, res_hidden_states_tuple=res_samples, deterministic=not train)
 
-        # 6. post-process
-        sample = self.conv_norm_out(sample)
-        sample = nn.silu(sample)
-        sample = self.conv_out(sample)
-        sample = jnp.transpose(sample, (0, 3, 1, 2))
+            # 6. post-process
+            sample = self.conv_norm_out(sample)
+            sample = nn.silu(sample)
+            sample = self.conv_out(sample)
+            sample = jnp.transpose(sample, (0, 3, 1, 2))
 
-        if not return_dict:
-            return (sample,)
+            if not return_dict:
+                return (sample,)
 
-        return FlaxUNet2DConditionOutput(sample=sample)
+            return FlaxUNet2DConditionOutput(sample=sample)
+        except:
+            
+            encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
+            down_block_res_samples = (sample,)
+            print('sample.npy',sample)
+            print('t_emb.npy',t_emb)
+            print('encoder_hidden_states.npy',encoder_hidden_states)
+            for down_block in self.down_blocks:
+                if isinstance(down_block, FlaxCrossAttnDownBlock2D):
+                    print("pre down_block",sample.shape )
+                    sample, res_samples = down_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
+                    print("post down_block",sample.shape)
+
+                else:
+                    try:
+                        print("not cross pre down_block",sample.shape , res_samples.shape)
+                    except:
+                         print("not cross pre down_block",sample.shape)
+                    sample, res_samples = down_block(sample, t_emb, deterministic=not train)
+                    print("not cross post down_block",sample.shape)
+                down_block_res_samples += res_samples
+
+            if down_block_additional_residuals is not None:
+                new_down_block_res_samples = ()
+                print("residuals ????")
+                for down_block_res_sample, down_block_additional_residual in zip(
+                    down_block_res_samples, down_block_additional_residuals
+                ):
+                    down_block_res_sample += down_block_additional_residual
+                    new_down_block_res_samples += (down_block_res_sample,)
+
+                down_block_res_samples = new_down_block_res_samples
+
+            # 4. mid
+            print("going into mid block sample v t_emb vs enc hs", sample.shape,t_emb.shape, encoder_hidden_states.shape)
+            print("before mid_block")
+            import numpy as np
+    #         np.save('sample.npy',sample)
+    #         np.save('t_emb.npy',t_emb)
+    #         np.save('encoder_hidden_states.npy',encoder_hidden_states)
+    #         print('sample.npy',sample)
+    #         print('t_emb.npy',t_emb)
+    #         print('encoder_hidden_states.npy',encoder_hidden_states)
+            sample = self.mid_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
+
+            if mid_block_additional_residual is not None:
+                sample += mid_block_additional_residual
+
+            # 5. up
+            for up_block in self.up_blocks:
+                res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
+                down_block_res_samples = down_block_res_samples[: -(self.layers_per_block + 1)]
+                if isinstance(up_block, FlaxCrossAttnUpBlock2D):
+                    sample = up_block(
+                        sample,
+                        temb=t_emb,
+                        encoder_hidden_states=encoder_hidden_states,
+                        res_hidden_states_tuple=res_samples,
+                        deterministic=not train,
+                    )
+                else:
+                    sample = up_block(sample, temb=t_emb, res_hidden_states_tuple=res_samples, deterministic=not train)
+
+            # 6. post-process
+            sample = self.conv_norm_out(sample)
+            sample = nn.silu(sample)
+            sample = self.conv_out(sample)
+            sample = jnp.transpose(sample, (0, 3, 1, 2))
+
+            if not return_dict:
+                return (sample,)
+
+            return FlaxUNet2DConditionOutput(sample=sample)
