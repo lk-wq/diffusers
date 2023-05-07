@@ -93,3 +93,71 @@ class FlaxTimesteps(nn.Module):
         return get_sinusoidal_embeddings(
             timesteps, embedding_dim=self.dim, flip_sin_to_cos=self.flip_sin_to_cos, freq_shift=self.freq_shift
         )
+
+class FlaxTextTimeEmbedding(nn.Module):
+    def __init__(self, encoder_dim: int, time_embed_dim: int, num_heads: int = 64):
+        super().__init__()
+        self.norm1 = nn.LayerNorm(encoder_dim)
+        self.pool = FlaxAttentionPooling(num_heads, encoder_dim)
+        self.proj = nn.Linear(encoder_dim, time_embed_dim)
+        self.norm2 = nn.LayerNorm(time_embed_dim)
+
+    def forward(self, hidden_states):
+        hidden_states = self.norm1(hidden_states)
+        hidden_states = self.pool(hidden_states)
+        hidden_states = self.proj(hidden_states)
+        hidden_states = self.norm2(hidden_states)
+        return hidden_states
+
+
+class FlaxAttentionPooling(nn.Module):
+    # Copied from https://github.com/deep-floyd/IF/blob/2f91391f27dd3c468bf174be5805b4cc92980c0b/deepfloyd_if/model/nn.py#L54
+
+    def __init__(self, num_heads, embed_dim, dtype=None):
+        super().__init__()
+#         self.dtype = dtype
+        self.positional_embedding = jax.random.normal(prng_seed, shape=latents_shape, dtype=jnp.float32) #nn.Parameter(torch.randn(1, embed_dim) / embed_dim**0.5)
+        self.k_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
+        self.q_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
+        self.v_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
+        self.num_heads = num_heads
+        self.dim_per_head = embed_dim // self.num_heads
+
+    def forward(self, x):
+        bs, length, width = x.shape#()
+
+        def shape(x):
+            # (bs, length, width) --> (bs, length, n_heads, dim_per_head)
+#             fill = (bs*length *width)//(length*self.num_heads*self.dim_per_head)
+            x = x.reshape(bs, lenth, self.num_heads, self.dim_per_head)
+            # (bs, length, n_heads, dim_per_head) --> (bs, n_heads, length, dim_per_head)
+            x = jnp.transpose(x, (0, 2,1,3))
+            # (bs, n_heads, length, dim_per_head) --> (bs*n_heads, length, dim_per_head)
+#             fill = (bs*self.n_heads *self.dim_per_head)//(length*self.num_heads*self.dim_per_head)
+
+            x = x.reshape(bs * self.num_heads, length, self.dim_per_head)
+            # (bs*n_heads, length, dim_per_head) --> (bs*n_heads, dim_per_head, length)
+            x = jnp.transpose(x,(0,2, 1))
+            return x
+
+        class_token = x.mean(dim=1, keepdim=True) + self.positional_embedding
+        x = jnp.concatenate([class_token, x], axis=1)  # (bs, length+1, width)
+
+        # (bs*n_heads, class_token_length, dim_per_head)
+        q = shape(self.q_proj(class_token))
+        # (bs*n_heads, length+class_token_length, dim_per_head)
+        k = shape(self.k_proj(x))
+        v = shape(self.v_proj(x))
+
+        # (bs*n_heads, class_token_length, length+class_token_length):
+        scale = 1 / math.sqrt(math.sqrt(self.dim_per_head))
+        weight = jnp.einsum("bct,bcs->bts", q * scale, k * scale)  # More stable with f16 than dividing afterwards
+        weight = jnp.softmax(weight.float(), axis=-1)#.type(weight.dtype)
+
+        # (bs*n_heads, dim_per_head, class_token_length)
+        a = jnp.einsum("bts,bcs->bct", weight, v)
+
+        # (bs, length+1, width)
+        a = jnp.transpose(a.reshape(bs, length+1, width),transpose(0,2, 1))
+
+        return a[:, 0, :]  # cls_token
