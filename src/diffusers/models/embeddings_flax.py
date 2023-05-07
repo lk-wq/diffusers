@@ -116,7 +116,7 @@ class FlaxAttentionPooling(nn.Module):
     def __init__(self, num_heads, embed_dim, dtype=None):
         super().__init__()
 #         self.dtype = dtype
-        self.positional_embedding = jax.random.normal(prng_seed, shape=latents_shape, dtype=jnp.float32) #nn.Parameter(torch.randn(1, embed_dim) / embed_dim**0.5)
+        self.positional_embedding = jnp.asarray(np.load('positional_embedding.npy'))#jax.random.normal(prng_seed, shape=latents_shape, dtype=jnp.float32) #nn.Parameter(torch.randn(1, embed_dim) / embed_dim**0.5)
         self.k_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
         self.q_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
         self.v_proj = nn.Dense(embed_dim)#, embed_dim, dtype=self.dtype)
