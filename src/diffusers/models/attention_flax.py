@@ -495,6 +495,12 @@ class FlaxBasicTransformerBlock2(nn.Module):
         
         #self.attn1(query, key, value)#attention_mask)
         print("hidden after self attn1",hidden_states.shape)
+        fill = 1
+        for i in hidden_states.shape:
+            fill *= i 
+        fill = fill // (batch_size * residual.shape[1])
+        hidden_states = jnp.transpose(hidden_states, (1, 2)).reshape(batch_size, -1, residual.shape[1])
+
         print("res shape",residual.shape)
 #         fill = 1
 #         for i in hidden_states.shape:
