@@ -720,8 +720,9 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
             print("hidden projection post !!!! ",encoder_hidden_states.size()  )
 
         # 2. pre-process
+        print("s0",sample,sample.size())
         sample = self.conv_in(sample)
-
+        print("s1",sample, sample.size())
         # 3. down
         print("entering down")
         torch.save(sample,'sample_down.pth')
