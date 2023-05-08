@@ -98,10 +98,10 @@ class FlaxCrossAttnDownBlock2D(nn.Module):
         for ix, (resnet, attn) in enumerate(zip(self.resnets, self.attentions)):
             hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
 #             if ix == 1:
-            print("pre attn",ix,hidden_states)
+            print("pre attn",ix,hidden_states,hidden_states.shape)
             hidden_states = attn(hidden_states, encoder_hidden_states, deterministic=deterministic)
 #             if ix == 1:
-            print("post attn",ix,hidden_states)
+            print("post attn",ix,hidden_states,hidden_states.shape)
 
             output_states += (hidden_states,)
 
