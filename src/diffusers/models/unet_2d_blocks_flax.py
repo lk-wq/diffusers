@@ -84,7 +84,13 @@ class FlaxCrossAttnDownBlock2D(nn.Module):
         self.attentions = attentions
 
         if self.add_downsample:
-            self.downsamplers_0 = FlaxDownsample2D(self.out_channels, dtype=self.dtype)
+            self.downsamplers_0 = FlaxResnetBlock2D(
+                in_channels=in_channels,
+                out_channels=self.out_channels,
+                dropout_prob=self.dropout,
+                downsample=True,
+                dtype=self.dtype,
+            )#FlaxDownsample2D(self.out_channels, dtype=self.dtype)
 
     def __call__(self, hidden_states, temb, encoder_hidden_states, deterministic=True):
         output_states = ()
