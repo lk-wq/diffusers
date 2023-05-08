@@ -550,12 +550,12 @@ class ResnetBlock2D(nn.Module):
 
     def forward(self, input_tensor, temb):
         hidden_states = input_tensor
-        print("residual ",hidden_states)
+#         print("residual ",hidden_states)
         if self.time_embedding_norm == "ada_group":
             hidden_states = self.norm1(hidden_states, temb)
         else:
             hidden_states = self.norm1(hidden_states)
-        print("post norm1",hidden_states)
+#         print("post norm1",hidden_states)
         hidden_states = self.nonlinearity(hidden_states)
 
         if self.upsample is not None:
