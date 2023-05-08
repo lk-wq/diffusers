@@ -733,13 +733,24 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
         for ix, downsample_block in enumerate(self.down_blocks):
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
                 print("cross attn hit !")
-                sample, res_samples = downsample_block(
-                    hidden_states=sample,
-                    temb=emb,
-                    encoder_hidden_states=encoder_hidden_states,
-                    attention_mask=attention_mask,
-                    cross_attention_kwargs=cross_attention_kwargs,
-                )
+                if ix == 0:
+                    sample, res_samples = downsample_block(
+                        hidden_states=sample,
+                        temb=emb,
+                        encoder_hidden_states=encoder_hidden_states,
+                        attention_mask=attention_mask,
+                        cross_attention_kwargs=cross_attention_kwargs,
+                        save=True
+                    )
+                else:
+                    sample, res_samples = downsample_block(
+                        hidden_states=sample,
+                        temb=emb,
+                        encoder_hidden_states=encoder_hidden_states,
+                        attention_mask=attention_mask,
+                        cross_attention_kwargs=cross_attention_kwargs,
+                    )
+                
             else:
                 print("no cross attn!!")
                 print("entering init sample",ix , sample)
