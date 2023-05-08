@@ -507,11 +507,13 @@ class FlaxBasicTransformerBlock2(nn.Module):
 #             fill *= i
 #         fill = fill//(batch_size * residual.shape[-1])
 
-        hidden_states = jnp.transpose(hidden_states,(0,2, 1)).reshape(batch_size, hidden_states.shape[2], residual.shape[-1])
+#         hidden_states = jnp.transpose(hidden_states,(0,2, 1)).reshape(batch_size, hidden_states.shape[2], residual.shape[-1])
 
 #         hidden_states = self.batch_to_head_dim(hidden_states)
         
         hidden_states = attn.to_out[0](hidden_states)
+        hidden_states = jnp.transpose(hidden_states, (0,2, 1)).reshape(residual.shape)
+
 
         hidden_states = hidden_states + r2
 
