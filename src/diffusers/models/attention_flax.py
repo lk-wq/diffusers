@@ -457,7 +457,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
         else:
             print("encoder size",encoder_hidden_states)
             encoder_hidden_states = attn.norm_cross(encoder_hidden_states)
-        hidden_states = jnp.transpose( jnp.transpose(attn.group_norm(hidden_states),transpose(1, 2)), (1, 2) )
+        hidden_states = jnp.transpose( jnp.transpose(attn.group_norm(hidden_states),(0,2, 1)), (0,2, 1) )
 
         query = attn.to_q(hidden_states)
         print("query v hs", query.shape, hidden_states.shape)
