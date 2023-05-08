@@ -706,6 +706,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
 
         if self.config.addition_embed_type == "text":
             print("self config addition hitting !!!")
+            print("pre emb",emb)
             aug_emb = self.add_embedding(encoder_hidden_states)
             emb = emb + aug_emb
 
