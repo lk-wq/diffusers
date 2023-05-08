@@ -314,7 +314,6 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         for ix , down_block in enumerate(self.down_blocks):
             print("db",down_block)
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
-                print("pre down_block",sample.shape )
                 sample, res_samples = down_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
                 print("post down_block",sample.shape)
 
@@ -323,6 +322,10 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                     print("not cross pre down_block",sample.shape , res_samples.shape)
                 except:
                      print("not cross pre down_block",sample.shape)
+                print("entering init sample", sample )
+                print(" ")
+                print("entering init temb ", t_emb )
+
                 sample, res_samples = down_block(sample, t_emb, deterministic=not train)
                 print("not cross post down_block",sample.shape)
             if ix == 0:
