@@ -1452,14 +1452,17 @@ class SimpleCrossAttnDownBlock2D(nn.Module):
         self.gradient_checkpointing = False
 
     def forward(
-        self, hidden_states, temb=None, encoder_hidden_states=None, attention_mask=None, cross_attention_kwargs=None
+        self, hidden_states, temb=None, encoder_hidden_states=None, attention_mask=None, cross_attention_kwargs=None,save=None
     ):
         output_states = ()
         cross_attention_kwargs = cross_attention_kwargs if cross_attention_kwargs is not None else {}
 
         for ix, (resnet, attn) in enumerate(zip(self.resnets, self.attentions)):
             # resnet
-            hidden_states = resnet(hidden_states, temb)
+            if ix == 1 and save:
+                hidden_states = resnet(hidden_states, temb,save=True)
+            else:
+                hidden_states = resnet(hidden_states, temb)
 #             if ix == 1:
             print("pre attn",ix, hidden_states, hidden_states.shape)
             # attn
