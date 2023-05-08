@@ -107,7 +107,7 @@ class FlaxTextTimeEmbedding(nn.Module):
     num_heads: int = 0
 
     def setup(self):
-        self.norm1 = nn.LayerNorm(self.encoder_dim,reduction_axes=2)
+        self.norm1 = nn.LayerNorm(self.encoder_dim)
         self.pool = FlaxAttentionPooling(num_heads=self.num_heads, embed_dim=self.encoder_dim)
         self.proj = nn.Dense(self.time_embed_dim)
         self.norm2 = nn.LayerNorm(self.time_embed_dim)
@@ -115,7 +115,7 @@ class FlaxTextTimeEmbedding(nn.Module):
     def __call__(self, hidden_states):
         print("h0 ",hidden_states,hidden_states.shape)
 
-        hidden_states = self.norm1(hidden_states)
+        hidden_states = self.norm1(hidden_states.astype(jnp.float32))
         print("h1 ",hidden_states)
         hidden_states = self.pool(hidden_states)
         hidden_states = self.proj(hidden_states)
