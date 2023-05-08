@@ -291,8 +291,13 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         t_emb = self.time_embedding(t_emb)
 
         # 2. pre-process
+        print("s0",sample)
         sample = jnp.transpose(sample, (0, 2, 3, 1))
+        print("s1",sample)
+
         sample = self.conv_in(sample)
+        print("s2",sample)
+
         print("enc huuh",encoder_hidden_states.shape)
         if encoder_hidden_states.shape[-1] == 768:
             t_emb2 = t_emb + self.add_embedding(encoder_hidden_states)
@@ -308,7 +313,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
     # 3. down
         encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
         down_block_res_samples = (sample,)
-        print('sample.npy',sample)
+#         print('sample.npy',sample)
         print('t_emb.npy 1',t_emb)
         print('encoder_hidden_states.npy',encoder_hidden_states)
         for ix , down_block in enumerate(self.down_blocks):
