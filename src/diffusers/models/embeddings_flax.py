@@ -107,7 +107,7 @@ class FlaxTextTimeEmbedding(nn.Module):
     num_heads: int = 0
 
     def setup(self):
-        self.norm1 = nn.LayerNorm(self.encoder_dim)
+        self.norm1 = nn.LayerNorm(self.encoder_dim,use_scale=False)
         self.pool = FlaxAttentionPooling(num_heads=self.num_heads, embed_dim=self.encoder_dim)
         self.proj = nn.Dense(self.time_embed_dim)
         self.norm2 = nn.LayerNorm(self.time_embed_dim)
