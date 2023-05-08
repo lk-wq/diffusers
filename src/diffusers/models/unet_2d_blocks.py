@@ -1460,8 +1460,8 @@ class SimpleCrossAttnDownBlock2D(nn.Module):
         for ix, (resnet, attn) in enumerate(zip(self.resnets, self.attentions)):
             # resnet
             hidden_states = resnet(hidden_states, temb)
-            if ix == 0:
-                print("pre attn",hidden_states)
+#             if ix == 0:
+#                 print("pre attn",hidden_states)
             # attn
             hidden_states = attn(
                 hidden_states,
@@ -1469,17 +1469,17 @@ class SimpleCrossAttnDownBlock2D(nn.Module):
                 attention_mask=attention_mask,
                 **cross_attention_kwargs,
             )
-            if ix == 0:
-                print("post attn",hidden_states)
+#             if ix == 0:
+#                 print("post attn",hidden_states)
 
             output_states = output_states + (hidden_states,)
 
         if self.downsamplers is not None:
             for downsampler in self.downsamplers:
                 hidden_states = downsampler(hidden_states, temb)
-
+            print("post down sampled", hidden_states)
             output_states = output_states + (hidden_states,)
-
+        
         return hidden_states, output_states
 
 
