@@ -174,26 +174,30 @@ class FlaxAttentionPooling(nn.Module):
             class_token = jnp.mean(x,axis=1, keepdims=True) + self.positional_embedding
         else:
             class_token = jnp.mean(x,axis=1, keepdims=True)
+        print("class token size",class_token.shape)
         x = jnp.concatenate([class_token, x], axis=1)  # (bs, length+1, width)
 
         # (bs*n_heads, class_token_length, dim_per_head)
         q = shape(self.q_proj(class_token))
+        print("q",q.shape)
         # (bs*n_heads, length+class_token_length, dim_per_head)
         k = shape(self.k_proj(x))
+        print("k",k.shape)
         v = shape(self.v_proj(x))
-
+        print("v",v.shape)
         # (bs*n_heads, class_token_length, length+class_token_length):
         scale = 1 / math.sqrt(math.sqrt(self.dim_per_head))
         weight = jnp.einsum("bct,bcs->bts", q * scale, k * scale)  # More stable with f16 than dividing afterwards
+        print("weight 1 ",weight.shape)
         weight = nn.softmax(weight.astype(jnp.float32), axis=-1)#.type(weight.dtype)
-
+        print("weight 2 ",weight.shape)
         # (bs*n_heads, dim_per_head, class_token_length)
         a = jnp.einsum("bts,bcs->bct", weight, v)
-
+        print("a 1",a.shape)
         # (bs, length+1, width)
         if raw_width > 768:
             a = jnp.transpose(a.reshape(bs, length+1, width),transpose(0,2, 1))
-
+            print("a 2", a.shape)
             return a[:, 0, :]  # cls_token
         else:
             return og
