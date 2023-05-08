@@ -518,7 +518,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
 
         hidden_states = hidden_states + residual
 
-        return hidden_states.reshape(r2)
+        return hidden_states.reshape(r2.shape)
 
 class FlaxTransformer2DModel2(nn.Module):
     r"""
