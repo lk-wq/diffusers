@@ -136,7 +136,8 @@ class FlaxResnetBlock2D(nn.Module):
     def __call__(self, hidden_states, temb, deterministic=True):
         residual = hidden_states
         print("residual pre -------->",residual,residual.shape)
-        hidden_states = self.norm1(hidden_states)
+#         hidden_states = self.norm1(hidden_states)
+        hidden_states = jnp.transpose( jnp.transpose(self.norm1(hidden_states),(0,3, 1,2)), (0,2, 3,1) )
         print("post norm1 ----->",hidden_states, hidden_states.shape )
         hidden_states = nn.swish(hidden_states)
 #         print("post swiswh",hidden_states)
@@ -173,7 +174,9 @@ class FlaxResnetBlock2D(nn.Module):
 #         temb = jnp.expand_dims(jnp.expand_dims(temb, 1), 1)
 #         hidden_states = hidden_states + temb
 
-        hidden_states = self.norm2(hidden_states)
+#         hidden_states = self.norm2(hidden_states)
+        hidden_states = jnp.transpose( jnp.transpose(self.norm2(hidden_states),(0,3, 1,2)), (0,2, 3,1) )
+
         scale, shift = jnp.split(temb, 2, axis=1)
         hidden_states = hidden_states * (1 +  jnp.expand_dims(jnp.expand_dims(scale,axis=1),axis=2)) + jnp.expand_dims(jnp.expand_dims(shift,axis=1),axis=2)
 
