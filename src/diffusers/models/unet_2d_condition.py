@@ -729,7 +729,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
 #         torch.save(encoder_hidden_states,'enc_down.pth')
 
         down_block_res_samples = (sample,)
-        for downsample_block in self.down_blocks:
+        for ix, downsample_block in enumerate(self.down_blocks):
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
                 print("cross attn hit !")
                 sample, res_samples = downsample_block(
@@ -742,7 +742,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
             else:
                 print("no cross attn!!")
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
-
+            if ix == 0:
+                torch.save(sample,'sample_d1.pth')
             down_block_res_samples += res_samples
 
         if down_block_additional_residuals is not None:
