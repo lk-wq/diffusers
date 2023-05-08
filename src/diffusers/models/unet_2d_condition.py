@@ -724,9 +724,9 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
 
         # 3. down
         print("entering down")
-#         torch.save(sample,'sample_down.pth')
-#         torch.save(emb,'emb_down.pth')
-#         torch.save(encoder_hidden_states,'enc_down.pth')
+        torch.save(sample,'sample_down.pth')
+        torch.save(emb,'emb_down.pth')
+        torch.save(encoder_hidden_states,'enc_down.pth')
 
         down_block_res_samples = (sample,)
         for ix, downsample_block in enumerate(self.down_blocks):
@@ -741,9 +741,9 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 )
             else:
                 print("no cross attn!!")
-                print("entering init sample",sample)
+                print("entering init sample",ix , sample)
                 print(" ")
-                print("entering init emb",emb)
+                print("entering init emb",ix , emb)
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
             if ix == 0:
                 torch.save(sample,'sample_d1.pth')
