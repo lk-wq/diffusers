@@ -160,10 +160,10 @@ class FlaxResnetBlock2D(nn.Module):
 #             if hidden_states.shape[0] >= 64:
 #                 input_tensor = input_tensor.contiguous()
 #                 hidden_states = hidden_states.contiguous()
-#         print("pre conv1 -------------------------------------->",hidden_states)
+        print("pre conv1 -------------------------------------->",hidden_states)
 
         hidden_states = self.conv1(hidden_states)
-#         print("post conv1 -------------------------------------->",hidden_states)
+        print("post conv1 -------------------------------------->",hidden_states)
 
         temb = self.time_emb_proj(nn.swish(temb))
         
