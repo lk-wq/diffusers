@@ -499,7 +499,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
         for i in hidden_states.shape:
             fill *= i 
         fill = fill // (batch_size * residual.shape[1])
-        hidden_states = jnp.transpose(hidden_states, (0,2, 1)).reshape(batch_size, -1, residual.shape[1])
+        hidden_states = jnp.transpose(hidden_states, (0,2, 1,3)).reshape(batch_size, -1, residual.shape[1])
 
         print("res shape",residual.shape)
 #         fill = 1
