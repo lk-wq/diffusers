@@ -160,8 +160,10 @@ class FlaxDownBlock2D(nn.Module):
     def __call__(self, hidden_states, temb, deterministic=True):
         output_states = ()
 
-        for resnet in self.resnets:
+        for ix, resnet in enumerate(self.resnets):
             hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
+            if ix == 0:
+                print("rezzy 0 ------------------------------------------------------>,hidden_states)
             output_states += (hidden_states,)
 
         if self.add_downsample:
