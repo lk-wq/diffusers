@@ -733,7 +733,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
         for ix, downsample_block in enumerate(self.down_blocks):
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
                 print("cross attn hit !")
-                if ix == 0:
+                if ix == 1:
                     sample, res_samples = downsample_block(
                         hidden_states=sample,
                         temb=emb,
