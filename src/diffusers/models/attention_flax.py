@@ -558,16 +558,16 @@ class FlaxTransformer2DModel2(nn.Module):
 #                 strides=(1, 1),
 #                 padding="VALID",
 #                 dtype=self.dtype,
-        self.to_out = [nn.Dense(768)]
+        self.to_out = [nn.Dense(inner_dim)]
 #         self.to_out.append()
 #         self.to_out.append(nn.Dropout(dropout))
-        self.to_k = nn.Dense(768)
-        self.to_q = nn.Dense(768)
-        self.to_v = nn.Dense(768)
+        self.to_k = nn.Dense(inner_dim)
+        self.to_q = nn.Dense(inner_dim)
+        self.to_v = nn.Dense(inner_dim)
         self.group_norm = nn.GroupNorm(num_groups=32, epsilon=1e-5)
         self.norm_cross = nn.GroupNorm(num_groups=32, epsilon=1e-5)
-        self.add_k_proj = nn.Dense(768)
-        self.add_v_proj = nn.Dense(768)
+        self.add_k_proj = nn.Dense(inner_dim)
+        self.add_v_proj = nn.Dense(inner_dim)
 
         self.transformer_blocks = [
             FlaxBasicTransformerBlock2(
