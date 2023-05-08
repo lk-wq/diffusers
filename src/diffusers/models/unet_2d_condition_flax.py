@@ -291,12 +291,12 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         t_emb = self.time_embedding(t_emb)
 
         # 2. pre-process
-        print("s0",sample , sample.size() )
+        print("s0",sample , sample.shape )
         sample = jnp.transpose(sample, (0, 2, 3, 1))
-        print("s1",sample , sample.size() )
+        print("s1",sample , sample.shape )
 
         sample = self.conv_in(sample)
-        print("s2",sample , sample.size() )
+        print("s2",sample , sample.shape )
 
         print("enc huuh",encoder_hidden_states.shape)
         if encoder_hidden_states.shape[-1] == 768:
