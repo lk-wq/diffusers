@@ -74,7 +74,7 @@ class FlaxTimestepEmbedding(nn.Module):
         temb = nn.silu(temb)
         temb = nn.Dense(self.time_embed_dim, dtype=self.dtype, name="linear_2")(temb)
         return temb
-
+import numpy as np
 
 class FlaxTimesteps(nn.Module):
     r"""
@@ -117,6 +117,7 @@ class FlaxTextTimeEmbedding(nn.Module):
 
         hidden_states = self.norm1(hidden_states.astype(jnp.float32))
         print("h1 ",hidden_states)
+        np.save('hidden_states.npy',hidden_states)
         hidden_states = self.pool(hidden_states)
         hidden_states = self.proj(hidden_states)
         hidden_states = self.norm2(hidden_states)
