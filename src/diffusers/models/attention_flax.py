@@ -445,10 +445,11 @@ class FlaxBasicTransformerBlock2(nn.Module):
         return tensor
 
     def __call__(self, hidden_states, encoder_hidden_states,attn, deterministic=True):
+        hidden_states = jnp.transpose(hidden_states, (0,3,1,2))
         residual = hidden_states
         print("hs",hidden_states.shape)
 #         encoder_hidden_states = jnp.ones((1,77,4096))
-        hidden_states = hidden_states.reshape(hidden_states.shape[0], hidden_states.shape[1]*hidden_states.shape[2], hidden_states.shape[-1])#.transpose(1, 2)
+        hidden_states = hidden_states.reshape(hidden_states.shape[0], hidden_states.shape[1],hidden_states.shape[-2]* hidden_states.shape[-1])#.transpose(1, 2)
         r2 = hidden_states
         batch_size, sequence_length, _ = hidden_states.shape
         if encoder_hidden_states is None:
