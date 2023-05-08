@@ -449,7 +449,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
         residual = hidden_states
         print("hs",hidden_states.shape)
 #         encoder_hidden_states = jnp.ones((1,77,4096))
-        hidden_states = hidden_states.reshape(hidden_states.shape[0], hidden_states.shape[1],hidden_states.shape[-2]* hidden_states.shape[-1])#.transpose(1, 2)
+        hidden_states = jnp.transpose(hidden_states.reshape(hidden_states.shape[0], hidden_states.shape[1],hidden_states.shape[-2]* hidden_states.shape[-1]),(0,2, 1))
         r2 = hidden_states
         batch_size, sequence_length, _ = hidden_states.shape
         if encoder_hidden_states is None:
@@ -457,7 +457,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
         else:
             print("encoder size",encoder_hidden_states)
             encoder_hidden_states = attn.norm_cross(encoder_hidden_states)
-        hidden_states = attn.group_norm(hidden_states)#.transpose(1, 2)).transpose(1, 2)
+        hidden_states = jnp.transpose( jnp.transpose(attn.group_norm(hidden_states),transpose(1, 2)), (1, 2) )
 
         query = attn.to_q(hidden_states)
         print("query v hs", query.shape, hidden_states.shape)
