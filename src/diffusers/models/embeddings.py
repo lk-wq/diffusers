@@ -388,7 +388,10 @@ class TextTimeEmbedding(nn.Module):
         self.norm2 = nn.LayerNorm(time_embed_dim)
 
     def forward(self, hidden_states):
+        print("h0 ", hidden_states)
         hidden_states = self.norm1(hidden_states)
+        print("h1 ", hidden_states)
+
         hidden_states = self.pool(hidden_states)
         hidden_states = self.proj(hidden_states)
         hidden_states = self.norm2(hidden_states)
@@ -447,7 +450,6 @@ class AttentionPooling(nn.Module):
         # (bs*n_heads, dim_per_head, class_token_length)
         a = torch.einsum("bts,bcs->bct", weight, v)
         print("a 1", a.size() )
-
         # (bs, length+1, width)
         a = a.reshape(bs, -1, 1).transpose(1, 2)
         print("a 2", a.size() )
