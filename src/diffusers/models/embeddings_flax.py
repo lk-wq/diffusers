@@ -114,11 +114,11 @@ class FlaxTextTimeEmbedding(nn.Module):
 
     def __call__(self, hidden_states):
         print("h0 ",hidden_states,hidden_states.shape)
-        print("h0 vars",jnp.var(hidden_states[0,:]) , jnp.mean(hidden_states[0,:]) )
+        print("h0 vars",jnp.var(hidden_states[0,0,:]) , jnp.mean(hidden_states[0,0,:]) )
 
         hidden_states = self.norm1(hidden_states.astype(jnp.float32))
         print("h1 ", hidden_states)
-        print("h1 vars",jnp.var(hidden_states[0,:]) , jnp.mean(hidden_states[0,:]) )
+        print("h1 vars",jnp.var(hidden_states[0,0,:]) , jnp.mean(hidden_states[0,0,:]) )
 #         np.save('hidden_states.npy',hidden_states)
         hidden_states = self.pool(hidden_states)
         hidden_states = self.proj(hidden_states)
