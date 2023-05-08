@@ -297,6 +297,8 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
         sample = self.conv_in(sample)
         print("s2",sample , sample.shape )
+        sample = jnp.transpose(sample, (0, 3, 1, 2))
+        print("s3",sample , sample.shape )
 
         print("enc huuh",encoder_hidden_states.shape)
         if encoder_hidden_states.shape[-1] == 768:
