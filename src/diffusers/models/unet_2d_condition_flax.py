@@ -163,7 +163,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             output_channel = block_out_channels[i]
             is_final_block = i == len(block_out_channels) - 1
 
-            if down_block_type == "CrossAttnDownBlock2D":
+            if not is_final_block:
                 down_block = FlaxCrossAttnDownBlock2D(
                     in_channels=input_channel,
                     out_channels=output_channel,
