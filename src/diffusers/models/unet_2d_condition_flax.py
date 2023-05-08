@@ -308,9 +308,9 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
     # 3. down
         encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
         down_block_res_samples = (sample,)
-#         print('sample.npy',sample)
-#         print('t_emb.npy 1',t_emb)
-#         print('encoder_hidden_states.npy',encoder_hidden_states)
+        print('sample.npy',sample)
+        print('t_emb.npy 1',t_emb)
+        print('encoder_hidden_states.npy',encoder_hidden_states)
         for ix , down_block in enumerate(self.down_blocks):
             print("db",down_block)
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
