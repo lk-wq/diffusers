@@ -196,7 +196,7 @@ class FlaxAttentionPooling(nn.Module):
         print("a 1",a.shape)
         # (bs, length+1, width)
         if raw_width > 768:
-            a = jnp.transpose(a.reshape(bs, length+1, width),transpose(0,2, 1))
+            a = jnp.transpose(a.reshape(bs, length+1, 1),transpose(0,2, 1))
             print("a 2", a.shape)
             return a[:, 0, :]  # cls_token
         else:
