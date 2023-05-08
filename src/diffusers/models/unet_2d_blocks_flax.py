@@ -68,7 +68,7 @@ class FlaxCrossAttnDownBlock2D(nn.Module):
             )
             resnets.append(res_block)
 
-            attn_block = FlaxTransformer2DModel(
+            attn_block = FlaxTransformer2DModel2(
                 in_channels=self.out_channels,
                 n_heads=self.attn_num_head_channels,
                 d_head=self.out_channels // self.attn_num_head_channels,
