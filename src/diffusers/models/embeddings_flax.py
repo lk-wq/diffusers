@@ -202,7 +202,7 @@ class FlaxAttentionPooling(nn.Module):
                 fill = fill * i
             fill = fill//bs
             print("fill ->",fill)
-            a = jnp.transpose(a.reshape(bs, fill, 1),transpose(0,2, 1))
+            a = jnp.transpose(a.reshape(bs, fill, 1),(0,2, 1))
             print("a 2", a.shape)
             return a[:, 0, :]  # cls_token
         else:
