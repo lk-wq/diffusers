@@ -137,8 +137,9 @@ class FlaxResnetBlock2D(nn.Module):
         residual = hidden_states
 #         print("residual -------->",residual)
         hidden_states = self.norm1(hidden_states)
-#         print("post norm1 ----->",hidden_states)
+        print("post norm1 ----->",hidden_states)
         hidden_states = nn.swish(hidden_states)
+#         print("post swiswh",hidden_states)
         if self.downsample:
             hidden_states = nn.avg_pool(hidden_states,window_shape=(2,2),strides=(2,2))
             residual = nn.avg_pool(residual,window_shape=(2,2),strides=(2,2))
@@ -160,10 +161,10 @@ class FlaxResnetBlock2D(nn.Module):
 #             if hidden_states.shape[0] >= 64:
 #                 input_tensor = input_tensor.contiguous()
 #                 hidden_states = hidden_states.contiguous()
-        print("pre conv1 -------------------------------------->",hidden_states)
+#         print("pre conv1 -------------------------------------->",hidden_states)
 
         hidden_states = self.conv1(hidden_states)
-        print("post conv1 -------------------------------------->",hidden_states)
+#         print("post conv1 -------------------------------------->",hidden_states)
 
         temb = self.time_emb_proj(nn.swish(temb))
         
