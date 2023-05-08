@@ -160,6 +160,7 @@ class FlaxResnetBlock2D(nn.Module):
 #                 hidden_states = hidden_states.contiguous()
 
         hidden_states = self.conv1(hidden_states)
+        print("post conv1 -------------------------------------->",hidden_states)
 
         temb = self.time_emb_proj(nn.swish(temb))
         
