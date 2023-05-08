@@ -548,9 +548,11 @@ class ResnetBlock2D(nn.Module):
                 in_channels, conv_2d_out_channels, kernel_size=1, stride=1, padding=0, bias=conv_shortcut_bias
             )
 
-    def forward(self, input_tensor, temb):
+    def forward(self, input_tensor, temb,save=None):
         hidden_states = input_tensor
 #         print("residual ",hidden_states)
+        if save:
+            torch.save(input_tensor,'saving_tensor.pth')
         if self.time_embedding_norm == "ada_group":
             hidden_states = self.norm1(hidden_states, temb)
         else:
