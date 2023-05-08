@@ -741,6 +741,9 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 )
             else:
                 print("no cross attn!!")
+                print("entering init sample",sample)
+                print(" ")
+                print("entering init emb",emb)
                 sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
             if ix == 0:
                 torch.save(sample,'sample_d1.pth')
