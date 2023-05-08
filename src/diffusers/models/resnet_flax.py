@@ -135,9 +135,9 @@ class FlaxResnetBlock2D(nn.Module):
 
     def __call__(self, hidden_states, temb, deterministic=True):
         residual = hidden_states
-#         print("residual -------->",residual)
+        print("residual pre -------->",residual,residual.shape)
         hidden_states = self.norm1(hidden_states)
-        print("post norm1 ----->",hidden_states)
+        print("post norm1 ----->",hidden_states, hidden_states.shape )
         hidden_states = nn.swish(hidden_states)
 #         print("post swiswh",hidden_states)
         if self.downsample:
