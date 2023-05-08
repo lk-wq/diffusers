@@ -388,9 +388,12 @@ class TextTimeEmbedding(nn.Module):
         self.norm2 = nn.LayerNorm(time_embed_dim)
 
     def forward(self, hidden_states):
-        print("h0 ", hidden_states)
+        print("h0 ",hidden_states,hidden_states.shape)
+        print("h0 vars",torch.var(hidden_states[0,0,:]) , torch.mean(hidden_states[0,0,:]) )
+
         hidden_states = self.norm1(hidden_states)
         print("h1 ", hidden_states)
+        print("h1 vars",torch.var(hidden_states[0,0,:]) , torch.mean(hidden_states[0,0,:]) )
 
         hidden_states = self.pool(hidden_states)
         hidden_states = self.proj(hidden_states)
