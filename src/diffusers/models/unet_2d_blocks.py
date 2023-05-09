@@ -1342,19 +1342,20 @@ class ResnetDownsampleBlock2D(nn.Module):
 
                 hidden_states = torch.utils.checkpoint.checkpoint(create_custom_forward(resnet), hidden_states, temb)
             else:
-                if ix ==1:
+                if ix ==2:
                     hidden_states = resnet(hidden_states, temb,display=True)
                 else:
                     hidden_states = resnet(hidden_states, temb)
-
+            
             if ix == 1:
 #                 print("rezzy 0 --------------------------------------------------------------------->",hidden_states)
                 torch.save(hidden_states,'rezzy0.pth')
             output_states = output_states + (hidden_states,)
-
+        torch.save(hidden_states,'fin.pth')
         if self.downsamplers is not None:
             for downsampler in self.downsamplers:
                 hidden_states = downsampler(hidden_states, temb)
+        torch.save(hidden_states,'fin_d.pth')
 
             output_states = output_states + (hidden_states,)
 
