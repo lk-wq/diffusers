@@ -173,7 +173,10 @@ class FlaxResnetBlock2D(nn.Module):
 #         print("post conv1 -------------------------------------->",hidden_states)
         if display:
             print("post conv1 ----->",hidden_states, hidden_states.shape )
-
+            try:
+                np.save('post_conv1.npy',np.asarray(hidden_states))
+            except:
+                pass
         temb = self.time_emb_proj(nn.swish(temb))
         if display:
             print("post time emb ----->",hidden_states, hidden_states.shape )
