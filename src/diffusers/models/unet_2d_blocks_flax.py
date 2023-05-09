@@ -429,8 +429,12 @@ class FlaxUNetMidBlock2DCrossAttn(nn.Module):
 
     def __call__(self, hidden_states, temb, encoder_hidden_states, deterministic=True):
         hidden_states = self.resnets[0](hidden_states, temb)
-        for attn, resnet in zip(self.attentions, self.resnets[1:]):
+        save_(hidden_states,'sample_mid_0.npy')
+        for ix, (attn, resnet) in enumerate(zip(self.attentions, self.resnets[1:])):
             hidden_states = attn(hidden_states, encoder_hidden_states, deterministic=deterministic)
+            save_(hidden_states,'sample_mid_postattn_'+str(ix)+'.npy')
+
             hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
+            save_(hidden_states,'sample_mid_postresnet_'+str(ix)+'.npy')
 
         return hidden_states
