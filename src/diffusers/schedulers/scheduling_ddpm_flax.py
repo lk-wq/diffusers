@@ -53,9 +53,9 @@ class FlaxDDPMSchedulerOutput(FlaxSchedulerOutput):
 from jax.experimental import io_callback
 from jax import debug
 import numpy as np
+
 def save_(x,name):
-    # print(name , "---------------------------------------------------->",x)
-    debug.callback(lambda x: np.save(name,x),x,x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
     return x
 
 class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
