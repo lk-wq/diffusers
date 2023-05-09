@@ -14,7 +14,7 @@
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
-
+import numpy as np
 
 class FlaxUpsample2D(nn.Module):
     out_channels: int
