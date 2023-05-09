@@ -266,7 +266,11 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
         # See formula (7) from https://arxiv.org/pdf/2006.11239.pdf
         pred_original_sample_coeff = (alpha_prod_t_prev ** (0.5) * state.common.betas[t]) / beta_prod_t
         current_sample_coeff = state.common.alphas[t] ** (0.5) * beta_prod_t_prev / beta_prod_t
+        save_(current_sample_coeff,'current_sample_coeff.npy')
+        save_(pred_original_sample,'pred_original_sample.npy')
+        save_(sample,'sample.npy')
 
+        save_(pred_original_sample_coeff,'pred_original_sample_coeff.npy')
         # 5. Compute predicted previous sample µ_t
         # See formula (7) from https://arxiv.org/pdf/2006.11239.pdf
         pred_prev_sample = pred_original_sample_coeff * pred_original_sample + current_sample_coeff * sample
@@ -283,6 +287,7 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
 # 
         variance = jnp.where(t > 0, random_variance(), jnp.zeros(model_output.shape, dtype=self.dtype))
         save_(variance,'variance.npy')
+        
         pred_prev_sample = pred_prev_sample + variance
 
         if not return_dict:
