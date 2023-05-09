@@ -135,6 +135,7 @@ class FlaxResnetBlock2D(nn.Module):
 
     def __call__(self, hidden_states, temb, deterministic=True,display=False):
         residual = hidden_states
+        display = False
         if display:
             print("residual pre -------->",residual,residual.shape)
         hidden_states = self.norm1(hidden_states)
@@ -173,10 +174,10 @@ class FlaxResnetBlock2D(nn.Module):
 #         print("post conv1 -------------------------------------->",hidden_states)
         if display:
             print("post conv1 ----->",hidden_states, hidden_states.shape )
-            try:
-                np.save('post_conv1.npy',np.asarray(hidden_states))
-            except:
-                pass
+        try:
+            np.save('post_conv1.npy',np.asarray(hidden_states))
+        except:
+            pass
         temb = self.time_emb_proj(nn.swish(temb))
         if display:
             print("post time emb ----->",hidden_states, hidden_states.shape )
