@@ -50,6 +50,13 @@ class DDPMSchedulerState:
 class FlaxDDPMSchedulerOutput(FlaxSchedulerOutput):
     state: DDPMSchedulerState
 
+from jax.experimental import io_callback
+from jax import debug
+import numpy as np
+def save_(x,name):
+    # print(name , "---------------------------------------------------->",x)
+    debug.callback(lambda x: np.save(name,x),x,x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    return x
 
 class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
     """
@@ -275,7 +282,7 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
 #         pred_prev_sample = pred_prev_sample + variance
 # 
         variance = jnp.where(t > 0, random_variance(), jnp.zeros(model_output.shape, dtype=self.dtype))
-
+        save_(variance,'variance.npy')
         pred_prev_sample = pred_prev_sample + variance
 
         if not return_dict:
