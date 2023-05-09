@@ -381,13 +381,13 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
 
         # 5. Compute predicted previous sample µ_t
         # See formula (7) from https://arxiv.org/pdf/2006.11239.pdf
-        torch.save(current_sample_coeff,'current_sample_coeff.pth')
-        torch.save(pred_original_sample_coeff,'pred_original_sample_coeff.pth')
-        torch.save(sample,'sample.pth')
-        torch.save(pred_original_sample,'pred_original_sample.pth')
+        torch.save(current_sample_coeff,'current_sample_coeff'+str(t)+'.pth')
+        torch.save(pred_original_sample_coeff,'pred_original_sample_coeff'+str(t)+'.pth')
+        torch.save(sample,'sample'+str(t)+'.pth')
+        torch.save(pred_original_sample,'pred_original_sample'+str(t)+'.pth')
 
         pred_prev_sample = pred_original_sample_coeff * pred_original_sample + current_sample_coeff * sample
-        torch.save(pred_prev_sample,'pred_prev_sample.pth')
+        torch.save(pred_prev_sample,'pred_prev_sample'+str(t)+'.pth')
 
         # 6. Add noise
         variance = 0
@@ -403,7 +403,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
                 variance = torch.exp(0.5 * variance) * variance_noise
             else:
                 variance = (self._get_variance(t, predicted_variance=predicted_variance) ** 0.5) * variance_noise
-        torch.save(variance,'variance.pth')
+        torch.save(variance,'variance'+str(t)+'.pth')
         pred_prev_sample = pred_prev_sample + variance
 
         if not return_dict:
