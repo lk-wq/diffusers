@@ -321,7 +321,11 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         for ix , down_block in enumerate(self.down_blocks):
             print("db",down_block)
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
-                sample, res_samples = down_block(sample, t_emb, encoder_hidden_states, deterministic=not train)
+                if ix == 0:
+                    save = True
+                else:
+                    save = False
+                sample, res_samples = down_block(sample, t_emb, encoder_hidden_states, deterministic=not train,save=save)
                 print("post down_block",sample.shape)
 
             else:
