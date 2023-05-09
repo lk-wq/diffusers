@@ -83,8 +83,9 @@ class FlaxDownsample2D(nn.Module):
         hidden_states = self.conv(hidden_states)
         return hidden_states
 from jax.experimental import io_callback
+from jax import debug
 def save_(x,name):
-    io_callback(lambda x: np.save(name,x),x,x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    debug.callback(lambda x: np.save(name,x),x,x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
     return x
 class FlaxResnetBlock2D(nn.Module):
     in_channels: int
