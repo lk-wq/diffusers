@@ -351,9 +351,9 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
         beta_prod_t_prev = 1 - alpha_prod_t_prev
         current_alpha_t = alpha_prod_t / alpha_prod_t_prev
         current_beta_t = 1 - current_alpha_t
-        torch.save( beta_prod_t , 'beta_prod_t.pth' )
-        torch.save( model_output , 'model_output.pth' )
-        torch.save( alpha_prod_t , 'alpha_prod_t.pth' )
+        torch.save( beta_prod_t , 'beta_prod_t'+str(t)+'.pth' )
+        torch.save( model_output , 'model_output'+str(t)+'.pth' )
+        torch.save( alpha_prod_t , 'alpha_prod_t'+str(t)+'.pth' )
 
         # 2. compute predicted original sample from predicted noise also called
         # "predicted x_0" of formula (15) from https://arxiv.org/pdf/2006.11239.pdf
