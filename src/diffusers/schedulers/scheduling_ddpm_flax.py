@@ -287,7 +287,8 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
 # 
         variance = jnp.where(t > 0, random_variance(), jnp.zeros(model_output.shape, dtype=self.dtype))
         save_(variance,'variance.npy')
-        
+        save_(pred_prev_sample,'pred_prev_sample.npy')
+
         pred_prev_sample = pred_prev_sample + variance
 
         if not return_dict:
