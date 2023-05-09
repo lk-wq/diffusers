@@ -379,7 +379,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
         if mid_block_additional_residual is not None:
             sample += mid_block_additional_residual
-
+        save_(sample,'sample_mid.npy')
         # 5. up
         for up_block in self.up_blocks:
             res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
