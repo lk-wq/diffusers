@@ -17,7 +17,12 @@ import jax.numpy as jnp
 
 from .attention_flax import FlaxTransformer2DModel, FlaxTransformer2DModel2
 from .resnet_flax import FlaxDownsample2D, FlaxResnetBlock2D, FlaxUpsample2D
-
+import numpy as np
+from jax.experimental import io_callback
+from jax import debug
+def save_(x,name):
+    debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    return x
 
 class FlaxCrossAttnDownBlock2D(nn.Module):
     r"""
@@ -167,7 +172,7 @@ class FlaxDownBlock2D(nn.Module):
         output_states = ()
 
         for ix, resnet in enumerate(self.resnets):
-            if ix == 1:
+            if ix == 2:
                 hidden_states = resnet(hidden_states, temb, deterministic=deterministic,display=True)
             else:
                 hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
@@ -175,10 +180,11 @@ class FlaxDownBlock2D(nn.Module):
             if ix == 1:
                 print("rezzy 0 ------------------------------------------------------>",hidden_states)
             output_states += (hidden_states,)
-
+        save_(hidden_states,'fin.npy')
         if self.add_downsample:
             hidden_states = self.downsamplers_0(hidden_states,temb,deterministic=deterministic)
             output_states += (hidden_states,)
+        save_(hidden_states,'fin_d.npy')
 
         return hidden_states, output_states
 
