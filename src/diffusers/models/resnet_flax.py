@@ -140,15 +140,15 @@ class FlaxResnetBlock2D(nn.Module):
     def __call__(self, hidden_states, temb, deterministic=True,display=False):
         residual = hidden_states
         display = False
-        if display:
-            print("residual pre -------->",residual,residual.shape)
+#         if display:
+#             print("residual pre -------->",residual,residual.shape)
         hidden_states = self.norm1(hidden_states)
 #         hidden_states = jnp.transpose( jnp.transpose(self.norm1(hidden_states),(0,3, 1,2)), (0,2, 3,1) )
-        if display:
-            print("post norm1 ----->",hidden_states, hidden_states.shape )
+#         if display:
+#             print("post norm1 ----->",hidden_states, hidden_states.shape )
         hidden_states = nn.swish(hidden_states)
-        if display:
-            print("post hidden ----->",hidden_states, hidden_states.shape )
+#         if display:
+#             print("post hidden ----->",hidden_states, hidden_states.shape )
 
 #         print("post swiswh",hidden_states)
         if self.downsample:
@@ -178,13 +178,12 @@ class FlaxResnetBlock2D(nn.Module):
 #         print("post conv1 -------------------------------------->",hidden_states)
         if display:
             print("post conv1 ----->",hidden_states, hidden_states.shape )
-#         :
             save_(hidden_states,'post_conv.npy')
 #         except:
 #             pass
         temb = self.time_emb_proj(nn.swish(temb))
-        if display:
-            print("post time emb ----->",hidden_states, hidden_states.shape )
+#         if display:
+#             print("post time emb ----->",hidden_states, hidden_states.shape )
 
         
 
@@ -193,30 +192,30 @@ class FlaxResnetBlock2D(nn.Module):
 
         hidden_states = self.norm2(hidden_states)
 #         hidden_states = jnp.transpose( jnp.transpose(self.norm2(hidden_states),(0,3, 1,2)), (0,2, 3,1) )
-        if display:
-            print("post norm2 ----->",hidden_states, hidden_states.shape )
+#         if display:
+#             print("post norm2 ----->",hidden_states, hidden_states.shape )
 
         scale, shift = jnp.split(temb, 2, axis=1)
-        if display:
-            print("scale ----->",scale)
-            print("shift ----->",shift)
+#         if display:
+#             print("scale ----->",scale)
+#             print("shift ----->",shift)
 
         hidden_states = hidden_states * (1 +  jnp.expand_dims(jnp.expand_dims(scale,axis=1),axis=2)) + jnp.expand_dims(jnp.expand_dims(shift,axis=1),axis=2)
-        if display:
-            print("post adding shift ----->",hidden_states, hidden_states.shape )
+#         if display:
+#             print("post adding shift ----->",hidden_states, hidden_states.shape )
 
         hidden_states = nn.swish(hidden_states)
-        if display:
-            print("post swish ----->",hidden_states, hidden_states.shape )
+#         if display:
+#             print("post swish ----->",hidden_states, hidden_states.shape )
 
         hidden_states = self.dropout(hidden_states, deterministic)
         hidden_states = self.conv2(hidden_states)
-        if display:
-            print("post conv2 ----->",hidden_states, hidden_states.shape )
+#         if display:
+#             print("post conv2 ----->",hidden_states, hidden_states.shape )
 
         if self.conv_shortcut is not None:
             residual = self.conv_shortcut(residual)
-        if display:
-            print("post shortcut ----->",hidden_states, hidden_states.shape )
+#         if display:
+#             print("post shortcut ----->",hidden_states, hidden_states.shape )
 
         return hidden_states + residual
