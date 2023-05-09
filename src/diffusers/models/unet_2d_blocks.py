@@ -1472,9 +1472,10 @@ class SimpleCrossAttnDownBlock2D(nn.Module):
 #             if ix == 1:
             if ix == 0 and save:
                 torch.save(hidden_states, '0_states.pth')
-            print("pre attn",ix, hidden_states, hidden_states.shape)
+#             print("pre attn",ix, hidden_states, hidden_states.shape)
             # attn
-            if ix ==0 and save:
+            if ix == 0 and save:
+                print("save ix 0 -----------------------------------------> blocks")
                 hidden_states = attn(
                     hidden_states,
                     encoder_hidden_states=encoder_hidden_states,
@@ -1491,7 +1492,7 @@ class SimpleCrossAttnDownBlock2D(nn.Module):
                 )
 
 #             if ix == 1:
-            print("post attn",ix, hidden_states,hidden_states.shape)
+#             print("post attn",ix, hidden_states,hidden_states.shape)
             if ix == 0 and save:
                 torch.save(hidden_states, '0_states2.pth')
 
