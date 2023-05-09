@@ -328,7 +328,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 #             print("db",down_block)
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
                 if ix == 1:
-                    save = True
+                    save = False
                     print("savig -------------------------------------> condition")
                 else:
                     save = False
