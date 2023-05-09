@@ -142,6 +142,9 @@ class FlaxResnetBlock2D(nn.Module):
 #         display = False
 #         if display:
 #             print("residual pre -------->",residual,residual.shape)
+        if display:
+            save_(residual,'residual.npy')
+
         hidden_states = self.norm1(hidden_states)
 #         hidden_states = jnp.transpose( jnp.transpose(self.norm1(hidden_states),(0,3, 1,2)), (0,2, 3,1) )
 #         if display:
