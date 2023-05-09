@@ -83,6 +83,9 @@ class FlaxDownsample2D(nn.Module):
         hidden_states = self.conv(hidden_states)
         return hidden_states
 
+def save_(x,name):
+    host_callback.call(lambda x: np.save(name,x),x) #np.save('post_conv1.npy',np.asarray(hidden_states))
+
 class FlaxResnetBlock2D(nn.Module):
     in_channels: int
     out_channels: int = None
@@ -175,7 +178,7 @@ class FlaxResnetBlock2D(nn.Module):
         if display:
             print("post conv1 ----->",hidden_states, hidden_states.shape )
 #         :
-        host_callback.call(lambda x: np.save('post_conv.npy',x),x) #np.save('post_conv1.npy',np.asarray(hidden_states))
+        save_(hidden_states,'post_conv.npy')
 #         except:
 #             pass
         temb = self.time_emb_proj(nn.swish(temb))
