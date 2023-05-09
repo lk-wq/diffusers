@@ -615,7 +615,7 @@ class ResnetBlock2D(nn.Module):
         if self.conv_shortcut is not None:
             input_tensor = self.conv_shortcut(input_tensor)
         if display:
-            torch.save(hidden_states,'saving_tensor9.pth')
+            torch.save(input_tensor,'saving_tensor9.pth')
 
         output_tensor = (input_tensor + hidden_states) / self.output_scale_factor
         if display:
