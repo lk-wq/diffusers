@@ -169,6 +169,9 @@ class FlaxDownBlock2D(nn.Module):
         for ix, resnet in enumerate(self.resnets):
             if ix == 1:
                 hidden_states = resnet(hidden_states, temb, deterministic=deterministic,display=True)
+            else:
+                hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
+
             if ix == 1:
                 print("rezzy 0 ------------------------------------------------------>",hidden_states)
             output_states += (hidden_states,)
