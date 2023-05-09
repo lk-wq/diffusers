@@ -101,7 +101,7 @@ class FlaxCrossAttnDownBlock2D(nn.Module):
         output_states = ()
 
         for ix, (resnet, attn) in enumerate(zip(self.resnets, self.attentions)):
-            if ix == 1:
+            if ix == 1 and save:
 #                 print("pre attn",ix,jnp.transpose( hidden_states, (0,2,3,1)  ),hidden_states.shape)
                 save = True
             else:
