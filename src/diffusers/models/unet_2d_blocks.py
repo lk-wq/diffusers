@@ -1470,6 +1470,8 @@ class SimpleCrossAttnDownBlock2D(nn.Module):
             else:
                 hidden_states = resnet(hidden_states, temb)
 #             if ix == 1:
+            if ix == 0 and save:
+                torch.save(hidden_states, '0_states.pth')
             print("pre attn",ix, hidden_states, hidden_states.shape)
             # attn
             hidden_states = attn(
@@ -1480,6 +1482,8 @@ class SimpleCrossAttnDownBlock2D(nn.Module):
             )
 #             if ix == 1:
             print("post attn",ix, hidden_states,hidden_states.shape)
+            if ix == 0 and save:
+                torch.save(hidden_states, '0_states2.pth')
 
             output_states = output_states + (hidden_states,)
 
