@@ -291,23 +291,23 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         t_emb = self.time_embedding(t_emb)
 
         # 2. pre-process
-        print("s0",sample , sample.shape )
+#         print("s0",sample , sample.shape )
         sample = jnp.transpose(sample, (0, 2, 3, 1))
-        print("s1",sample , sample.shape )
+#         print("s1",sample , sample.shape )
 
         sample = self.conv_in(sample)
-        print("s2",sample , sample.shape )
+#         print("s2",sample , sample.shape )
         sample2 = jnp.transpose(sample, (0, 3, 1, 2))
-        print("s3",sample2 , sample2.shape )
+#         print("s3",sample2 , sample2.shape )
 
-        print("enc huuh",encoder_hidden_states.shape)
+#         print("enc huuh",encoder_hidden_states.shape)
         if encoder_hidden_states.shape[-1] == 768:
             t_emb2 = t_emb + self.add_embedding(encoder_hidden_states)
         else:
-            print("pre t_emb",t_emb.shape)
-            print("pre emb val",t_emb)
+#             print("pre t_emb",t_emb.shape)
+#             print("pre emb val",t_emb)
             t_emb = t_emb + self.add_embedding(encoder_hidden_states)
-            print("post t_emb",t_emb.shape)
+#             print("post t_emb",t_emb.shape)
             
 #         except Exception as e:
 #             print("EXCEPTION",e)
@@ -316,36 +316,36 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
         down_block_res_samples = (sample,)
 #         print('sample.npy',sample)
-        print('t_emb.npy 1',t_emb)
-        print('encoder_hidden_states.npy',encoder_hidden_states)
+#         print('t_emb.npy 1',t_emb)
+#         print('encoder_hidden_states.npy',encoder_hidden_states)
         for ix , down_block in enumerate(self.down_blocks):
-            print("db",down_block)
+#             print("db",down_block)
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
                 if ix == 1:
                     save = True
                 else:
                     save = False
                 sample, res_samples = down_block(sample, t_emb, encoder_hidden_states, deterministic=not train,save=save)
-                print("post down_block",sample.shape)
+#                 print("post down_block",sample.shape)
 
             else:
-                try:
-                    print("not cross pre down_block",sample.shape , res_samples.shape)
-                except:
-                     print("not cross pre down_block",sample.shape)
-                print("entering init sample", sample )
-                print(" ")
-                print("entering init temb ", t_emb )
+#                 try:
+#                     print("not cross pre down_block",sample.shape , res_samples.shape)
+#                 except:
+#                      print("not cross pre down_block",sample.shape)
+#                 print("entering init sample", sample )
+#                 print(" ")
+#                 print("entering init temb ", t_emb )
 
                 sample, res_samples = down_block(sample, t_emb, deterministic=not train)
-                print("not cross post down_block",sample.shape)
-            if ix == 0:
-                print("sample 1 --------------->",sample)
+#                 print("not cross post down_block",sample.shape)
+#             if ix == 0:
+#                 print("sample 1 --------------->",sample)
             down_block_res_samples += res_samples
 
         if down_block_additional_residuals is not None:
             new_down_block_res_samples = ()
-            print("residuals ????")
+#             print("residuals ????")
             for down_block_res_sample, down_block_additional_residual in zip(
                 down_block_res_samples, down_block_additional_residuals
             ):
@@ -355,11 +355,11 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             down_block_res_samples = new_down_block_res_samples
 
         # 4. mid
-        print("going into mid block sample v t_emb vs enc hs", sample.shape,t_emb.shape, encoder_hidden_states.shape)
-        print("before mid_block")
-        print('sample.npy',sample)
-        print('t_emb.npy 1',t_emb)
-        print('encoder_hidden_states.npy',encoder_hidden_states)
+#         print("going into mid block sample v t_emb vs enc hs", sample.shape,t_emb.shape, encoder_hidden_states.shape)
+#         print("before mid_block")
+#         print('sample.npy',sample)
+#         print('t_emb.npy 1',t_emb)
+#         print('encoder_hidden_states.npy',encoder_hidden_states)
 
         import numpy as np
 #         np.save('sample.npy',sample)
