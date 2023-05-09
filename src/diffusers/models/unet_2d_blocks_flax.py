@@ -106,11 +106,11 @@ class FlaxCrossAttnDownBlock2D(nn.Module):
                 save = True
             else:
                 save = False
-            if ix == 0:
+            if ix == 0 and save:
                 save_(hidden_states,'0_states.npy')
             hidden_states = resnet(hidden_states, temb, deterministic=deterministic,save=save)
             hidden_states = attn(hidden_states, encoder_hidden_states, deterministic=deterministic)
-            if ix == 0:
+            if ix == 0 and save:
                 save_(hidden_states,'0_states2.npy')
 
 #             if ix == 1:
