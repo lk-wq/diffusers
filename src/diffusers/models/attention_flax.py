@@ -456,7 +456,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
         if encoder_hidden_states is None:
             encoder_hidden_states = hidden_states
         else:
-            print("encoder size",encoder_hidden_states)
+#             print("encoder size",encoder_hidden_states)
             encoder_hidden_states = attn.norm_cross(encoder_hidden_states)
         hidden_states = jnp.transpose( jnp.transpose(attn.group_norm(hidden_states),(0,2, 1)), (0,2, 1) )
 
