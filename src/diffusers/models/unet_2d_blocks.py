@@ -1344,6 +1344,9 @@ class ResnetDownsampleBlock2D(nn.Module):
             else:
                 if ix ==1:
                     hidden_states = resnet(hidden_states, temb,display=True)
+                else:
+                    hidden_states = resnet(hidden_states, temb)
+
             if ix == 1:
 #                 print("rezzy 0 --------------------------------------------------------------------->",hidden_states)
                 torch.save(hidden_states,'rezzy0.pth')
