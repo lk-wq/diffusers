@@ -139,7 +139,7 @@ class FlaxResnetBlock2D(nn.Module):
 
     def __call__(self, hidden_states, temb, deterministic=True,display=False):
         residual = hidden_states
-        display = False
+#         display = False
 #         if display:
 #             print("residual pre -------->",residual,residual.shape)
         hidden_states = self.norm1(hidden_states)
