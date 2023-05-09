@@ -323,6 +323,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             if isinstance(down_block, FlaxCrossAttnDownBlock2D):
                 if ix == 1:
                     save = True
+                    print("savig -------------------------------------> condition")
                 else:
                     save = False
                 sample, res_samples = down_block(sample, t_emb, encoder_hidden_states, deterministic=not train,save=save)
