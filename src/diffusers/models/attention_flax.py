@@ -649,7 +649,7 @@ class FlaxTransformer2DModel2(nn.Module):
 #                 dtype=self.dtype,
 #             )
 
-    def __call__(self, hidden_states, context, deterministic=True):
+    def __call__(self, hidden_states, context, deterministic=True,save=False):
 #         batch, height, width, channels = hidden_states.shape
 #         residual = hidden_states
 #         hidden_states = self.norm_cross(hidden_states)
@@ -661,7 +661,7 @@ class FlaxTransformer2DModel2(nn.Module):
 #             hidden_states = hidden_states.reshape(batch, height * width, channels)
         r = hidden_states
         for transformer_block in self.transformer_blocks:
-            hidden_states = transformer_block(hidden_states, context,self, deterministic=deterministic)
+            hidden_states = transformer_block(hidden_states, context,self, deterministic=deterministic,save=save)
 
 #         if self.use_linear_projection:
 #             hidden_states = self.to_out(hidden_states)
