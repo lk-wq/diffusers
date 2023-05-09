@@ -31,6 +31,12 @@ from .unet_2d_blocks_flax import (
     FlaxUpBlock2D,
 )
 
+from jax.experimental import io_callback
+from jax import debug
+import numpy as np
+def save_(x,name):
+    debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    return x
 
 @flax.struct.dataclass
 class FlaxUNet2DConditionOutput(BaseOutput):
@@ -343,7 +349,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 #             if ix == 0:
 #                 print("sample 1 --------------->",sample)
             down_block_res_samples += res_samples
-
+        save_(sample,'sample_down.npy')
         if down_block_additional_residuals is not None:
             new_down_block_res_samples = ()
 #             print("residuals ????")
