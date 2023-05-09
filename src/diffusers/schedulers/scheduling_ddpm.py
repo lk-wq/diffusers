@@ -387,6 +387,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
         torch.save(pred_original_sample,'pred_original_sample.pth')
 
         pred_prev_sample = pred_original_sample_coeff * pred_original_sample + current_sample_coeff * sample
+        torch.save(pred_prev_sample,'pred_prev_sample.pth')
 
         # 6. Add noise
         variance = 0
