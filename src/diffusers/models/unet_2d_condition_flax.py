@@ -218,7 +218,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
             is_final_block = i == len(block_out_channels) - 1
 
-            if up_block_type == "CrossAttnUpBlock2D":
+            if not is final_block:#up_block_type == "CrossAttnUpBlock2D":
                 up_block = FlaxCrossAttnUpBlock2D(
                     in_channels=input_channel,
                     out_channels=output_channel,
@@ -381,7 +381,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             sample += mid_block_additional_residual
         save_(sample,'sample_mid.npy')
         # 5. up
-        for up_block in self.up_blocks:
+        for i , up_block in enumerate(self.up_blocks):
             res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
             down_block_res_samples = down_block_res_samples[: -(self.layers_per_block + 1)]
             if isinstance(up_block, FlaxCrossAttnUpBlock2D):
@@ -392,8 +392,11 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                     res_hidden_states_tuple=res_samples,
                     deterministic=not train,
                 )
+                save_(sample,'up_sample_round_'+str(i)+'.pth')
             else:
                 sample = up_block(sample, temb=t_emb, res_hidden_states_tuple=res_samples, deterministic=not train)
+                save_(sample,'up_sample_round_'+str(i)+'.pth')
+
         save_(sample,'sample_up_final.npy')
         # 6. post-process
         sample = self.conv_norm_out(sample)
