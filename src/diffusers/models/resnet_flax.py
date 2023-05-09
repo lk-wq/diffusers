@@ -222,5 +222,6 @@ class FlaxResnetBlock2D(nn.Module):
             residual = self.conv_shortcut(residual)
         if display:
             save_(hidden_states + residual,'post_shortcut.npy')
+            save_(residual,'post_residual.npy')
 
         return hidden_states + residual
