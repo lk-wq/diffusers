@@ -104,6 +104,7 @@ class FlaxCrossAttnDownBlock2D(nn.Module):
             if ix == 1 and save:
 #                 print("pre attn",ix,jnp.transpose( hidden_states, (0,2,3,1)  ),hidden_states.shape)
                 save = True
+                print("saving blocks ------------------------------------------------------->")
             else:
                 save = False
             if ix == 0 and save:
