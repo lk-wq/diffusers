@@ -177,7 +177,7 @@ class FlaxResnetBlock2D(nn.Module):
         hidden_states = self.conv1(hidden_states)
 #         print("post conv1 -------------------------------------->",hidden_states)
         if display:
-            print("post conv1 ----->",hidden_states, hidden_states.shape )
+            print("in display ----->",hidden_states, hidden_states.shape )
             save_(hidden_states,'post_conv.npy')
 #         except:
 #             pass
