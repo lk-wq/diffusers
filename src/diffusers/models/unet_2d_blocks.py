@@ -656,8 +656,9 @@ class UNetMidBlock2DSimpleCrossAttn(nn.Module):
         self, hidden_states, temb=None, encoder_hidden_states=None, attention_mask=None, cross_attention_kwargs=None
     ):
         cross_attention_kwargs = cross_attention_kwargs if cross_attention_kwargs is not None else {}
+        torch.save(hidden_states,'sample_mid_0.pth')
         hidden_states = self.resnets[0](hidden_states, temb)
-        for attn, resnet in zip(self.attentions, self.resnets[1:]):
+        for ix, (attn, resnet) in enumerate(zip(self.attentions, self.resnets[1:])):
             # attn
             hidden_states = attn(
                 hidden_states,
@@ -665,9 +666,11 @@ class UNetMidBlock2DSimpleCrossAttn(nn.Module):
                 attention_mask=attention_mask,
                 **cross_attention_kwargs,
             )
+            torch.save(hidden_states,'sample_postattn_'+str(ix)+'.pth')
 
             # resnet
             hidden_states = resnet(hidden_states, temb)
+            torch.save(hidden_states,'sample_postresnet_'+str(ix)+'.pth')
 
         return hidden_states
 
