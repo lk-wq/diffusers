@@ -243,6 +243,9 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
         alpha_prod_t_prev = jnp.where(t > 0, state.common.alphas_cumprod[t - 1], jnp.array(1.0, dtype=self.dtype))
         beta_prod_t = 1 - alpha_prod_t
         beta_prod_t_prev = 1 - alpha_prod_t_prev
+        save_( beta_prod_t , 'beta_prod_t.npy' )
+        save_( model_output , 'model_output.npy' )
+        save_( alpha_prod_t , 'alpha_prod_t.npy' )
 
         # 2. compute predicted original sample from predicted noise also called
         # "predicted x_0" of formula (15) from https://arxiv.org/pdf/2006.11239.pdf
