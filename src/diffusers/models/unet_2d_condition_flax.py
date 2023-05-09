@@ -349,7 +349,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 #             if ix == 0:
 #                 print("sample 1 --------------->",sample)
             down_block_res_samples += res_samples
-        save_(sample,'sample_down.npy')
+#         save_(sample,'sample_down.npy')
         if down_block_additional_residuals is not None:
             new_down_block_res_samples = ()
 #             print("residuals ????")
@@ -379,7 +379,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
         if mid_block_additional_residual is not None:
             sample += mid_block_additional_residual
-        save_(sample,'sample_mid.npy')
+#         save_(sample,'sample_mid.npy')
         # 5. up
         for i , up_block in enumerate(self.up_blocks):
             res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
@@ -392,18 +392,18 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                     res_hidden_states_tuple=res_samples,
                     deterministic=not train,
                 )
-                save_(sample,'up_sample_round_'+str(i)+'.pth')
+#                 save_(sample,'up_sample_round_'+str(i)+'.pth')
             else:
                 sample = up_block(sample, temb=t_emb, res_hidden_states_tuple=res_samples, deterministic=not train)
-                save_(sample,'up_sample_round_'+str(i)+'.pth')
+#                 save_(sample,'up_sample_round_'+str(i)+'.pth')
 
         save_(sample,'sample_up_final.npy')
         # 6. post-process
         sample = self.conv_norm_out(sample)
         sample = nn.silu(sample)
         sample = self.conv_out(sample)
-        sample = jnp.transpose(sample, (0, 3, 1, 2))
-        save_(sample,'final_sample.npy')
+        sample = jnp.transpose(sample, (0, 3, 2, 1))
+#         save_(sample,'final_sample.npy')
         if not return_dict:
             return (sample,)
 
