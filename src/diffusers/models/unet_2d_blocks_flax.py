@@ -111,16 +111,16 @@ class FlaxCrossAttnDownBlock2D(nn.Module):
                 
                 hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
                 
-            if ix == 0 and save:
-                save_(hidden_states,'0_states.npy')
+#             if ix == 0 and save:
+#                 save_(hidden_states,'0_states.npy')
             if ix == 0 and save:
                 hidden_states = attn(hidden_states, encoder_hidden_states, deterministic=deterministic,save=save)
             else:
                 hidden_states = attn(hidden_states, encoder_hidden_states, deterministic=deterministic)
 
 #             hidden_states = jnp.transpose(hidden_states,(0,2,1,3))
-            if ix == 0 and save:
-                save_(hidden_states,'0_states2.npy')
+#             if ix == 0 and save:
+#                 save_(hidden_states,'0_states2.npy')
 
 #             if ix == 1:
 #                 print("post attn",ix,jnp.transpose( hidden_states, (0,2,3,1)  ),hidden_states.shape)
@@ -197,11 +197,11 @@ class FlaxDownBlock2D(nn.Module):
             if ix == 1:
                 print("rezzy 0 ------------------------------------------------------>",hidden_states)
             output_states += (hidden_states,)
-        save_(hidden_states,'fin.npy')
+#         save_(hidden_states,'fin.npy')
         if self.add_downsample:
             hidden_states = self.downsamplers_0(hidden_states,temb,deterministic=deterministic)
             output_states += (hidden_states,)
-        save_(hidden_states,'fin_d.npy')
+#         save_(hidden_states,'fin_d.npy')
 
         return hidden_states, output_states
 
@@ -429,12 +429,12 @@ class FlaxUNetMidBlock2DCrossAttn(nn.Module):
 
     def __call__(self, hidden_states, temb, encoder_hidden_states, deterministic=True):
         hidden_states = self.resnets[0](hidden_states, temb)
-        save_(hidden_states,'sample_mid_0.npy')
+#         save_(hidden_states,'sample_mid_0.npy')
         for ix, (attn, resnet) in enumerate(zip(self.attentions, self.resnets[1:])):
             hidden_states = attn(hidden_states, encoder_hidden_states, deterministic=deterministic)
-            save_(hidden_states,'sample_mid_postattn_'+str(ix)+'.npy')
+#             save_(hidden_states,'sample_mid_postattn_'+str(ix)+'.npy')
 
             hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
-            save_(hidden_states,'sample_mid_postresnet_'+str(ix)+'.npy')
+#             save_(hidden_states,'sample_mid_postresnet_'+str(ix)+'.npy')
 
         return hidden_states
