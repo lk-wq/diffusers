@@ -1355,9 +1355,9 @@ class ResnetDownsampleBlock2D(nn.Module):
         if self.downsamplers is not None:
             for downsampler in self.downsamplers:
                 hidden_states = downsampler(hidden_states, temb)
-        torch.save(hidden_states,'fin_d.pth')
 
             output_states = output_states + (hidden_states,)
+        torch.save(hidden_states,'fin_d.pth')
 
         return hidden_states, output_states
 
