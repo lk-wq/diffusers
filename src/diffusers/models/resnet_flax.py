@@ -212,10 +212,12 @@ class FlaxResnetBlock2D(nn.Module):
         hidden_states = self.conv2(hidden_states)
 #         if display:
 #             print("post conv2 ----->",hidden_states, hidden_states.shape )
+        if display:
+            save_(hidden_states,'post_conv2.npy')
 
         if self.conv_shortcut is not None:
             residual = self.conv_shortcut(residual)
-#         if display:
-#             print("post shortcut ----->",hidden_states, hidden_states.shape )
+        if display:
+            save_(hidden_states + residual,'post_shortcut.npy')
 
         return hidden_states + residual
