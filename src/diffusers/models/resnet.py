@@ -618,6 +618,8 @@ class ResnetBlock2D(nn.Module):
             torch.save(hidden_states,'saving_tensor9.pth')
 
         output_tensor = (input_tensor + hidden_states) / self.output_scale_factor
+        if display:
+            torch.save(hidden_states,'saving_tensor10.pth')
 
         return output_tensor
 
