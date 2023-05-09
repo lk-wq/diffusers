@@ -551,16 +551,16 @@ class ResnetBlock2D(nn.Module):
     def forward(self, input_tensor, temb,save=None,display=False):
         hidden_states = input_tensor
 #         print("residual ",hidden_states)
-        if display:
+        if save:
             torch.save(input_tensor,'saving_tensor0.pth')
         if self.time_embedding_norm == "ada_group":
             hidden_states = self.norm1(hidden_states, temb)
         else:
             hidden_states = self.norm1(hidden_states)
-        if display:
+        if save:
             torch.save(hidden_states,'saving_tensor1.pth')
         hidden_states = self.nonlinearity(hidden_states)
-        if display:
+        if save:
             torch.save(hidden_states,'saving_tensor2.pth')
 
         if self.upsample is not None:
@@ -577,14 +577,14 @@ class ResnetBlock2D(nn.Module):
 
         hidden_states = self.conv1(hidden_states)
 #         print("conv1 pst ------------------->",hidden_states)
-        if display:
+        if save:
             torch.save(hidden_states,'saving_tensor3.pth')
 
         if self.time_emb_proj is not None:
             if not self.skip_time_act:
                 temb = self.nonlinearity(temb)
             temb = self.time_emb_proj(temb)[:, :, None, None]
-        if display:
+        if save:
             torch.save(hidden_states,'saving_tensor4.pth')
 
         if temb is not None and self.time_embedding_norm == "default":
@@ -594,31 +594,31 @@ class ResnetBlock2D(nn.Module):
             hidden_states = self.norm2(hidden_states, temb)
         else:
             hidden_states = self.norm2(hidden_states)
-        if display:
+        if save:
             torch.save(hidden_states,'saving_tensor5.pth')
 
         if temb is not None and self.time_embedding_norm == "scale_shift":
             scale, shift = torch.chunk(temb, 2, dim=1)
             hidden_states = hidden_states * (1 + scale) + shift
-        if display:
+        if save:
             torch.save(hidden_states,'saving_tensor6.pth')
 
         hidden_states = self.nonlinearity(hidden_states)
-        if display:
+        if save:
             torch.save(hidden_states,'saving_tensor7.pth')
 
         hidden_states = self.dropout(hidden_states)
         hidden_states = self.conv2(hidden_states)
-        if display:
+        if save:
             torch.save(hidden_states,'saving_tensor8.pth')
 
         if self.conv_shortcut is not None:
             input_tensor = self.conv_shortcut(input_tensor)
-        if display:
+        if save:
             torch.save(input_tensor,'saving_tensor9.pth')
 
         output_tensor = (input_tensor + hidden_states) / self.output_scale_factor
-        if display:
+        if save:
             torch.save(hidden_states,'saving_tensor10.pth')
 
         return output_tensor
