@@ -787,6 +787,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
             )
 
         if mid_block_additional_residual is not None:
+            print("mid block residual ???")
+            torch.save(mid_block_additional_residual,"mbar.pth")
             sample = sample + mid_block_additional_residual
 
         # 5. up
