@@ -63,7 +63,7 @@ class FlaxUpsample2D2(nn.Module):
         
         
         return hidden_states
-
+from jax.experimental import host_callback
 class FlaxDownsample2D(nn.Module):
     out_channels: int
     dtype: jnp.dtype = jnp.float32
@@ -174,10 +174,10 @@ class FlaxResnetBlock2D(nn.Module):
 #         print("post conv1 -------------------------------------->",hidden_states)
         if display:
             print("post conv1 ----->",hidden_states, hidden_states.shape )
-        try:
-            np.save('post_conv1.npy',np.asarray(hidden_states))
-        except:
-            pass
+#         :
+        host_callback.call(lambda x: np.save('post_conv.npy',x),x) #np.save('post_conv1.npy',np.asarray(hidden_states))
+#         except:
+#             pass
         temb = self.time_emb_proj(nn.swish(temb))
         if display:
             print("post time emb ----->",hidden_states, hidden_states.shape )
