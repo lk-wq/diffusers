@@ -740,7 +740,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                         encoder_hidden_states=encoder_hidden_states,
                         attention_mask=attention_mask,
                         cross_attention_kwargs=cross_attention_kwargs,
-                        save=True
+                        save=False
                     )
                 else:
                     sample, res_samples = downsample_block(
