@@ -367,9 +367,9 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
             )
 
         # 3. Clip or threshold "predicted x_0"
-        if self.config.thresholding:
-            pred_original_sample = self._threshold_sample(pred_original_sample)
-        elif self.config.clip_sample:
+#         if self.config.thresholding:
+#             pred_original_sample = self._threshold_sample(pred_original_sample)
+        if self.config.clip_sample:
             pred_original_sample = pred_original_sample.clamp(
                 -self.config.clip_sample_range, self.config.clip_sample_range
             )
@@ -397,7 +397,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
                 variance = torch.exp(0.5 * variance) * variance_noise
             else:
                 variance = (self._get_variance(t, predicted_variance=predicted_variance) ** 0.5) * variance_noise
-
+        torch.save(variance,'variance.pth')
         pred_prev_sample = pred_prev_sample + variance
 
         if not return_dict:
