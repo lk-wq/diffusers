@@ -381,6 +381,11 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
 
         # 5. Compute predicted previous sample µ_t
         # See formula (7) from https://arxiv.org/pdf/2006.11239.pdf
+        torch.save(current_sample_coeff,'current_sample_coeff.pth')
+        torch.save(pred_original_sample_coeff,'pred_original_sample_coeff.pth')
+        torch.save(sample,'sample.pth')
+        torch.save(pred_original_sample,'pred_original_sample.pth')
+
         pred_prev_sample = pred_original_sample_coeff * pred_original_sample + current_sample_coeff * sample
 
         # 6. Add noise
