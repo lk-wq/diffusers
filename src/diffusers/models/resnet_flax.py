@@ -143,6 +143,7 @@ class FlaxResnetBlock2D(nn.Module):
 #         if display:
 #             print("residual pre -------->",residual,residual.shape)
         if save:
+            print("hitting ------------------------------------------------------->")
             save_(residual,'residual.npy')
 
         hidden_states = self.norm1(hidden_states)
