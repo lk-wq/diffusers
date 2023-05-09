@@ -622,46 +622,79 @@ class AttnAddedKVProcessor2_0:
                 "AttnAddedKVProcessor2_0 requires PyTorch 2.0, to use it, please upgrade PyTorch to 2.0."
             )
 
-    def __call__(self, attn: Attention, hidden_states, encoder_hidden_states=None, attention_mask=None):
-        print("encoder hidden",encoder_hidden_states.size())
-        print("hidden pre view",hidden_states.size())
+    def __call__(self, attn: Attention, hidden_states, encoder_hidden_states=None, attention_mask=None,save=False):
+#         print("encoder hidden",encoder_hidden_states.size())
+#         print("hidden pre view",hidden_states.size())
 
 #         print("2")
 #         print("attn mask ", attention_mask)
         residual = hidden_states
+        if save:
+            torch.save(hidden_states,'attn1.pth')
         hidden_states = hidden_states.view(hidden_states.shape[0], hidden_states.shape[1], -1).transpose(1, 2)
+        if save:
+            torch.save(hidden_states,'attn2.pth')
+
         batch_size, sequence_length, _ = hidden_states.shape
-        print("hidden_states post view",hidden_states.size() )
         attention_mask = attn.prepare_attention_mask(attention_mask, sequence_length, batch_size, out_dim=4)
 #         print("attn mask post",attention_mask.size() )
         if encoder_hidden_states is None:
             encoder_hidden_states = hidden_states
         elif attn.norm_cross:
             encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
-        
+        if save:
+            torch.save(encoder_hidden_states,'attn3.pth')
         hidden_states = attn.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
-        
+        if save:
+            torch.save(hidden_states,'attn4.pth')
         query = attn.to_q(hidden_states)
-        print("q 1", query.size() )
+        if save:
+            torch.save(query,'attn5.pth')
         query = attn.head_to_batch_dim(query, out_dim=4)
-        print("q 2",query.size() )
+        if save:
+            torch.save(query,'attn6.pth')
+        
         encoder_hidden_states_key_proj = attn.add_k_proj(encoder_hidden_states)
-        print("e kp", encoder_hidden_states_key_proj.size() )
+        if save:
+            torch.save(hidden_states,'attn7.pth')
+
         encoder_hidden_states_value_proj = attn.add_v_proj(encoder_hidden_states)
-        print("e vp", encoder_hidden_states_value_proj.size() )
+        if save:
+            torch.save(encoder_hidden_states_value_proj,'attn8.pth')
+        
         encoder_hidden_states_key_proj = attn.head_to_batch_dim(encoder_hidden_states_key_proj, out_dim=4)
-        print("e kp 2", encoder_hidden_states_key_proj.size() )
+        if save:
+            torch.save(encoder_hidden_states_key_proj,'attn9.pth')
 
         encoder_hidden_states_value_proj = attn.head_to_batch_dim(encoder_hidden_states_value_proj, out_dim=4)
-        print("e vp 2", encoder_hidden_states_value_proj.size() )
+        if save:
+            torch.save(encoder_hidden_states_value_proj,'attn10.pth')
 
         if not attn.only_cross_attention:
             key = attn.to_k(hidden_states)
+            if save:
+                torch.save(key,'attn11.pth')
+            
             value = attn.to_v(hidden_states)
+            if save:
+                torch.save(value,'attn12.pth')
+           
             key = attn.head_to_batch_dim(key, out_dim=4)
+            if save:
+                torch.save(key,'attn13.pth')
+            
             value = attn.head_to_batch_dim(value, out_dim=4)
+            if save:
+                torch.save(value,'attn14.pth')
+
             key = torch.cat([encoder_hidden_states_key_proj, key], dim=2)
+            if save:
+                torch.save(key,'attn15.pth')
+
             value = torch.cat([encoder_hidden_states_value_proj, value], dim=2)
+            if save:
+                torch.save(value,'attn16.pth')
+
         else:
             print("not only cross")
             key = encoder_hidden_states_key_proj
@@ -669,25 +702,32 @@ class AttnAddedKVProcessor2_0:
 
         # the output of sdp = (batch, num_heads, seq_len, head_dim)
         # TODO: add support for attn.scale when we move to Torch 2.1
-        print("going in q k v", query.size(),key.size(),value.size())
+
         hidden_states = F.scaled_dot_product_attention(
             query, key, value, attn_mask=attention_mask, dropout_p=0.0, is_causal=False
         )
-        print("hidden post attn ", hidden_states.shape)
+        if save:
+            torch.save(hidden_states,'attn17.pth')
+
         hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, residual.shape[1])
-        print("hidden post attn 1 ", hidden_states.shape)
+        if save:
+            torch.save(hidden_states,'attn18.pth')
 
         # linear proj
         hidden_states = attn.to_out[0](hidden_states)
-        print("hidden post attn 2 ", hidden_states.shape)
+        if save:
+            torch.save(hidden_states,'attn19.pth')
 
         # dropout
         hidden_states = attn.to_out[1](hidden_states)
 
         hidden_states = hidden_states.transpose(-1, -2).reshape(residual.shape)
-        print("hidden post attn 3 ", hidden_states.shape)
+        if save:
+            torch.save(hidden_states,'attn20.pth')
 
         hidden_states = hidden_states + residual
+        if save:
+            torch.save(hidden_states,'attn21.pth')
 
         return hidden_states
 
