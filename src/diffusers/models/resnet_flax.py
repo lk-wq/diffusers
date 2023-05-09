@@ -137,21 +137,23 @@ class FlaxResnetBlock2D(nn.Module):
         elif self.upsample:
             self.up = True
 
-    def __call__(self, hidden_states, temb, deterministic=True,display=False):
+    def __call__(self, hidden_states, temb, deterministic=True,display=False,save=False):
         residual = hidden_states
 #         display = False
 #         if display:
 #             print("residual pre -------->",residual,residual.shape)
-        if display:
+        if save:
             save_(residual,'residual.npy')
 
         hidden_states = self.norm1(hidden_states)
 #         hidden_states = jnp.transpose( jnp.transpose(self.norm1(hidden_states),(0,3, 1,2)), (0,2, 3,1) )
-#         if display:
-#             print("post norm1 ----->",hidden_states, hidden_states.shape )
+        if save:
+            save_(hidden_states,'post_norm1.npy')
         hidden_states = nn.swish(hidden_states)
 #         if display:
 #             print("post hidden ----->",hidden_states, hidden_states.shape )
+        if save:
+            save_(hidden_states,'post_swish.npy')
 
 #         print("post swiswh",hidden_states)
         if self.downsample:
@@ -178,15 +180,17 @@ class FlaxResnetBlock2D(nn.Module):
 #         print("pre conv1 -------------------------------------->",hidden_states)
 
         hidden_states = self.conv1(hidden_states)
+        if save:
+            save_(hidden_states,'post_conv1.npy')
+
 #         print("post conv1 -------------------------------------->",hidden_states)
-        if display:
-            print("in display ----->",hidden_states, hidden_states.shape )
-            save_(hidden_states,'post_conv.npy')
 #         except:
 #             pass
         temb = self.time_emb_proj(nn.swish(temb))
 #         if display:
 #             print("post time emb ----->",hidden_states, hidden_states.shape )
+        if save:
+            save_(hidden_states,'post_emb.npy')
 
         
 
@@ -197,6 +201,8 @@ class FlaxResnetBlock2D(nn.Module):
 #         hidden_states = jnp.transpose( jnp.transpose(self.norm2(hidden_states),(0,3, 1,2)), (0,2, 3,1) )
 #         if display:
 #             print("post norm2 ----->",hidden_states, hidden_states.shape )
+        if save:
+            save_(hidden_states,'post_norm2.npy')
 
         scale, shift = jnp.split(temb, 2, axis=1)
 #         if display:
@@ -204,23 +210,28 @@ class FlaxResnetBlock2D(nn.Module):
 #             print("shift ----->",shift)
 
         hidden_states = hidden_states * (1 +  jnp.expand_dims(jnp.expand_dims(scale,axis=1),axis=2)) + jnp.expand_dims(jnp.expand_dims(shift,axis=1),axis=2)
-#         if display:
+        if save:
+            save_(hidden_states,'post_scaled.npy')
+
+    #         if display:
 #             print("post adding shift ----->",hidden_states, hidden_states.shape )
 
         hidden_states = nn.swish(hidden_states)
 #         if display:
 #             print("post swish ----->",hidden_states, hidden_states.shape )
+        if save:
+            save_(hidden_states,'post_swished2.npy')
 
         hidden_states = self.dropout(hidden_states, deterministic)
         hidden_states = self.conv2(hidden_states)
 #         if display:
 #             print("post conv2 ----->",hidden_states, hidden_states.shape )
-        if display:
+        if save:
             save_(hidden_states,'post_conv2.npy')
 
         if self.conv_shortcut is not None:
             residual = self.conv_shortcut(residual)
-        if display:
+        if save:
             save_(hidden_states + residual,'post_shortcut.npy')
             save_(residual,'post_residual.npy')
 
