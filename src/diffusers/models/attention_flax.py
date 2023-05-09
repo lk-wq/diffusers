@@ -269,7 +269,7 @@ class FlaxAttention2(nn.Module):
         tensor = tensor.reshape(batch_size // head_size, seq_len, dim * head_size)
         return tensor
 
-    def __call__(self, query, key, value, deterministic=True):
+    def __call__(self, query, key, value, deterministic=True,save=False):
 #         context = hidden_states if context is None else context
 
 #         query_proj = self.query(hidden_states)
@@ -386,6 +386,12 @@ def batch_to_head_dim( tensor):
     tensor = jnp.transpose(tensor, (0, 2, 1, 3))
     tensor = tensor.reshape(batch_size // head_size, seq_len, dim * head_size)
     return tensor
+from jax.experimental import io_callback
+from jax import debug
+import numpy as np
+def save_(x,name):
+    debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    return x
 
 class FlaxBasicTransformerBlock2(nn.Module):
     r"""
@@ -444,55 +450,87 @@ class FlaxBasicTransformerBlock2(nn.Module):
 
         return tensor
 
-    def __call__(self, hidden_states, encoder_hidden_states,attn, deterministic=True):
+    def __call__(self, hidden_states, encoder_hidden_states,attn, deterministic=True,save=False):
         r2 = hidden_states
-
+        if save:
+            save_(hidden_states, 'attn1.npy')
         hidden_states = jnp.transpose(hidden_states, (0,3,1,2))
         residual = hidden_states
         print("hs",hidden_states.shape)
 #         encoder_hidden_states = jnp.ones((1,77,4096))
         hidden_states = jnp.transpose(hidden_states.reshape(hidden_states.shape[0], hidden_states.shape[1],hidden_states.shape[-2]* hidden_states.shape[-1]),(0,2, 1))
+        if save:
+            save_(hidden_states, 'attn2.npy')
+
         batch_size, sequence_length, _ = hidden_states.shape
         if encoder_hidden_states is None:
             encoder_hidden_states = hidden_states
         else:
 #             print("encoder size",encoder_hidden_states)
             encoder_hidden_states = attn.norm_cross(encoder_hidden_states)
+        if save:
+            save_(encoder_hidden_states, 'attn2.npy')
+
         hidden_states = jnp.transpose( jnp.transpose(attn.group_norm(hidden_states),(0,2, 1)), (0,2, 1) )
+        if save:
+            save_(hidden_states, 'attn3.npy')
 
         query = attn.to_q(hidden_states)
+        if save:
+            save_(query, 'attn4.npy')
+
         print("query v hs", query.shape, hidden_states.shape)
         query = self.head_to_batch_dim(query, out_dim=4)
+        if save:
+            save_(query, 'attn5.npy')
+
         print("enc h s",encoder_hidden_states.shape)
         encoder_hidden_states_key_proj = attn.add_k_proj(encoder_hidden_states)
+        if save:
+            save_(encoder_hidden_states_key_proj, 'attn6.npy')
+
         encoder_hidden_states_value_proj = attn.add_v_proj(encoder_hidden_states)
-        
-        print("encoder hidden key proj", encoder_hidden_states_key_proj.shape )
-        print("encoder hidden states value proj",encoder_hidden_states_value_proj.shape )
-        
+        if save:
+            save_(encoder_hidden_states_value_proj, 'attn7.npy')
+
         encoder_hidden_states_key_proj = self.head_to_batch_dim(encoder_hidden_states_key_proj, out_dim=4)
+        if save:
+            save_(encoder_hidden_states_key_proj, 'attn8.npy')
+
         encoder_hidden_states_value_proj = self.head_to_batch_dim(encoder_hidden_states_value_proj, out_dim=4)
-        print("encoder hidden key proj 2 ", encoder_hidden_states_key_proj.shape )
-        print("encoder hidden states value proj 2 ",encoder_hidden_states_value_proj.shape )
+        if save:
+            save_(encoder_hidden_states_key_proj, 'attn9.npy')
 
         key = attn.to_k(hidden_states)
+        if save:
+           save_(key, 'attn10.npy')
+
         value = attn.to_v(hidden_states)
-        print("key proj 3 ", key.shape )
-        print("value 3 ",value.shape )
+        if save:
+           save_(value, 'attn11.npy')
 
         key = self.head_to_batch_dim(key, out_dim=4)
+        if save:
+           save_(value, 'attn12.npy')
+
         value = self.head_to_batch_dim(value, out_dim=4)
-        print("key proj 4 ", key.shape )
-        print("value 4 ",value.shape )
+        if save:
+           save_(value, 'attn13.npy')
 
         key = jnp.concatenate([encoder_hidden_states_key_proj, key], axis=2)
+        if save:
+           save_(key, 'attn14.npy')
+
         value = jnp.concatenate([encoder_hidden_states_value_proj, value], axis=2)
-        print("key proj 5 ", key.shape )
-        print("value 5 ",value.shape )
+        if save:
+           save_(value, 'attn15.npy')
 
         attn_weight = nn.softmax(query @ jnp.transpose(key,(0,1,3,2))/jnp.sqrt(query.shape[-1]), axis=-1)
+        if save:
+           save_(attn_weight, 'attn16.npy')
         hidden_states = attn_weight @ value
-        
+        if save:
+           save_(hidden_states, 'attn17.npy')
         
         #self.attn1(query, key, value)#attention_mask)
         print("hidden after self attn1",hidden_states.shape)
@@ -501,6 +539,8 @@ class FlaxBasicTransformerBlock2(nn.Module):
             fill *= i 
         fill = fill // (batch_size * residual.shape[1])
         hidden_states = jnp.transpose(hidden_states, (0,2, 1,3)).reshape(batch_size, -1, residual.shape[1])
+        if save:
+           save_(hidden_states, 'attn18.npy')
 
         print("res shape",residual.shape)
 #         fill = 1
@@ -513,10 +553,17 @@ class FlaxBasicTransformerBlock2(nn.Module):
 #         hidden_states = self.batch_to_head_dim(hidden_states)
         
         hidden_states = attn.to_out[0](hidden_states)
+        if save:
+           save_(hidden_states, 'attn19.npy')
+
         hidden_states = jnp.transpose(hidden_states, (0,2, 1)).reshape(residual.shape)
 
+        if save:
+           save_(hidden_states, 'attn20.npy')
 
         hidden_states = hidden_states + residual
+        if save:
+           save_(hidden_states, 'attn21.npy')
 
         return hidden_states.reshape(r2.shape)
 
