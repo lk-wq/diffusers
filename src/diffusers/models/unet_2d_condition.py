@@ -818,12 +818,13 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 sample = upsample_block(
                     hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
                 )
-
+        torch.save(sample,'sample_up_final.pth')
         # 6. post-process
         if self.conv_norm_out:
             sample = self.conv_norm_out(sample)
             sample = self.conv_act(sample)
         sample = self.conv_out(sample)
+        torch.save(sample,'final_sample.pth')
 
         if not return_dict:
             return (sample,)
