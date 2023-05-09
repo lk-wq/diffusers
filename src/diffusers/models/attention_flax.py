@@ -469,7 +469,7 @@ class FlaxBasicTransformerBlock2(nn.Module):
 #             print("encoder size",encoder_hidden_states)
             encoder_hidden_states = attn.norm_cross(encoder_hidden_states)
         if save:
-            save_(encoder_hidden_states, 'attn2.npy')
+            save_(encoder_hidden_states, 'attn0.npy')
 
         hidden_states = jnp.transpose( jnp.transpose(attn.group_norm(hidden_states),(0,2, 1)), (0,2, 1) )
         if save:
@@ -563,9 +563,10 @@ class FlaxBasicTransformerBlock2(nn.Module):
 
         hidden_states = hidden_states + residual
         if save:
-           save_(hidden_states, 'attn21.npy')
+          save_(hidden_states, 'attn21.npy')
+        hidden_states = jnp.transpose(hidden_states, (0,2,3,1))
 
-        return hidden_states.reshape(r2.shape)
+        return hidden_states#.reshape(r2.shape)
 
 class FlaxTransformer2DModel2(nn.Module):
     r"""
