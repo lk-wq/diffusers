@@ -114,6 +114,7 @@ class FlaxCrossAttnDownBlock2D(nn.Module):
             if ix == 0 and save:
                 save_(hidden_states,'0_states.npy')
             hidden_states = attn(hidden_states, encoder_hidden_states, deterministic=deterministic)
+            hidden_states = jnp.transpose(hidden_states,(0,2,1,3))
             if ix == 0 and save:
                 save_(hidden_states,'0_states2.npy')
 
