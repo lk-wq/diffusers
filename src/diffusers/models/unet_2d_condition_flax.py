@@ -120,6 +120,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
     flip_sin_to_cos: bool = True
     freq_shift: int = 0
     use_memory_efficient_attention: bool = False
+    index: int = 0
 
     def init_weights(self, rng: jax.random.KeyArray) -> FrozenDict:
         # init input tensors
@@ -314,6 +315,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 #             print("pre emb val",t_emb)
             t_emb = t_emb + self.add_embedding(encoder_hidden_states)
 #             print("post t_emb",t_emb.shape)
+        save_(t_emb,'t_emb'+str(index)+'.npy')
             
 #         except Exception as e:
 #             print("EXCEPTION",e)
@@ -349,7 +351,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 #             if ix == 0:
 #                 print("sample 1 --------------->",sample)
             down_block_res_samples += res_samples
-#         save_(sample,'sample_down.npy')
+        save_(sample,'sample_down'+str(index)+'.npy')
         if down_block_additional_residuals is not None:
             new_down_block_res_samples = ()
 #             print("residuals ????")
@@ -379,7 +381,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
         if mid_block_additional_residual is not None:
             sample += mid_block_additional_residual
-#         save_(sample,'sample_mid.npy')
+        save_(sample,'sample_mid'+str(index)+'_'+str(index)+'.npy')
         # 5. up
         for i , up_block in enumerate(self.up_blocks):
             res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
@@ -392,18 +394,18 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                     res_hidden_states_tuple=res_samples,
                     deterministic=not train,
                 )
-#                 save_(sample,'up_sample_round_'+str(i)+'.pth')
+                save_(sample,'up_sample_round_'+str(i)+'_'+str(index)+'.pth')
             else:
                 sample = up_block(sample, temb=t_emb, res_hidden_states_tuple=res_samples, deterministic=not train)
-#                 save_(sample,'up_sample_round_'+str(i)+'.pth')
+                save_(sample,'up_sample_round_'+str(i)+'_'+str(index)+'.pth')
 
-        save_(sample,'sample_up_final.npy')
+        save_(sample,'sample_up_final'+str(index)+'.npy')
         # 6. post-process
         sample = self.conv_norm_out(sample)
         sample = nn.silu(sample)
         sample = self.conv_out(sample)
         sample = jnp.transpose(sample, (0, 3, 2, 1))
-#         save_(sample,'final_sample.npy')
+        save_(sample,'final_sample'+str(index)+'.npy')
         if not return_dict:
             return (sample,)
 
