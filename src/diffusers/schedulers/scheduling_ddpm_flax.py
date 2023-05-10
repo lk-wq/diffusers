@@ -168,13 +168,16 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
         )
 
     def _get_variance(self, state: DDPMSchedulerState, t, predicted_variance=None, variance_type=None):
+        prev_t = t - self.config.num_train_timesteps // 2
+
         alpha_prod_t = state.common.alphas_cumprod[t]
-        alpha_prod_t_prev = jnp.where(t > 0, state.common.alphas_cumprod[t - 1], jnp.array(1.0, dtype=self.dtype))
+        alpha_prod_t_prev = jnp.where(t > 0, state.common.alphas_cumprod[prev_t], jnp.array(1.0, dtype=self.dtype))
+        current_beta_t = 1 - alpha_prod_t / alpha_prod_t_prev
 
         # For t > 0, compute predicted variance βt (see formula (6) and (7) from https://arxiv.org/pdf/2006.11239.pdf)
         # and sample from it to get previous sample
         # x_{t-1} ~ N(pred_prev_sample, variance) == add variance to pred_sample
-        variance = (1 - alpha_prod_t_prev) / (1 - alpha_prod_t) * state.common.betas[t]
+        variance = (1 - alpha_prod_t_prev) / (1 - alpha_prod_t) * current_beta_t#state.common.betas[t]
         variance = jnp.clip(variance, a_min=1e-20)
 
         if variance_type is None:
@@ -196,7 +199,7 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
 #         elif variance_type == "learned_range":
         if True:
             min_log = jnp.log(variance)
-            max_log = jnp.log(state.common.betas[t])
+            max_log = jnp.log(current_beta_t)
             frac = (predicted_variance + 1) / 2.
             variance = frac * max_log + (1 - frac) * min_log
 
