@@ -175,27 +175,29 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
         # and sample from it to get previous sample
         # x_{t-1} ~ N(pred_prev_sample, variance) == add variance to pred_sample
         variance = (1 - alpha_prod_t_prev) / (1 - alpha_prod_t) * state.common.betas[t]
+        variance = jnp.clip(variance, a_min=1e-20)
 
         if variance_type is None:
             variance_type = self.config.variance_type
 
         # hacks - were probably added for training stability
-        if variance_type == "fixed_small":
-            variance = jnp.clip(variance, a_min=1e-20)
-        # for rl-diffuser https://arxiv.org/abs/2205.09991
-        elif variance_type == "fixed_small_log":
-            variance = jnp.log(jnp.clip(variance, a_min=1e-20))
-        elif variance_type == "fixed_large":
-            variance = state.common.betas[t]
-        elif variance_type == "fixed_large_log":
-            # Glide max_log
-            variance = jnp.log(state.common.betas[t])
-        elif variance_type == "learned":
-            return predicted_variance
-        elif variance_type == "learned_range":
-            min_log = variance
-            max_log = state.common.betas[t]
-            frac = (predicted_variance + 1) / 2
+#         if variance_type == "fixed_small":
+#             variance = jnp.clip(variance, a_min=1e-20)
+#         # for rl-diffuser https://arxiv.org/abs/2205.09991
+#         elif variance_type == "fixed_small_log":
+#             variance = jnp.log(jnp.clip(variance, a_min=1e-20))
+#         elif variance_type == "fixed_large":
+#             variance = state.common.betas[t]
+#         elif variance_type == "fixed_large_log":
+#             # Glide max_log
+#             variance = jnp.log(state.common.betas[t])
+#         elif variance_type == "learned":
+#             return predicted_variance
+#         elif variance_type == "learned_range":
+          if True:
+            min_log = jnp.log(variance)
+            max_log = jnp.log(state.common.betas[t])
+            frac = (predicted_variance + 1) / 2.
             variance = frac * max_log + (1 - frac) * min_log
 
         return variance
