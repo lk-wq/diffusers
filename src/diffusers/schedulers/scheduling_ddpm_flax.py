@@ -168,7 +168,7 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
         )
 
     def _get_variance(self, state: DDPMSchedulerState, t, predicted_variance=None, variance_type=None):
-        prev_t = t - self.config.num_train_timesteps // 2
+        prev_t = t - self.config.num_train_timesteps // 15
 
         alpha_prod_t = state.common.alphas_cumprod[t]
         alpha_prod_t_prev = jnp.where(t > 0, state.common.alphas_cumprod[prev_t], jnp.array(1.0, dtype=self.dtype))
@@ -242,7 +242,7 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
             model_output, predicted_variance = model_output.split(2, axis=1)#jnp.split(model_output, sample.shape[1], axis=1)
         else:
             predicted_variance = None
-        prev_t = timestep - self.config.num_train_timesteps // 2
+        prev_t = timestep - self.config.num_train_timesteps // 15
 
         # 1. compute alphas, betas
         alpha_prod_t = state.common.alphas_cumprod[t]
