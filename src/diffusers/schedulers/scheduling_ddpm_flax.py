@@ -285,6 +285,7 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
             variance = self._get_variance(state,t, predicted_variance=predicted_variance)
             save_(variance,'small_v_'+str(self.current_step)+'.npy')
             variance = jnp.exp(0.5 * variance) * noise
+            save_(predicted_variance,'predicted_v_'+str(t)+'.pth')
 
             return variance#(self._get_variance(state, t, predicted_variance=predicted_variance) ** 0.5) * noise
 #         pred_prev_sample = pred_prev_sample + variance
