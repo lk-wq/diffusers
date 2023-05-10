@@ -239,7 +239,7 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
             model_output, predicted_variance = model_output.split(2, axis=1)#jnp.split(model_output, sample.shape[1], axis=1)
         else:
             predicted_variance = None
-        prev_t = timestep - self.config.num_train_timesteps // 15
+        prev_t = timestep - self.config.num_train_timesteps // 100
 
         # 1. compute alphas, betas
         alpha_prod_t = state.common.alphas_cumprod[t]
