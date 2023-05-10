@@ -120,7 +120,6 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
     flip_sin_to_cos: bool = True
     freq_shift: int = 0
     use_memory_efficient_attention: bool = False
-    index: int = 0
 
     def init_weights(self, rng: jax.random.KeyArray) -> FrozenDict:
         # init input tensors
@@ -270,6 +269,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         mid_block_additional_residual=None,
         return_dict: bool = True,
         train: bool = False,
+        index: int = 0,
     ) -> Union[FlaxUNet2DConditionOutput, Tuple]:
         r"""
         Args:
