@@ -283,6 +283,7 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
             split_key = jax.random.split(key, num=1)
             noise = jax.random.normal(split_key, shape=model_output.shape, dtype=self.dtype)
             variance = self._get_variance(state,t, predicted_variance=predicted_variance)
+            save_(variance,'small_v_'+str(self.current_step)+'.npy')
             variance = jnp.exp(0.5 * variance) * noise
 
             return variance#(self._get_variance(state, t, predicted_variance=predicted_variance) ** 0.5) * noise
