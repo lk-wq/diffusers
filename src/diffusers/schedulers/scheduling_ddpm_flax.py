@@ -245,9 +245,13 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
         alpha_prod_t_prev = jnp.where(t > 0, state.common.alphas_cumprod[t - 1], jnp.array(1.0, dtype=self.dtype))
         beta_prod_t = 1 - alpha_prod_t
         beta_prod_t_prev = 1 - alpha_prod_t_prev
+        current_alpha_t = alpha_prod_t / alpha_prod_t_prev
+        current_beta_t = 1 - current_alpha_t
+
         save_( beta_prod_t , 'beta_prod_t'+str(self.current_step)+'.npy' )
         save_( model_output , 'model_output'+str(self.current_step)+'.npy' )
         save_( alpha_prod_t , 'alpha_prod_t'+str(self.current_step)+'.npy' )
+        save_( alpha_prod_t_prev , 'alpha_prod_t_prev'+str(self.current_step)+'.npy' )
 
         # 2. compute predicted original sample from predicted noise also called
         # "predicted x_0" of formula (15) from https://arxiv.org/pdf/2006.11239.pdf
@@ -269,8 +273,8 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
 
         # 4. Compute coefficients for pred_original_sample x_0 and current sample x_t
         # See formula (7) from https://arxiv.org/pdf/2006.11239.pdf
-        pred_original_sample_coeff = (alpha_prod_t_prev ** (0.5) * state.common.betas[t]) / beta_prod_t
-        current_sample_coeff = state.common.alphas[t] ** (0.5) * beta_prod_t_prev / beta_prod_t
+        pred_original_sample_coeff = (alpha_prod_t_prev ** (0.5) * current_beta_t) / beta_prod_t
+        current_sample_coeff = current_alpha_t ** (0.5) * beta_prod_t_prev / beta_prod_t
         save_(current_sample_coeff,'current_sample_coeff'+str(self.current_step)+'.npy')
         save_(pred_original_sample,'pred_original_sample'+str(self.current_step)+'.npy')
         save_(sample,'sample'+str(self.current_step)+'.npy')
