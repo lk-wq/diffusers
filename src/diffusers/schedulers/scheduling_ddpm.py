@@ -405,6 +405,7 @@ class DDPMScheduler(SchedulerMixin, ConfigMixin):
             elif self.variance_type == "learned_range":
                 variance = self._get_variance(t, predicted_variance=predicted_variance)
                 torch.save(variance,'small_v_'+str(t)+'.pth')
+                torch.save(predicted_variance,'predicted_v_'+str(t)+'.pth')
 
                 variance = torch.exp(0.5 * variance) * variance_noise
             else:
