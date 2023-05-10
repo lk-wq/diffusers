@@ -417,7 +417,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         sample = self.conv_norm_out(sample)
         sample = nn.silu(sample)
         sample = self.conv_out(sample)
-        sample = jnp.transpose(sample, (0, 3, 2, 1))
+#         sample = jnp.transpose(sample, (0, 3, 2, 1))
         save_(sample,'final_sample'+str(index)+'.npy')
         if not return_dict:
             return (sample,)
