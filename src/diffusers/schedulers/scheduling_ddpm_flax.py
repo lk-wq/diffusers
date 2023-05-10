@@ -194,7 +194,7 @@ class FlaxDDPMScheduler(FlaxSchedulerMixin, ConfigMixin):
 #         elif variance_type == "learned":
 #             return predicted_variance
 #         elif variance_type == "learned_range":
-          if True:
+        if True:
             min_log = jnp.log(variance)
             max_log = jnp.log(state.common.betas[t])
             frac = (predicted_variance + 1) / 2.
