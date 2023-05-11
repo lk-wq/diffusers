@@ -1073,7 +1073,7 @@ def main():
             noise_pred = unet_outputs.sample
             noise_pred , variance = noise_pred.split(2, axis=1)
 
-            loss = (noisy_latents - noise_pred) ** 2
+            loss = (noise - noise_pred) ** 2
             loss = loss.mean()
 
             return loss
