@@ -998,16 +998,16 @@ def main():
         state = optimizer.init(params)
         return tuple(state), params
 
-    if False:
-        state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer,c0=c0p)
-        text_encoder_state = TrainState.create(
-            apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer,c0=c0t
-        )
-    else:
-        state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
-        text_encoder_state = train_state.TrainState.create(
-            apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
-        )
+#     if False:
+#         state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer,c0=c0p)
+#         text_encoder_state = TrainState.create(
+#             apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer,c0=c0t
+#         )
+#     else:
+#         state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+#         text_encoder_state = train_state.TrainState.create(
+#             apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer
+#         )
 
 #     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
