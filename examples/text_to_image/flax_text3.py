@@ -968,7 +968,7 @@ def main():
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
     )
     
-    text_encoder, text_encoder_params = FlaxT5EncoderModel.from_pretrained(
+    text_encoder, text_params = FlaxT5EncoderModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="text_encoder",dtype=weight_dtype
     )
 
