@@ -1033,7 +1033,10 @@ def main():
 
     # Initialize our training
     rng = jax.random.PRNGKey(args.seed)
-    train_rngs = jax.random.split(rng, jax.local_device_count())
+    rng, dropout_rng = jax.random.split(rng)
+
+    train_rngs = jax.random.PRNGKey(args.seed)
+#     train_rngs = jax.random.split(rng, jax.local_device_count())
 
     def train_step(params,opt_state, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
