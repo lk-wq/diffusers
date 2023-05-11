@@ -1078,7 +1078,7 @@ def main():
 
         grad_fn = jax.value_and_grad(compute_loss)
         loss, grads = grad_fn(params)
-
+        print("types grads opt_state params", type(grads), type(opt_state) , type(params))
         updates, new_opt_state = optimizer.update(grads, opt_state, params)
         new_params = optax.apply_updates(params, updates)
 #         grad = jax.lax.pmean(grad, "batch")
