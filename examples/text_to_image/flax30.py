@@ -1094,8 +1094,8 @@ def main():
 #     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
     p_train_step = pjit(
         train_step,
-        in_axis_resources=(param_spec, opt_state_spec, None, None, None),
-        out_axis_resources=(param_spec, opt_state_spec, None, None, None),
+        in_axis_resources=(param_spec, opt_state_spec, None, None),
+        out_axis_resources=(param_spec, opt_state_spec, None, None),
         donate_argnums=(0, 1),
     )
 #     p_get_initial_state = pjit(
@@ -1167,7 +1167,7 @@ def main():
             for batch in train_dataloader:
 #                 batch = shard(batch)
                 # batch = shard(batch)
-                unet_params, opt_state, text_encoder_state, train_metric, train_rngs = p_train_step(unet_params,opt_state, batch, train_rngs)
+                unet_params, opt_state, train_metric, train_rngs = p_train_step(unet_params,opt_state, batch, train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
