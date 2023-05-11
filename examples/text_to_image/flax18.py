@@ -959,15 +959,15 @@ def main():
     optimizer = optax.multi_transform(
       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
 
-    unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+    unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
     )
     def get_initial_state(params):
         state = optimizer.init(params)
         return tuple(state), params
-    param_spec = set_partitions(unfreeze(unet_params))
+    param_spec = set_partitions(unfreeze(params))
     
-    params_shapes = jax.tree_util.tree_map(lambda x: x.shape, unet_params)
+    params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
     state_shapes = jax.eval_shape(get_initial_state, params_shapes)
 
     def get_opt_spec(x):
@@ -984,7 +984,7 @@ def main():
         in_axis_resources=None,
         out_axis_resources=(opt_state_spec, param_spec),
     )
-    unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
+    params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
     
     mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
     print("starting -----------------------------------------------------------> ")
@@ -998,7 +998,7 @@ def main():
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
     with Mesh(mesh_devices, ("dp","mp")):
-        opt_state, unet_params = p_get_initial_state(freeze(unet_params))
+        opt_state, unet_params = p_get_initial_state(freeze(params))
 
 #     with Mesh(mesh_devices, ("dp", "mp")):
 #         opt_state, params = p_get_initial_state(freeze(unet_params))
