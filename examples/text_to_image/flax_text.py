@@ -55,6 +55,7 @@ import inspect
 from typing import Callable, Dict, Union, NamedTuple, Optional, Iterable, Sequence
 
 from partitions_text import set_partitions_text
+from transformers import T5EncoderModel, FlaxT5EncoderModel
 
 import chex
 
@@ -967,7 +968,7 @@ def main():
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
     )
     
-    text_encoder, text_encoder_params = FlaxUNet2DConditionModel.from_pretrained(
+    text_encoder, text_encoder_params = FlaxT5EncoderModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="text_encoder",dtype=weight_dtype
     )
 
