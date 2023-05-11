@@ -968,9 +968,9 @@ def main():
 #     optimizer = optax.multi_transform(
 #       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
 
-    unet, params = FlaxUNet2DConditionModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
-    )
+#     unet, params = FlaxUNet2DConditionModel.from_pretrained(
+#         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
+#     )
     
     text_encoder, text_params = FlaxT5EncoderModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="text_encoder",dtype=weight_dtype
@@ -983,11 +983,11 @@ def main():
         state = optimizer2.init(params)
         return state, params
 
-    param_spec = set_partitions(unfreeze(params))
+#     param_spec = set_partitions(unfreeze(params))
     text_param_spec = set_partitions_text(unfreeze(text_params))
 
-    params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
-    state_shapes = jax.eval_shape(get_initial_state, params_shapes)
+#     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
+#     state_shapes = jax.eval_shape(get_initial_state, params_shapes)
 
     text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
     text_state_shapes = jax.eval_shape(get_initial_state2, text_params_shapes)
@@ -997,19 +997,19 @@ def main():
             return param_spec
         return None
     
-    opt_state_spec, param_spec = jax.tree_util.tree_map(
-        get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
-    )
+#     opt_state_spec, param_spec = jax.tree_util.tree_map(
+#         get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
+#     )
 
     text_opt_state_spec, text_param_spec = jax.tree_util.tree_map(
         get_opt_spec, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
 
-    p_get_initial_state = pjit(
-        get_initial_state,
-        in_axis_resources=None,
-        out_axis_resources=(opt_state_spec, param_spec),
-    )
+#     p_get_initial_state = pjit(
+#         get_initial_state,
+#         in_axis_resources=None,
+#         out_axis_resources=(opt_state_spec, param_spec),
+#     )
     p_get_initial_state2 = pjit(
         get_initial_state2,
         in_axis_resources=None,
