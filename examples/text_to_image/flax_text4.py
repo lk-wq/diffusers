@@ -976,7 +976,7 @@ def main():
         state = optimizer.init(params)
         return state, params
     param_spec = set_partitions(unfreeze(params))
-    text_param_spec = set_partitions_text(unfreeze(text_encoder_params))
+    text_param_spec = set_partitions_text(unfreeze(text_params))
 
     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
     state_shapes = jax.eval_shape(get_initial_state, params_shapes)
