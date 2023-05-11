@@ -900,40 +900,6 @@ def main():
             d[parts[-1]] = value
         return resultDict
 
-     
-    unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
-    )
-    def get_initial_state(params):
-        state = optimizer.init(params)
-        return tuple(state), params
-    param_spec = set_partitions(unfreeze(unet_params))
-    
-    params_shapes = jax.tree_util.tree_map(lambda x: x.shape, unet_params)
-    state_shapes = jax.eval_shape(get_initial_state, params_shapes)
-
-    def get_opt_spec(x):
-        if isinstance(x, dict):
-            return param_spec
-        return None
-    
-    opt_state_spec, param_spec = jax.tree_util.tree_map(
-        get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
-    )
-
-    p_get_initial_state = pjit(
-        get_initial_state,
-        in_axis_resources=None,
-        out_axis_resources=(opt_state_spec, param_spec),
-    )
-    unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
-    
-    mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
-
-#     with Mesh(mesh_devices, ("dp", "mp")):
-#         opt_state, params = p_get_initial_state(freeze(unet_params))
-    
- 
     if args.scale_lr:
         args.learning_rate = args.learning_rate * total_train_batch_size
     if args.scheduling != "constant":
@@ -992,8 +958,42 @@ def main():
 
     optimizer = optax.multi_transform(
       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
-    c0p = get_zero(unet_params)
-    c0t = get_zero(text_encoder.params)
+
+    unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+        args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
+    )
+    def get_initial_state(params):
+        state = optimizer.init(params)
+        return tuple(state), params
+    param_spec = set_partitions(unfreeze(unet_params))
+    
+    params_shapes = jax.tree_util.tree_map(lambda x: x.shape, unet_params)
+    state_shapes = jax.eval_shape(get_initial_state, params_shapes)
+
+    def get_opt_spec(x):
+        if isinstance(x, dict):
+            return param_spec
+        return None
+    
+    opt_state_spec, param_spec = jax.tree_util.tree_map(
+        get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
+    )
+
+    p_get_initial_state = pjit(
+        get_initial_state,
+        in_axis_resources=None,
+        out_axis_resources=(opt_state_spec, param_spec),
+    )
+    unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
+    
+    mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
+
+#     with Mesh(mesh_devices, ("dp", "mp")):
+#         opt_state, params = p_get_initial_state(freeze(unet_params))
+    
+ 
+#     c0p = get_zero(unet_params)
+#     c0t = get_zero(text_encoder.params)
     def get_initial_state(params):
         state = optimizer.init(params)
         return tuple(state), params
