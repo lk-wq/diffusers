@@ -1061,10 +1061,10 @@ def main():
                 timestep_rng,
                 (bsz,),
                 0,
-                noise_scheduler.config.num_train_timesteps,
+                noise_scheduler[0].config.num_train_timesteps,
             )
 
-            noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
+            noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
 #             encoder_hidden_states 
 
@@ -1212,7 +1212,7 @@ def main():
                         scheduler_args["variance_type"] = 'fixed_small'
 
                         scheduler = FlaxDDIMScheduler.from_config(
-                                noise_scheduler.config, **scheduler_args
+                                noise_scheduler[0].config, **scheduler_args
                         )
 
                         pipeline = FlaxStableDiffusionPipeline(
@@ -1286,7 +1286,7 @@ def main():
             scheduler_args["variance_type"] = 'fixed_small'
 
             scheduler = FlaxDDIMScheduler.from_config(
-                    noise_scheduler.config, **scheduler_args
+                    noise_scheduler[0].config, **scheduler_args
             )
 
     #         scheduler = FlaxPNDMScheduler(
