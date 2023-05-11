@@ -985,7 +985,7 @@ def main():
         in_axis_resources=None,
         out_axis_resources=(opt_state_spec, param_spec),
     )
-#     params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
+    params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
     
 #     mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
     mesh_devices = mesh_utils.create_device_mesh((4, 2))
