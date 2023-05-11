@@ -1483,7 +1483,6 @@ class SimpleCrossAttnDownBlock2D(nn.Module):
                     hidden_states,
                     encoder_hidden_states=encoder_hidden_states,
                     attention_mask=attention_mask,
-                    save=save,
                     **cross_attention_kwargs,
                 )
             else:
