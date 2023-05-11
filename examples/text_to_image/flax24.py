@@ -986,7 +986,9 @@ def main():
     )
 #     params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
     
-    mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
+#     mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
+    mesh_devices = mesh_utils.create_device_mesh((4, 2))
+        
     print("starting -----------------------------------------------------------> ",mesh_devices)
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
