@@ -983,11 +983,11 @@ def main():
         state = optimizer2.init(params)
         return state, params
 
-#     param_spec = set_partitions(unfreeze(params))
+    param_spec = set_partitions(unfreeze(params))
     text_param_spec = set_partitions_text(unfreeze(text_params))
 
-#     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
-#     state_shapes = jax.eval_shape(get_initial_state, params_shapes)
+    params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
+    state_shapes = jax.eval_shape(get_initial_state, params_shapes)
 
     text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
     text_state_shapes = jax.eval_shape(get_initial_state2, text_params_shapes)
@@ -996,20 +996,24 @@ def main():
         if isinstance(x, dict):
             return param_spec
         return None
+    def get_opt_spec2(x):
+        if isinstance(x, dict):
+            return text_param_spec
+        return None
     
-#     opt_state_spec, param_spec = jax.tree_util.tree_map(
-#         get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
-#     )
-
-    text_opt_state_spec, text_param_spec = jax.tree_util.tree_map(
-        get_opt_spec, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
+    opt_state_spec, param_spec = jax.tree_util.tree_map(
+        get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
 
-#     p_get_initial_state = pjit(
-#         get_initial_state,
-#         in_axis_resources=None,
-#         out_axis_resources=(opt_state_spec, param_spec),
-#     )
+    text_opt_state_spec, text_param_spec = jax.tree_util.tree_map(
+        get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
+    )
+
+    p_get_initial_state = pjit(
+        get_initial_state,
+        in_axis_resources=None,
+        out_axis_resources=(opt_state_spec, param_spec),
+    )
     p_get_initial_state2 = pjit(
         get_initial_state2,
         in_axis_resources=None,
