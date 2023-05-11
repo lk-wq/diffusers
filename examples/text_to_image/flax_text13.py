@@ -968,9 +968,9 @@ def main():
 #     optimizer = optax.multi_transform(
 #       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
 
-#     unet, params = FlaxUNet2DConditionModel.from_pretrained(
-#         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
-#     )
+    unet, params = FlaxUNet2DConditionModel.from_pretrained(
+        args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
+    )
     
     text_encoder, text_params = FlaxT5EncoderModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="text_encoder",dtype=weight_dtype
