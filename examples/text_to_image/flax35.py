@@ -1069,6 +1069,7 @@ def main():
             unet_outputs = unet.apply({"params": params}, noisy_latents, timesteps, batch['input_ids'], train=True)
 
             noise_pred = unet_outputs.sample
+            noise_pred , variance = noise_pred.split(2, axis=1)
 
             loss = (noisy_latents - noise_pred) ** 2
             loss = loss.mean()
