@@ -323,6 +323,10 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             save_(t_emb,'t_emb_pre_addition_'+str(index)+'.npy')
             add_ = self.add_embedding(encoder_hidden_states)
             save_(add_,'add_'+str(index)+'.npy')
+            print("add ------------------------>", add_)
+            print("t_emb ------------------------>", t_emb)
+            print("pre ------------------------>", encoder_hidden_states)
+
             t_emb = t_emb + add_
 #             print("post t_emb",t_emb.shape)
         save_(t_emb,'t_emb'+str(index)+'.npy')
