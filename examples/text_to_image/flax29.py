@@ -407,7 +407,7 @@ class FolderData(Dataset):
         self.negative_prompt = negative_prompt
         self.instance_prompt = ip
         prompt_ids = torch.load('prompt_embeds.pth',map_location='cpu')
-        prompt_ids = jnp.asarray(prompt_ids)
+#         prompt_ids = jnp.asarray(prompt_ids)
         self.data = prompt_ids
         self.drop = drop
     def __len__(self):
