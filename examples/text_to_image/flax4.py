@@ -398,7 +398,7 @@ class FolderData(Dataset):
                 ]
             )
 
-        self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
+#         self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
         self.negative_prompt = negative_prompt
         self.instance_prompt = ip
         prompt_ids = torch.load('prompt_embeds.pth',map_location='cpu')
