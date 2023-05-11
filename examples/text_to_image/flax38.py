@@ -872,7 +872,7 @@ def main():
         batch = {k: v.numpy() for k, v in batch.items()}
         return batch
 
-    total_train_batch_size = args.train_batch_size * jax.local_device_count()
+    total_train_batch_size = args.train_batch_size * 1#jax.local_device_count()
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, shuffle=True, collate_fn=collate_fn, batch_size=total_train_batch_size, drop_last=True
     )
