@@ -35,7 +35,7 @@ from transformers import CLIPFeatureExtractor, CLIPTokenizer, FlaxCLIPTextModel,
 
 from flax.core.frozen_dict import freeze, unfreeze
 from flax.training.common_utils import onehot, stack_forest
-from paritions import set_partitions
+from paritions_sd import set_partitions
 
 from typing import Dict
 import numpy as np
