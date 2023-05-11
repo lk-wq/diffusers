@@ -60,6 +60,9 @@ import jax.numpy as jnp
 
 #----------------------------------------------------------------------------------------
 # BUILDING BLOCKS
+from jax.experimental.maps import xmap
+from jax.experimental.pjit import pjit
+from jax.sharding import Mesh
 
 def _compute_error(x, y, result):
     """
@@ -398,8 +401,9 @@ class FolderData(Dataset):
         self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
         self.negative_prompt = negative_prompt
         self.instance_prompt = ip
-        self.drop = drop
-
+        prompt_ids = torch.load('prompt_embeds.pth',map_location='cpu')
+        prompt_ids = jnp.asarray(prompt_ids)
+        self.data = prompt_ids
     def __len__(self):
         return len(self.captions)
 
@@ -417,7 +421,7 @@ class FolderData(Dataset):
         if self.drop:
             if choice <= 15:
               caption = ""
-        data["txt"] = self.tokenize_captions(caption)
+        data["txt"] = self.data#self.tokenize_captions(caption)
 
         # if self.postprocess is not None:
         #     data = self.postprocess(data)
@@ -841,7 +845,7 @@ def main():
         pixel_values = torch.stack([example["image"] for example in examples] )#+ [example['class_images'] for example in examples] )
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
         input_ids = [example["txt"] for example in examples]
-
+        input_ids = torch.cat(input_ids)
         # Concat class and instance examples for prior preservation.
         # We do this to avoid doing two forward passes.
 #         if args.with_prior_preservation:
@@ -851,9 +855,9 @@ def main():
 #         pixel_values = torch.stack(pixel_values)
 #         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
 
-        input_ids = tokenizer.pad(
-            {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
-        ).input_ids
+#         input_ids = tokenizer.pad(
+#             {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
+#         ).input_ids
 
         batch = {
             "input_ids": input_ids,
@@ -875,9 +879,9 @@ def main():
     #shard(
     # Load models and create wrapper for stable diffusion
     print("weight type ----->",weight_dtype)
-    text_encoder = FlaxCLIPTextModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="text_encoder",revision='bf16', dtype=weight_dtype
-    )
+#     text_encoder = FlaxCLIPTextModel.from_pretrained(
+#         args.pretrained_model_name_or_path, subfolder="text_encoder",revision='bf16', dtype=weight_dtype
+#     )
     
     import flatdict
     def unflatten(dictionary):
@@ -892,40 +896,37 @@ def main():
             d[parts[-1]] = value
         return resultDict
 
-    vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="vae",revision='bf16',dtype=weight_dtype
-    )
-
-#     vae_param_dict = dict(flatdict.FlatDict(vae_params, delimiter='.'))
-#     for r in vae_param_dict.items():
-#       k , v = r[0], r[1]
-#       try:
-#         if v.dtype == jnp.float32:
-#           v2= v.astype(jnp.bfloat16)
-#           vae_param_dict[k] = v2
-#           del v
-#       except:
-#         print("f",k)
-#     vae_params = unflatten(vae_param_dict)
-#     del vae_param_dict
      
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",  revision='bf16',dtype=weight_dtype
     )
-#     unet_param_dict = dict(flatdict.FlatDict(unet_params, delimiter='.'))
-#     for r in unet_param_dict.items():
-#       k , v = r[0], r[1]
-#       try:
-#         if True:#v.dtype == jnp.float32:
-#           v2= v.astype(jnp.float32)
-#           unet_param_dict[k] = v2
-#           del v
-#       except:
-#         print("f",k)
-#     unet_params = unflatten(unet_param_dict)
-#     del unet_param_dict
+    def get_initial_state(params):
+        state = optimizer.init(params)
+        return tuple(state), params
+    param_spec = set_partitions(unfreeze(unet_params))
+    
+    def get_opt_spec(x):
+        if isinstance(x, dict):
+            return param_spec
+        return None
+    
+    opt_state_spec, param_spec = jax.tree_util.tree_map(
+        get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
+    )
 
-    # Optimization
+    p_get_initial_state = pjit(
+        get_initial_state,
+        in_axis_resources=None,
+        out_axis_resources=(opt_state_spec, param_spec),
+    )
+    unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
+    
+    mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
+
+#     with Mesh(mesh_devices, ("dp", "mp")):
+#         opt_state, params = p_get_initial_state(freeze(unet_params))
+    
+ 
     if args.scale_lr:
         args.learning_rate = args.learning_rate * total_train_batch_size
     if args.scheduling != "constant":
@@ -955,11 +956,6 @@ def main():
         weight_decay=args.adam_weight_decay,
     )
     
-#     adamw2 = optax.MultiSteps(
-#         adamw, 256
-#     )
-
-
     optimizer_ = optax.chain(
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
@@ -991,8 +987,11 @@ def main():
       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
     c0p = get_zero(unet_params)
     c0t = get_zero(text_encoder.params)
+    def get_initial_state(params):
+        state = optimizer.init(params)
+        return tuple(state), params
 
-    if args.stochastic_rounding:
+    if False:
         state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer,c0=c0p)
         text_encoder_state = TrainState.create(
             apply_fn=text_encoder.__call__, params=text_encoder.params, tx=optimizer,c0=c0t
@@ -1013,19 +1012,16 @@ def main():
     rng = jax.random.PRNGKey(args.seed)
     train_rngs = jax.random.split(rng, jax.local_device_count())
 
-    def train_step(state, text_encoder_state, vae_params, batch, train_rng):
+    def train_step(params,opt_state, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-        params = {"text_encoder": text_encoder_state.params, "unet": state.params}
 
         def compute_loss(params):
             # Convert images to latent space
-            vae_outputs = vae.apply(
-                {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
-            )
-            latents = vae_outputs.latent_dist.sample(sample_rng)
+#             latents = vae_outputs.latent_dist.sample(sample_rng)
             # (NHWC) -> (NCHW)
-            latents = jnp.transpose(latents, (0, 3, 1, 2))
-            latents = latents * 0.18215
+            latents = batch["pixel_values"]
+#             latents = jnp.transpose(latents, (0, 3, 1, 2))
+#             latents = latents * 0.18215
 
             # Sample noise that we'll add to the latents
             noise_rng, timestep_rng = jax.random.split(sample_rng)
@@ -1039,65 +1035,54 @@ def main():
                 noise_scheduler.config.num_train_timesteps,
             )
 
-            # Add noise to the latents according to the noise magnitude at each timestep
-            # (this is the forward diffusion process)
-            noisy_latents, alpha, sigma = noise_scheduler.add_noise(latents, noise, timesteps)
+            noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
 
-            # Get the text embedding for conditioning
-            # print("batch", batch["input_ids"])
-            encoder_hidden_states = text_encoder(
-                batch["input_ids"],
-                params=params["text_encoder"],
-                train=True,
-            )[0]
-            #unc = tokenizer([""]*len(batch['input_ids']), max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
-            # print("unc",unc)
+#             encoder_hidden_states 
 
-            # encoder_hidden_states_unc = text_encoder(
-            #     batch['unc'],
-            #     params=text_encoder_params,
-            #     train=False,
-            # )[0]
-
-            # Predict the noise residual and compute loss
-            unet_outputs = unet.apply({"params": params['unet']}, noisy_latents, timesteps, encoder_hidden_states, train=True)
-            # unet_outputs_unc = unet.apply({"params": params}, noisy_latents, timesteps, encoder_hidden_states_unc, train=True)
+            unet_outputs = unet.apply({"params": params}, noisy_latents, timesteps, batch['input_ids'], train=True)
 
             noise_pred = unet_outputs.sample
-            # noise_pred_unc = unet_outputs_unc.sample
-            # noise_pred_use = noise_pred_unc + 3*( noise_pred - noise_pred_unc )
-            v = alpha*noise - sigma * latents
-            loss = (v - noise_pred) ** 2
+
+            loss = (noisy_latents - noise_pred) ** 2
             loss = loss.mean()
 
             return loss
 
         grad_fn = jax.value_and_grad(compute_loss)
-        loss, grad = grad_fn(params)
-        grad = jax.lax.pmean(grad, "batch")
-        print(" g -------------> ", type(grad['text_encoder']) , type(grad['unet']) )
-        if args.stochastic_rounding:
-            new_state = state.apply_gradients(grads=grad['unet'])
-            new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
-        else:
-            new_state = state.apply_gradients(grads=grad['unet'])
-            new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
+        loss, grads = grad_fn(params)
+
+        updates, new_opt_state = optimizer.update(grads, opt_state, params)
+        new_params = optax.apply_updates(params, updates)
+#         grad = jax.lax.pmean(grad, "batch")
+#         print(" g -------------> ", type(grad['text_encoder']) , type(grad['unet']) )
+#         if args.stochastic_rounding:
+#         new_state = state.apply_gradients(grads=grad['unet'])
+#             new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
+#         else:
+#             new_state = state.apply_gradients(grads=grad['unet'])
+#             new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
 
         metrics = {"loss": loss}
         metrics = jax.lax.pmean(metrics, axis_name="batch")
 
-        return new_state,new_text_encoder_state, metrics, new_train_rng 
+        return new_params,new_opt_state, metrics, new_train_rng 
 
     # Create parallel version of the train step
-    p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
+#     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
+    p_train_step = pjit(
+        train_step,
+        in_axis_resources=(param_spec, opt_state_spec, None, None, None),
+        out_axis_resources=(param_spec, opt_state_spec, None, None, None),
+        donate_argnums=(0, 1),
+    )
+    p_get_initial_state = pjit(
+        get_initial_state,
+        in_axis_resources=None,
+        out_axis_resources=(opt_state_spec, param_spec),
+    )
 
-    # Replicate the train state on each device
-    state = jax_utils.replicate(state)
-    # avg_state = jax_utils.replicate(avg_state)
-    text_encoder_state = jax_utils.replicate(text_encoder_state)
-
-#     text_encoder_params = jax_utils.replicate(text_encoder.params)
-    vae_params = jax_utils.replicate(vae_params)
+    with Mesh(mesh_devices, ("dp", "mp")):
+        opt_state, unet_params = p_get_initial_state(freeze(unet_params))
 
     # Train!
     num_update_steps_per_epoch = math.ceil(len(train_dataloader))
@@ -1141,174 +1126,174 @@ def main():
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
     avg = get_params_to_save(state.params)
-    text_avg = get_params_to_save(text_encoder_state.params)
+#     text_avg = get_params_to_save(text_encoder_state.params)
 
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
     
-        
 #     for ix , epoch in enumerate(epochs):
 #         # ======================== Training ================================
-    for ix , epoch in enumerate(epochs):
-        # ======================== Training ================================
+    with Mesh(mesh_devices, ("mp")):
+        for ix , epoch in enumerate(epochs):
+            # ======================== Training ================================
 
-        train_metrics = []
+            train_metrics = []
 
-        steps_per_epoch = len(train_dataset) // total_train_batch_size
-        train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
-        # train
+            steps_per_epoch = len(train_dataset) // total_train_batch_size
+            train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
+            # train
 
-        # train
-        for batch in train_dataloader:
-            batch = shard(batch)
-            # batch = shard(batch)
-            state, text_encoder_state, train_metric, train_rngs = p_train_step(state, text_encoder_state, vae_params, batch, train_rngs)
+            # train
+            for batch in train_dataloader:
+#                 batch = shard(batch)
+                # batch = shard(batch)
+                unet_params, opt_state, text_encoder_state, train_metric, train_rngs = p_train_step(unet_params,opt_state, batch, train_rngs)
 
-#             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
-            # start = time.perf_counter()
-            train_metrics.append(train_metric)
+    #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+                # start = time.perf_counter()
+                train_metrics.append(train_metric)
 
-            train_step_progress_bar.update(1)
+                train_step_progress_bar.update(1)
 
-            if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
-                if args.ema_frequency > -1 and global_step % args.ema_frequency == 0:
-                  it = global_step#//args.ema_frequency
-                  decay = args.min_decay
-                  decay = min(decay,(1 + it) / (10 + it))
-                  rng, _ = jax.random.split(rng, 2)
+                if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
+#                     if args.ema_frequency > -1 and global_step % args.ema_frequency == 0:
+#                       it = global_step#//args.ema_frequency
+#                       decay = args.min_decay
+#                       decay = min(decay,(1 + it) / (10 + it))
+#                       rng, _ = jax.random.split(rng, 2)
 
-                  avg = ema_update( rng, get_params_to_save(state.params) , avg, decay )
-                  text_avg = ema_update(rng, get_params_to_save(text_encoder_state.params) , text_avg, decay )
+#                       avg = ema_update( rng, get_params_to_save(state.params) , avg, decay )
+#                       text_avg = ema_update(rng, get_params_to_save(text_encoder_state.params) , text_avg, decay )
 
-    #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
-                if global_step % args.save_frequency == 0:
-                    print("saving -----------------------------------------------> " , global_step)
-                    scheduler = FlaxDDIMScheduler(
-                        beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-                        # clip_sample=False,
-                        num_train_timesteps=1000,
-                        prediction_type="v_prediction",
-                        set_alpha_to_one=False,
-                        steps_offset=1,
-                        # skip_prk_steps=True,
-                    )
-            #         scheduler = FlaxPNDMScheduler(
-            #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-            #         )
-
-                    safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-                        "CompVis/stable-diffusion-safety-checker", from_pt=True
-                    )
-                    pipeline = FlaxStableDiffusionPipeline(
-                        text_encoder=text_encoder,
-                        vae=vae,
-                        unet=unet,
-                        tokenizer=tokenizer,
-                        scheduler=scheduler,
-                        safety_checker=safety_checker,
-                        feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
-                    )
-                    if args.ema_frequency > -1:
-                        pipeline.save_pretrained(
-                            args.output_dir,
-                            params={
-                                "text_encoder": text_avg,
-                                "vae": get_params_to_save(vae_params),
-                                "unet": avg,
-                                "safety_checker": safety_checker.params,
-
-                            },
+        #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
+                    if global_step % args.save_frequency == 0:
+                        print("saving -----------------------------------------------> " , global_step)
+                        scheduler = FlaxDDIMScheduler(
+                            beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+                            # clip_sample=False,
+                            num_train_timesteps=1000,
+                            prediction_type="v_prediction",
+                            set_alpha_to_one=False,
+                            steps_offset=1,
+                            # skip_prk_steps=True,
                         )
-                    else:
-                        pipeline.save_pretrained(
-                            args.output_dir,
-                            params={
-                                "text_encoder": get_params_to_save(text_encoder_state.params),
-                                "vae": get_params_to_save(vae_params),
-                                "unet": get_params_to_save(state.params),
-                                "safety_checker": safety_checker.params,
+                #         scheduler = FlaxPNDMScheduler(
+                #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+                #         )
 
-                            },
+                        safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
+                            "CompVis/stable-diffusion-safety-checker", from_pt=True
                         )
+                        pipeline = FlaxStableDiffusionPipeline(
+                            text_encoder=text_encoder,
+                            vae=vae,
+                            unet=unet,
+                            tokenizer=tokenizer,
+                            scheduler=scheduler,
+                            safety_checker=safety_checker,
+                            feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+                        )
+                        if args.ema_frequency > -1:
+                            pipeline.save_pretrained(
+                                args.output_dir,
+                                params={
+                                    "text_encoder": text_avg,
+                                    "vae": get_params_to_save(vae_params),
+                                    "unet": avg,
+                                    "safety_checker": safety_checker.params,
 
-    #                     blob = bucket.blob(args.output_dir+str(global_step))
-                    try:
-                        upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir+str(global_step))
-                        print("upload SUCCESS ===============================================>")
-                    except:
-                        print("upload fail =================>")
+                                },
+                            )
+                        else:
+                            pipeline.save_pretrained(
+                                args.output_dir,
+                                params={
+                                    "text_encoder": get_params_to_save(text_encoder_state.params),
+                                    "vae": get_params_to_save(vae_params),
+                                    "unet": get_params_to_save(state.params),
+                                    "safety_checker": safety_checker.params,
 
-    #                     blob.upload_from_filename(args.output_dir+str(global_step))
-    #                     del blob
-                    del pipeline
-                    del safety_checker
-    #                     jax.lib.xla_bridge.get_backend().defragment()
+                                },
+                            )
+
+        #                     blob = bucket.blob(args.output_dir+str(global_step))
+                        try:
+                            upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir+str(global_step))
+                            print("upload SUCCESS ===============================================>")
+                        except:
+                            print("upload fail =================>")
+
+        #                     blob.upload_from_filename(args.output_dir+str(global_step))
+        #                     del blob
+                        del pipeline
+                        del safety_checker
+        #                     jax.lib.xla_bridge.get_backend().defragment()
 
 
-            global_step += 1
-            if global_step >= args.max_train_steps:
-                break
+                global_step += 1
+                if global_step >= args.max_train_steps:
+                    break
 
 
-        train_metric = jax_utils.unreplicate(train_metric)
+            train_metric = jax_utils.unreplicate(train_metric)
 
-        train_step_progress_bar.close()
-        epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
+            train_step_progress_bar.close()
+            epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
 
-    # Create the pipeline using using the trained modules and save it.
-    if jax.process_index() == 0:
-        scheduler = FlaxDDIMScheduler(
-            beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-            # clip_sample=False,
-            num_train_timesteps=1000,
-            prediction_type="v_prediction",
-            set_alpha_to_one=False,
-            steps_offset=1,
-            # skip_prk_steps=True,
-        )
-#         scheduler = FlaxPNDMScheduler(
-#             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-#         )
-
-        safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-            "CompVis/stable-diffusion-safety-checker", from_pt=True
-        )
-        pipeline = FlaxStableDiffusionPipeline(
-            text_encoder=text_encoder,
-            vae=vae,
-            unet=unet,
-            tokenizer=tokenizer,
-            scheduler=scheduler,
-            safety_checker=safety_checker,
-            feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
-        )
-
-        if args.ema_frequency > -1:
-            pipeline.save_pretrained(
-                args.output_dir,
-                params={
-                    "text_encoder": text_avg,
-                    "vae": get_params_to_save(vae_params),
-                    "unet": avg,
-                    "safety_checker": safety_checker.params,
-
-                },
+        # Create the pipeline using using the trained modules and save it.
+        if jax.process_index() == 0:
+            scheduler = FlaxDDIMScheduler(
+                beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+                # clip_sample=False,
+                num_train_timesteps=1000,
+                prediction_type="v_prediction",
+                set_alpha_to_one=False,
+                steps_offset=1,
+                # skip_prk_steps=True,
             )
-        else:
-            pipeline.save_pretrained(
-                args.output_dir,
-                params={
-                    "text_encoder": get_params_to_save(text_encoder_state.params),
-                    "vae": get_params_to_save(vae_params),
-                    "unet": get_params_to_save(state.params),
-                    "safety_checker": safety_checker.params,
+    #         scheduler = FlaxPNDMScheduler(
+    #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+    #         )
 
-                },
+            safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
+                "CompVis/stable-diffusion-safety-checker", from_pt=True
             )
-        upload_local_directory_to_gcs(args.output_dir , bucket, args.bucketdir)
+            pipeline = FlaxStableDiffusionPipeline(
+                text_encoder=text_encoder,
+                vae=vae,
+                unet=unet,
+                tokenizer=tokenizer,
+                scheduler=scheduler,
+                safety_checker=safety_checker,
+                feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+            )
 
-        if args.push_to_hub:
-            repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
+            if args.ema_frequency > -1:
+                pipeline.save_pretrained(
+                    args.output_dir,
+                    params={
+                        "text_encoder": text_avg,
+                        "vae": get_params_to_save(vae_params),
+                        "unet": avg,
+                        "safety_checker": safety_checker.params,
+
+                    },
+                )
+            else:
+                pipeline.save_pretrained(
+                    args.output_dir,
+                    params={
+                        "text_encoder": get_params_to_save(text_encoder_state.params),
+                        "vae": get_params_to_save(vae_params),
+                        "unet": get_params_to_save(state.params),
+                        "safety_checker": safety_checker.params,
+
+                    },
+                )
+            upload_local_directory_to_gcs(args.output_dir , bucket, args.bucketdir)
+
+            if args.push_to_hub:
+                repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
 
 
 if __name__ == "__main__":
