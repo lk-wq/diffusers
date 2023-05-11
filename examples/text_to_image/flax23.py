@@ -933,7 +933,7 @@ def main():
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
     )
-    optimizer_2 = optax.MultiSteps(
+    optimizer = optax.MultiSteps(
         optimizer_, args.accumulation_frequency
     )
     def flattened_traversal(fn):
@@ -956,8 +956,8 @@ def main():
         return jax.random.PRNGKey(seed)
     rng = create_key(args.seed)
 
-    optimizer = optax.multi_transform(
-      {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
+#     optimizer = optax.multi_transform(
+#       {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
 
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
@@ -984,10 +984,10 @@ def main():
         in_axis_resources=None,
         out_axis_resources=(opt_state_spec, param_spec),
     )
-    params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
+#     params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
     
     mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
-    print("starting -----------------------------------------------------------> ")
+    print("starting -----------------------------------------------------------> ",mesh_devices)
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
@@ -998,7 +998,7 @@ def main():
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
     with Mesh(mesh_devices, ("dp","mp")):
-        opt_state, unet_params = p_get_initial_state(params )
+        opt_state, unet_params = p_get_initial_state(freeze(params) )
 
 #     with Mesh(mesh_devices, ("dp", "mp")):
 #         opt_state, params = p_get_initial_state(freeze(unet_params))
@@ -1094,11 +1094,11 @@ def main():
         out_axis_resources=(param_spec, opt_state_spec, None, None, None),
         donate_argnums=(0, 1),
     )
-    p_get_initial_state = pjit(
-        get_initial_state,
-        in_axis_resources=None,
-        out_axis_resources=(opt_state_spec, param_spec),
-    )
+#     p_get_initial_state = pjit(
+#         get_initial_state,
+#         in_axis_resources=None,
+#         out_axis_resources=(opt_state_spec, param_spec),
+#     )
 
     # Train!
     num_update_steps_per_epoch = math.ceil(len(train_dataloader))
