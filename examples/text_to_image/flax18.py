@@ -997,7 +997,7 @@ def main():
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
-    with Mesh(mesh_devices, ("mp")):
+    with Mesh(mesh_devices, ("dp","mp")):
         opt_state, unet_params = p_get_initial_state(freeze(unet_params))
 
 #     with Mesh(mesh_devices, ("dp", "mp")):
@@ -1149,7 +1149,7 @@ def main():
     
 #     for ix , epoch in enumerate(epochs):
 #         # ======================== Training ================================
-    with Mesh(mesh_devices, ("mp")):
+    with Mesh(mesh_devices, ("dp","mp")):
         for ix , epoch in enumerate(epochs):
             # ======================== Training ================================
 
