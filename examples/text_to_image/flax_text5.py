@@ -941,6 +941,10 @@ def main():
     optimizer = optax.MultiSteps(
         optimizer_, args.accumulation_frequency
     )
+    optimizer2 = optax.MultiSteps(
+        optimizer_, args.accumulation_frequency
+    )
+
     def flattened_traversal(fn):
       """Returns function that is called with `(path, param)` instead of pytree."""
       def mask(tree):
@@ -975,6 +979,10 @@ def main():
     def get_initial_state(params):
         state = optimizer.init(params)
         return state, params
+    def get_initial_state2(params):
+        state = optimizer2.init(params)
+        return state, params
+
     param_spec = set_partitions(unfreeze(params))
     text_param_spec = set_partitions_text(unfreeze(text_params))
 
@@ -1002,6 +1010,12 @@ def main():
         in_axis_resources=None,
         out_axis_resources=(opt_state_spec, param_spec),
     )
+    p_get_initial_state2 = pjit(
+        get_initial_state2,
+        in_axis_resources=None,
+        out_axis_resources=(opt_state_spec, param_spec),
+    )
+
     params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
     
 #     mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
@@ -1020,7 +1034,7 @@ def main():
     with Mesh(mesh_devices, ("dp","mp")):
         opt_state, unet_params = p_get_initial_state(freeze(params) )
     with Mesh(mesh_devices, ("dp","mp")):
-        text_opt_state, text_params = p_get_initial_state(freeze(text_params) )
+        text_opt_state, text_params = p_get_initial_state2(freeze(text_params) )
 
 #     with Mesh(mesh_devices, ("dp", "mp")):
 #         opt_state, params = p_get_initial_state(freeze(unet_params))
