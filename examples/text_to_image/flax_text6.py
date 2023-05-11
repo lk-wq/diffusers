@@ -1032,9 +1032,10 @@ def main():
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
     with Mesh(mesh_devices, ("dp","mp")):
-        opt_state, unet_params = p_get_initial_state(freeze(params) )
-    with Mesh(mesh_devices, ("dp","mp")):
         text_opt_state, text_params = p_get_initial_state2(freeze(text_params) )
+
+    with Mesh(mesh_devices, ("dp","mp")):
+        opt_state, unet_params = p_get_initial_state(freeze(params) )
 
 #     with Mesh(mesh_devices, ("dp", "mp")):
 #         opt_state, params = p_get_initial_state(freeze(unet_params))
