@@ -408,7 +408,7 @@ class FolderData(Dataset):
         self.instance_prompt = ip
         prompt_ids = torch.load('prompt_embeds.pth',map_location='cpu')
 #         prompt_ids = jnp.asarray(prompt_ids)
-        self.data = prompt_ids
+        self.data = prompt_ids[0]
         self.drop = drop
     def __len__(self):
         return len(self.captions)
