@@ -54,6 +54,8 @@ import functools
 import inspect
 from typing import Callable, Dict, Union, NamedTuple, Optional, Iterable, Sequence
 
+from partitions_text import set_partitions_text
+
 import chex
 
 """
@@ -427,7 +429,7 @@ class FolderData(Dataset):
         if self.drop:
             if choice <= 15:
               caption = ""
-        data["txt"] = self.data#self.tokenize_captions(caption)
+        data["txt"] = self.tokenize_captions(caption)
 
         # if self.postprocess is not None:
         #     data = self.postprocess(data)
@@ -851,7 +853,7 @@ def main():
         pixel_values = torch.stack([example["image"] for example in examples] )#+ [example['class_images'] for example in examples] )
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
         input_ids = [example["txt"] for example in examples]
-        input_ids = torch.cat(input_ids)
+
         # Concat class and instance examples for prior preservation.
         # We do this to avoid doing two forward passes.
 #         if args.with_prior_preservation:
@@ -861,9 +863,9 @@ def main():
 #         pixel_values = torch.stack(pixel_values)
 #         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
 
-#         input_ids = tokenizer.pad(
-#             {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
-#         ).input_ids
+        input_ids = tokenizer.pad(
+            {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
+        ).input_ids
 
         batch = {
             "input_ids": input_ids,
@@ -964,13 +966,22 @@ def main():
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
     )
+    
+    text_encoder, text_encoder_params = FlaxUNet2DConditionModel.from_pretrained(
+        args.pretrained_model_name_or_path, subfolder="text_encoder",dtype=weight_dtype
+    )
+
     def get_initial_state(params):
         state = optimizer.init(params)
         return state, params
     param_spec = set_partitions(unfreeze(params))
-    
+    text_param_spec = set_partitions_text(unfreeze(text_encoder_params))
+
     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
     state_shapes = jax.eval_shape(get_initial_state, params_shapes)
+
+    text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
+    text_state_shapes = jax.eval_shape(get_initial_state, text_params_shapes)
 
     def get_opt_spec(x):
         if isinstance(x, dict):
@@ -979,6 +990,10 @@ def main():
     
     opt_state_spec, param_spec = jax.tree_util.tree_map(
         get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
+    )
+
+    text_opt_state_spec, text_param_spec = jax.tree_util.tree_map(
+        get_opt_spec, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
 
     p_get_initial_state = pjit(
@@ -1003,6 +1018,8 @@ def main():
     print("starting -----------------------------------------------------------> ")
     with Mesh(mesh_devices, ("dp","mp")):
         opt_state, unet_params = p_get_initial_state(freeze(params) )
+    with Mesh(mesh_devices, ("dp","mp")):
+        text_opt_state, text_params = p_get_initial_state(freeze(text_params) )
 
 #     with Mesh(mesh_devices, ("dp", "mp")):
 #         opt_state, params = p_get_initial_state(freeze(unet_params))
@@ -1041,8 +1058,9 @@ def main():
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
 
-    def train_step(params,opt_state, batch, train_rng):
+    def train_step(unet_params,unet_opt_state,text_params,text_opt_state, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+        params = {"text_encoder": text_params, "unet": unet_params}
 
         def compute_loss(params):
             # Convert images to latent space
@@ -1063,12 +1081,17 @@ def main():
                 0,
                 noise_scheduler[0].config.num_train_timesteps,
             )
+            encoder_hidden_states = text_encoder(
+                batch["input_ids"],
+                params=params['text_encoder'],
+                train=True,
+            )[0]
 
             noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
 #             encoder_hidden_states 
 
-            unet_outputs = unet.apply({"params": params}, noisy_latents, timesteps, batch['input_ids'], train=True)
+            unet_outputs = unet.apply({"params": params['unet']}, noisy_latents, timesteps, encoder_hidden_states, train=True)
 
             noise_pred = unet_outputs.sample
             noise_pred , variance = noise_pred.split(2, axis=1)
@@ -1080,30 +1103,23 @@ def main():
 
         grad_fn = jax.value_and_grad(compute_loss)
         loss, grads = grad_fn(params)
-        print("types grads opt_state params", type(grads), type(opt_state) , type(params))
-        updates, new_opt_state = optimizer.update(grads, opt_state, params)
-        new_params = optax.apply_updates(params, updates)
-#         grad = jax.lax.pmean(grad, "batch")
-#         print(" g -------------> ", type(grad['text_encoder']) , type(grad['unet']) )
-#         if args.stochastic_rounding:
-#         new_state = state.apply_gradients(grads=grad['unet'])
-#             new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
-#         else:
-#             new_state = state.apply_gradients(grads=grad['unet'])
-#             new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
+        unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
+        new_unet_params = optax.apply_updates(params['unet'], unet_updates)
+        
+        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state, params['text_encoder'])
+        new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
 
         metrics = {"loss": loss}
-#         metrics = jax.lax.pmean(metrics, axis_name="batch")
 
-        return new_params,new_opt_state, metrics, new_train_rng 
+        return new_unet_params,new_unet_opt_state, new_text_params, new_text_opt_state, metrics, new_train_rng 
 
     # Create parallel version of the train step
 #     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
     p_train_step = pjit(
         train_step,
-        in_axis_resources=(param_spec, opt_state_spec, None, None),
-        out_axis_resources=(param_spec, opt_state_spec, None, None),
-        donate_argnums=(0, 1),
+        in_axis_resources=(param_spec, opt_state_spec,param_spec, opt_state_spec, None, None),
+        out_axis_resources=(param_spec, opt_state_spec,param_spec, opt_state_spec, None, None),
+        donate_argnums=(0, 1,2,3),
     )
 #     p_get_initial_state = pjit(
 #         get_initial_state,
@@ -1174,7 +1190,7 @@ def main():
             for batch in train_dataloader:
 #                 batch = shard(batch)
                 # batch = shard(batch)
-                unet_params, opt_state, train_metric, train_rngs = p_train_step(unet_params,opt_state, batch, train_rngs)
+                unet_params, opt_state,text_params, text_opt_state, train_metric, train_rngs = p_train_step(unet_params,opt_state,text_params, text_opt_state, batch, train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
