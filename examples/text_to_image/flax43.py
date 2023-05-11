@@ -1214,37 +1214,37 @@ def main():
                         scheduler = FlaxDDIMScheduler.from_config(
                                 noise_scheduler[0].config, **scheduler_args
                         )
+                        params = jax.device_get(unet_params)
 
-                        pipeline = FlaxStableDiffusionPipeline(
-                            text_encoder=None,
-                            unet=unet,
-                            tokenizer=None,
-                            scheduler=scheduler,
-                            safety_checker=None,
-                            feature_extractor=None,
+                        unet = FlaxUNet2DConditionModel.save_pretrained(
+                            args.output_dir+'/unet',params=params
                         )
+                        scheduler[0].save_pretrained(args.output_dir+'/scheduler')
+                        
                         if args.ema_frequency > -1:
-                            pipeline.save_pretrained(
-                                args.output_dir,
-                                params={
-#                                     "text_encoder": text_avg,
-#                                     "vae": get_params_to_save(vae_params),
-                                    "unet": unet_params,
-#                                     "safety_checker": safety_checker.params,
+                            pass
+#                             pipeline.save_pretrained(
+#                                 args.output_dir,
+#                                 params={
+# #                                     "text_encoder": text_avg,
+# #                                     "vae": get_params_to_save(vae_params),
+#                                     "unet": unet_params,
+# #                                     "safety_checker": safety_checker.params,
 
-                                },
-                            )
+#                                 },
+#                             )
                         else:
-                            pipeline.save_pretrained(
-                                args.output_dir,
-                                params={
-#                                     "text_encoder": get_params_to_save(text_encoder_state.params),
-#                                     "vae": get_params_to_save(vae_params),
-                                      "unet": unet_params,
-#                                     "safety_checker": safety_checker.params,
+                            pass
+#                             pipeline.save_pretrained(
+#                                 args.output_dir,
+#                                 params={
+# #                                     "text_encoder": get_params_to_save(text_encoder_state.params),
+# #                                     "vae": get_params_to_save(vae_params),
+#                                       "unet": unet_params,
+# #                                     "safety_checker": safety_checker.params,
 
-                                },
-                            )
+#                                 },
+#                             )
 
         #                     blob = bucket.blob(args.output_dir+str(global_step))
                         try:
@@ -1255,8 +1255,7 @@ def main():
 
         #                     blob.upload_from_filename(args.output_dir+str(global_step))
         #                     del blob
-                        del pipeline
-                        del safety_checker
+                        del params
         #                     jax.lib.xla_bridge.get_backend().defragment()
 
 
@@ -1288,42 +1287,42 @@ def main():
             scheduler = FlaxDDIMScheduler.from_config(
                     noise_scheduler[0].config, **scheduler_args
             )
+            
+            params = jax.device_get(unet_params)
+
+            unet = FlaxUNet2DConditionModel.save_pretrained(
+                args.output_dir+'/unet',params=params
+            )
+            scheduler[0].save_pretrained(args.output_dir+'/scheduler')
 
     #         scheduler = FlaxPNDMScheduler(
     #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
     #         )
 
-            pipeline = FlaxStableDiffusionPipeline(
-                text_encoder=None,
-                unet=unet,
-                tokenizer=None,
-                scheduler=scheduler,
-                safety_checker=None,
-                feature_extractor=None,
-            )
-
             if args.ema_frequency > -1:
-                pipeline.save_pretrained(
-                    args.output_dir,
-                    params={
-#                         "text_encoder": text_avg,
-                        "unet": unet_params,
+                pass
+#                 pipeline.save_pretrained(
+#                     args.output_dir,
+#                     params={
+# #                         "text_encoder": text_avg,
+#                         "unet": unet_params,
 
-                    },
-                )
+#                     },
+#                 )
             else:
-                unet_params = jax.device_get(unet_params)
+                pass
+#                 unet_params = jax.device_get(unet_params)
 
-                pipeline.save_pretrained(
-                    args.output_dir,
-                    params={
-#                         "text_encoder": get_params_to_save(text_encoder_state.params),
-#                         "vae": get_params_to_save(vae_params),
-                          "unet": unet_params,
-#                         "safety_checker": safety_checker.params,
+#                 pipeline.save_pretrained(
+#                     args.output_dir,
+#                     params={
+# #                         "text_encoder": get_params_to_save(text_encoder_state.params),
+# #                         "vae": get_params_to_save(vae_params),
+#                           "unet": unet_params,
+# #                         "safety_checker": safety_checker.params,
 
-                    },
-                )
+#                     },
+#                 )
             upload_local_directory_to_gcs(args.output_dir , bucket, args.bucketdir)
 
 
