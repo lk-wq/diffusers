@@ -966,7 +966,7 @@ def main():
     )
     def get_initial_state(params):
         state = optimizer.init(params)
-        return tuple(state), params
+        return state, params
     param_spec = set_partitions(unfreeze(params))
     
     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
