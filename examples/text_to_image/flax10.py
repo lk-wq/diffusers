@@ -35,7 +35,7 @@ from transformers import CLIPFeatureExtractor, CLIPTokenizer, FlaxCLIPTextModel,
 
 from flax.core.frozen_dict import freeze, unfreeze
 from flax.training.common_utils import onehot, stack_forest
-from paritions_sd import set_partitions
+from partitions_sd import set_partitions
 
 from typing import Dict
 import numpy as np
@@ -909,6 +909,9 @@ def main():
         return tuple(state), params
     param_spec = set_partitions(unfreeze(unet_params))
     
+    params_shapes = jax.tree_util.tree_map(lambda x: x.shape, unet_params)
+    state_shapes = jax.eval_shape(get_initial_state, params_shapes)
+
     def get_opt_spec(x):
         if isinstance(x, dict):
             return param_spec
