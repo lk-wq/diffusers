@@ -1216,8 +1216,8 @@ def main():
                         )
                         params = jax.device_get(unet_params)
 
-                        unet = FlaxUNet2DConditionModel.save_pretrained(
-                            save_directory=args.output_dir+'/unet',params=params
+                        unet.save_pretrained(
+                           args.output_dir+'/unet',params=params
                         )
                         scheduler[0].save_pretrained(args.output_dir+'/scheduler')
                         
@@ -1290,7 +1290,7 @@ def main():
             
             params = jax.device_get(unet_params)
 
-            unet = FlaxUNet2DConditionModel.save_pretrained(
+            unet.save_pretrained(
                 args.output_dir+'/unet',params=params
             )
             scheduler[0].save_pretrained(args.output_dir+'/scheduler')
