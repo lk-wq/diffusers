@@ -1091,7 +1091,7 @@ def main():
 #             new_text_encoder_state = text_encoder_state.apply_gradients(grads=grad["text_encoder"])
 
         metrics = {"loss": loss}
-        metrics = jax.lax.pmean(metrics, axis_name="batch")
+#         metrics = jax.lax.pmean(metrics, axis_name="batch")
 
         return new_params,new_opt_state, metrics, new_train_rng 
 
