@@ -1144,7 +1144,7 @@ def main():
           new_tensors, old_tensors)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
-    avg = get_params_to_save(state.params)
+#     avg = get_params_to_save(state.params)
 #     text_avg = get_params_to_save(text_encoder_state.params)
 
     client = storage.Client()
