@@ -1027,9 +1027,11 @@ def main():
 
 #     state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
-    noise_scheduler = FlaxDDPMScheduler(
-        beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
-    )
+#     noise_scheduler = FlaxDDPMScheduler(
+#         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
+#     )
+    noise_scheduler = FlaxDDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+
     noise_scheduler_state = noise_scheduler.create_state()
 
     # Initialize our training
@@ -1193,39 +1195,42 @@ def main():
         #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                     if global_step % args.save_frequency == 0:
                         print("saving -----------------------------------------------> " , global_step)
-                        scheduler = FlaxDDIMScheduler(
-                            beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-                            # clip_sample=False,
-                            num_train_timesteps=1000,
-                            prediction_type="v_prediction",
-                            set_alpha_to_one=False,
-                            steps_offset=1,
-                            # skip_prk_steps=True,
-                        )
+#                         scheduler = FlaxDDIMScheduler(
+#                             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+#                             # clip_sample=False,
+#                             num_train_timesteps=1000,
+#                             prediction_type="v_prediction",
+#                             set_alpha_to_one=False,
+#                             steps_offset=1,
+#                             # skip_prk_steps=True,
+#                         )
                 #         scheduler = FlaxPNDMScheduler(
                 #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
                 #         )
+                        scheduler_args = {}
 
-                        safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-                            "CompVis/stable-diffusion-safety-checker", from_pt=True
+                        scheduler_args["variance_type"] = 'fixed_small'
+
+                        scheduler = FlaxDDIMScheduler.from_config(
+                                noise_scheduler.config, **scheduler_args
                         )
+
                         pipeline = FlaxStableDiffusionPipeline(
-                            text_encoder=text_encoder,
-                            vae=vae,
+                            text_encoder=None,
                             unet=unet,
-                            tokenizer=tokenizer,
+                            tokenizer=None,
                             scheduler=scheduler,
-                            safety_checker=safety_checker,
-                            feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+                            safety_checker=None,
+                            feature_extractor=None,
                         )
                         if args.ema_frequency > -1:
                             pipeline.save_pretrained(
                                 args.output_dir,
                                 params={
-                                    "text_encoder": text_avg,
-                                    "vae": get_params_to_save(vae_params),
-                                    "unet": avg,
-                                    "safety_checker": safety_checker.params,
+#                                     "text_encoder": text_avg,
+#                                     "vae": get_params_to_save(vae_params),
+                                    "unet": unet_params,
+#                                     "safety_checker": safety_checker.params,
 
                                 },
                             )
@@ -1233,10 +1238,10 @@ def main():
                             pipeline.save_pretrained(
                                 args.output_dir,
                                 params={
-                                    "text_encoder": get_params_to_save(text_encoder_state.params),
-                                    "vae": get_params_to_save(vae_params),
-                                    "unet": get_params_to_save(state.params),
-                                    "safety_checker": safety_checker.params,
+#                                     "text_encoder": get_params_to_save(text_encoder_state.params),
+#                                     "vae": get_params_to_save(vae_params),
+                                      "unet": unet_params,
+#                                     "safety_checker": safety_checker.params,
 
                                 },
                             )
@@ -1260,65 +1265,66 @@ def main():
                     break
 
 
-            train_metric = jax_utils.unreplicate(train_metric)
+#             train_metric = jax_utils.unreplicate(train_metric)
 
             train_step_progress_bar.close()
             epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
 
         # Create the pipeline using using the trained modules and save it.
         if jax.process_index() == 0:
-            scheduler = FlaxDDIMScheduler(
-                beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-                # clip_sample=False,
-                num_train_timesteps=1000,
-                prediction_type="v_prediction",
-                set_alpha_to_one=False,
-                steps_offset=1,
-                # skip_prk_steps=True,
+#             scheduler = FlaxDDIMScheduler(
+#                 beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+#                 # clip_sample=False,
+#                 num_train_timesteps=1000,
+#                 prediction_type="v_prediction",
+#                 set_alpha_to_one=False,
+#                 steps_offset=1,
+#                 # skip_prk_steps=True,
+#             )
+            scheduler_args = {}
+
+            scheduler_args["variance_type"] = 'fixed_small'
+
+            scheduler = FlaxDDIMScheduler.from_config(
+                    noise_scheduler.config, **scheduler_args
             )
+
     #         scheduler = FlaxPNDMScheduler(
     #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
     #         )
 
-            safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-                "CompVis/stable-diffusion-safety-checker", from_pt=True
-            )
             pipeline = FlaxStableDiffusionPipeline(
-                text_encoder=text_encoder,
-                vae=vae,
+                text_encoder=None,
                 unet=unet,
-                tokenizer=tokenizer,
+                tokenizer=None,
                 scheduler=scheduler,
-                safety_checker=safety_checker,
-                feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+                safety_checker=None,
+                feature_extractor=None,
             )
 
             if args.ema_frequency > -1:
                 pipeline.save_pretrained(
                     args.output_dir,
                     params={
-                        "text_encoder": text_avg,
-                        "vae": get_params_to_save(vae_params),
-                        "unet": avg,
-                        "safety_checker": safety_checker.params,
+#                         "text_encoder": text_avg,
+                        "unet": unet_params,
 
                     },
                 )
             else:
+                unet_params = jax.device_get(unet_params)
+
                 pipeline.save_pretrained(
                     args.output_dir,
                     params={
-                        "text_encoder": get_params_to_save(text_encoder_state.params),
-                        "vae": get_params_to_save(vae_params),
-                        "unet": get_params_to_save(state.params),
-                        "safety_checker": safety_checker.params,
+#                         "text_encoder": get_params_to_save(text_encoder_state.params),
+#                         "vae": get_params_to_save(vae_params),
+                          "unet": unet_params,
+#                         "safety_checker": safety_checker.params,
 
                     },
                 )
             upload_local_directory_to_gcs(args.output_dir , bucket, args.bucketdir)
-
-            if args.push_to_hub:
-                repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
 
 
 if __name__ == "__main__":
