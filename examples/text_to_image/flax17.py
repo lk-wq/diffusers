@@ -948,9 +948,9 @@ def main():
     def check_str(path):
       for s in path:
         if 'up' in s or 'norm' in s or 'text' in s or 'att' in s or 'bias' in s:
-            print("success ---> " , path )
+#             print("success ---> " , path )
             return True
-      print("fail ----> ", path )      
+#       print("fail ----> ", path )      
       return False
     def create_key(seed=0):
         return jax.random.PRNGKey(seed)
@@ -987,6 +987,18 @@ def main():
     unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
     
     mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
+    print("starting -----------------------------------------------------------> ")
+    print("starting -----------------------------------------------------------> ")
+    print("starting -----------------------------------------------------------> ")
+    print("starting -----------------------------------------------------------> ")
+    print("starting -----------------------------------------------------------> ")
+    print("starting -----------------------------------------------------------> ")
+    print("starting -----------------------------------------------------------> ")
+    print("starting -----------------------------------------------------------> ")
+    print("starting -----------------------------------------------------------> ")
+    print("starting -----------------------------------------------------------> ")
+    with Mesh(mesh_devices, ("mp")):
+        opt_state, unet_params = p_get_initial_state(freeze(unet_params))
 
 #     with Mesh(mesh_devices, ("dp", "mp")):
 #         opt_state, params = p_get_initial_state(freeze(unet_params))
@@ -994,9 +1006,9 @@ def main():
  
 #     c0p = get_zero(unet_params)
 #     c0t = get_zero(text_encoder.params)
-    def get_initial_state(params):
-        state = optimizer.init(params)
-        return tuple(state), params
+#     def get_initial_state(params):
+#         state = optimizer.init(params)
+#         return tuple(state), params
 
 #     if False:
 #         state = TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer,c0=c0p)
@@ -1087,9 +1099,6 @@ def main():
         in_axis_resources=None,
         out_axis_resources=(opt_state_spec, param_spec),
     )
-
-    with Mesh(mesh_devices, ("dp", "mp")):
-        opt_state, unet_params = p_get_initial_state(freeze(unet_params))
 
     # Train!
     num_update_steps_per_epoch = math.ceil(len(train_dataloader))
