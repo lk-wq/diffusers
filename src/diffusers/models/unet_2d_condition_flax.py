@@ -294,13 +294,13 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
             timesteps = timesteps.astype(dtype=jnp.float32)
             timesteps = jnp.expand_dims(timesteps, 0)
 
-        save_(timesteps,'timesteps_'+str(index)+'.npy')
+#         save_(timesteps,'timesteps_'+str(index)+'.npy')
         t_emb = self.time_proj(timesteps)
-        save_(t_emb,'post_time_proj_'+str(index)+'.npy')
+#         save_(t_emb,'post_time_proj_'+str(index)+'.npy')
 
         t_emb = self.time_embedding(t_emb)
 
-        save_(sample,'sample_incoming_'+str(index)+'.npy')
+#         save_(sample,'sample_incoming_'+str(index)+'.npy')
 
         # 2. pre-process
 #         print("s0",sample , sample.shape )
@@ -308,7 +308,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 #         print("s1",sample , sample.shape )
 
         sample = self.conv_in(sample)
-        save_(sample,'conv_in_'+str(index)+'.npy')
+#         save_(sample,'conv_in_'+str(index)+'.npy')
 
 #         print("s2",sample , sample.shape )
         sample2 = jnp.transpose(sample, (0, 3, 1, 2))
@@ -320,7 +320,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         else:
 #             print("pre t_emb",t_emb.shape)
 #             print("pre emb val",t_emb)
-            save_(t_emb,'t_emb_pre_addition_'+str(index)+'.npy')
+#             save_(t_emb,'t_emb_pre_addition_'+str(index)+'.npy')
             add_ = self.add_embedding(encoder_hidden_states)
             save_(add_,'add_'+str(index)+'.npy')
             print("add ------------------------>", add_)
@@ -329,15 +329,15 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
             t_emb = t_emb + add_
 #             print("post t_emb",t_emb.shape)
-        save_(t_emb,'t_emb'+str(index)+'.npy')
+#         save_(t_emb,'t_emb'+str(index)+'.npy')
             
 #         except Exception as e:
 #             print("EXCEPTION",e)
 
     # 3. down
-        save_(encoder_hidden_states,'encoder_hidden_states_incoming_'+str(index)+'.npy')
+#         save_(encoder_hidden_states,'encoder_hidden_states_incoming_'+str(index)+'.npy')
         encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
-        save_(encoder_hidden_states,'encoder_hidden_states_enc_hp_'+str(index)+'.npy')
+#         save_(encoder_hidden_states,'encoder_hidden_states_enc_hp_'+str(index)+'.npy')
 
         down_block_res_samples = (sample,)
 #         print('sample.npy',sample)
@@ -398,7 +398,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
         if mid_block_additional_residual is not None:
             sample += mid_block_additional_residual
-        save_(sample,'sample_mid'+str(index)+'_'+str(index)+'.npy')
+#         save_(sample,'sample_mid'+str(index)+'_'+str(index)+'.npy')
         # 5. up
         for i , up_block in enumerate(self.up_blocks):
             res_samples = down_block_res_samples[-(self.layers_per_block + 1) :]
@@ -411,18 +411,18 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
                     res_hidden_states_tuple=res_samples,
                     deterministic=not train,
                 )
-                save_(sample,'up_sample_round_'+str(i)+'_'+str(index)+'.pth')
+#                 save_(sample,'up_sample_round_'+str(i)+'_'+str(index)+'.pth')
             else:
                 sample = up_block(sample, temb=t_emb, res_hidden_states_tuple=res_samples, deterministic=not train)
-                save_(sample,'up_sample_round_'+str(i)+'_'+str(index)+'.pth')
+#                 save_(sample,'up_sample_round_'+str(i)+'_'+str(index)+'.pth')
 
-        save_(sample,'sample_up_final'+str(index)+'.npy')
+#         save_(sample,'sample_up_final'+str(index)+'.npy')
         # 6. post-process
         sample = self.conv_norm_out(sample)
         sample = nn.silu(sample)
         sample = self.conv_out(sample)
         sample = jnp.transpose(sample, (0, 3, 1, 2))
-        save_(sample,'final_sample'+str(index)+'.npy')
+#         save_(sample,'final_sample'+str(index)+'.npy')
         if not return_dict:
             return (sample,)
 
