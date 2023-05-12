@@ -887,6 +887,8 @@ def main():
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
         input_ids = torch.cat([example["txt"][0] for example in examples])
         attention_mask = torch.cat([example["txt"][1] for example in examples])
+        fixed = [example["fixed"] for example in examples]
+        fixed = torch.cat(fixed)
 
         # Concat class and instance examples for prior preservation.
         # We do this to avoid doing two forward passes.
@@ -905,7 +907,7 @@ def main():
             "input_ids": input_ids,
             "attention_mask":attention_mask,
             "pixel_values": pixel_values,
-            'test:
+            'fixed':fixed,
         }
         batch = {k: v.numpy() for k, v in batch.items()}
         return batch
@@ -1149,7 +1151,7 @@ def main():
 
 #             encoder_hidden_states 
 
-            unet_outputs = unet.apply({"params": params['unet']}, noisy_latents, timesteps, encoder_hidden_states, train=True)
+            unet_outputs = unet.apply({"params": params['unet']}, noisy_latents, timesteps, batch['fixed'], train=True)
 
             noise_pred = unet_outputs.sample
             noise_pred , variance = noise_pred.split(2, axis=1)
