@@ -101,9 +101,10 @@ class FlaxCrossAttnDownBlock2D(nn.Module):
         output_states = ()
 
         for ix, (resnet, attn) in enumerate(zip(self.resnets, self.attentions)):
-            if ix == 1 and save:
+            if ix == 0 and save:
 #                 print("pre attn",ix,jnp.transpose( hidden_states, (0,2,3,1)  ),hidden_states.shape)
                 save = True
+                save_(hidden_states,"entering_first_resnet_xattn.npy')
                 print("saving blocks ------------------------------------------------------->")
                 hidden_states = resnet(hidden_states, temb, deterministic=deterministic,save=save)
 
