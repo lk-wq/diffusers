@@ -16,6 +16,13 @@ import math
 import flax.linen as nn
 import jax.numpy as jnp
 
+from jax.experimental import io_callback
+from jax import debug
+import numpy as np
+def save_(x,name):
+    debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    return x
+
 import numpy as np
 def get_sinusoidal_embeddings(
     timesteps: jnp.ndarray,
@@ -177,6 +184,7 @@ class FlaxAttentionPooling(nn.Module):
             return x
         print("x mean vs self pos",jnp.mean(x,axis=1, keepdims=True).shape ,self.positional_embedding.shape)
         if raw_width > 2816:
+            save_( 'raw_greater_2816.npy' , self.positional_embedding)
             class_token = jnp.mean(x,axis=1, keepdims=True) + self.positional_embedding
         else:
             class_token = jnp.mean(x,axis=1, keepdims=True)
