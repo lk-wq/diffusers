@@ -191,7 +191,7 @@ class FlaxDownBlock2D(nn.Module):
 
         for ix, resnet in enumerate(self.resnets):
             if ix == 0:
-                hidden_states = resnet(hidden_states, temb, deterministic=deterministic,save=False)
+                hidden_states = resnet(hidden_states, temb, deterministic=deterministic,save=save)
             else:
                 hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
 
