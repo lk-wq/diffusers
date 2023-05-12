@@ -79,7 +79,7 @@ class FlaxTimestepEmbedding(nn.Module):
     def __call__(self, temb):
         temb = nn.Dense(self.time_embed_dim, dtype=self.dtype, name="linear_1")(temb)
         save_(temb,'temb_stage_1.npy')
-        temb = nn.silu(temb)
+        temb = nn.gelu(temb)
         save_(temb,'temb_stage_2.npy')
 
         temb = nn.Dense(self.time_embed_dim, dtype=self.dtype, name="linear_2")(temb)
