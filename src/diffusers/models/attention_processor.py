@@ -564,10 +564,9 @@ class CustomDiffusionAttnProcessor(nn.Module):
 
 
 class AttnAddedKVProcessor:
-    def __call__(self, attn: Attention, hidden_states, encoder_hidden_states=None, attention_mask=None):
-        print("encoder hidden",encoder_hidden_states.size())
-        print("1")
-        print("attn mask ", attention_mask)
+    def __call__(self, attn: Attention, hidden_states, encoder_hidden_states=None, attention_mask=None,save=False):
+        if save:
+            torch.save(hidden_states,'attn1.pth')
 
         residual = hidden_states
         hidden_states = hidden_states.view(hidden_states.shape[0], hidden_states.shape[1], -1).transpose(1, 2)
@@ -579,39 +578,95 @@ class AttnAddedKVProcessor:
             encoder_hidden_states = hidden_states
         elif attn.norm_cross:
             encoder_hidden_states = attn.norm_encoder_hidden_states(encoder_hidden_states)
+        if save:
+            torch.save(encoder_hidden_states,'attn2.pth')
 
         hidden_states = attn.group_norm(hidden_states.transpose(1, 2)).transpose(1, 2)
+        if save:
+            torch.save(hidden_states,'attn3.pth')
 
         query = attn.to_q(hidden_states)
+        if save:
+            torch.save(query,'attn4.pth')
+ 
         query = attn.head_to_batch_dim(query)
+        if save:
+            torch.save(query,'attn5.pth')
 
         encoder_hidden_states_key_proj = attn.add_k_proj(encoder_hidden_states)
+        if save:
+            torch.save(encoder_hidden_states_key_proj,'attn6.pth')
+
         encoder_hidden_states_value_proj = attn.add_v_proj(encoder_hidden_states)
+        if save:
+            torch.save(encoder_hidden_states_value_proj,'attn7.pth')
+        
         encoder_hidden_states_key_proj = attn.head_to_batch_dim(encoder_hidden_states_key_proj)
+        if save:
+            torch.save(encoder_hidden_states_key_proj,'attn8.pth')
+        
         encoder_hidden_states_value_proj = attn.head_to_batch_dim(encoder_hidden_states_value_proj)
+        if save:
+            torch.save(encoder_hidden_states_value_proj,'attn9.pth')
 
         if not attn.only_cross_attention:
             key = attn.to_k(hidden_states)
+            if save:
+                torch.save(key,'attn9.pth')
+
             value = attn.to_v(hidden_states)
+            if save:
+                torch.save(value,'attn10.pth')
+            
             key = attn.head_to_batch_dim(key)
+            if save:
+                torch.save(key,'attn11.pth')
+            
             value = attn.head_to_batch_dim(value)
+            if save:
+                torch.save(value,'attn12.pth')
+            
             key = torch.cat([encoder_hidden_states_key_proj, key], dim=1)
+            if save:
+                torch.save(key,'attn13.pth')
+            
             value = torch.cat([encoder_hidden_states_value_proj, value], dim=1)
+            if save:
+                torch.save(value,'attn14.pth')
+        
         else:
             key = encoder_hidden_states_key_proj
             value = encoder_hidden_states_value_proj
 
         attention_probs = attn.get_attention_scores(query, key, attention_mask)
+        if save:
+            torch.save(value,'attn15.pth')
+
         hidden_states = torch.bmm(attention_probs, value)
+        if save:
+            torch.save(value,'attn16.pth')
+
         hidden_states = attn.batch_to_head_dim(hidden_states)
+        if save:
+            torch.save(value,'attn17.pth')
 
         # linear proj
         hidden_states = attn.to_out[0](hidden_states)
+        if save:
+            torch.save(value,'attn18.pth')
+
         # dropout
         hidden_states = attn.to_out[1](hidden_states)
+        if save:
+            torch.save(value,'attn19.pth')
 
         hidden_states = hidden_states.transpose(-1, -2).reshape(residual.shape)
+        if save:
+            torch.save(value,'attn20.pth')
+
         hidden_states = hidden_states + residual
+        if save:
+            torch.save(value,'attn21.pth')
 
         return hidden_states
 
