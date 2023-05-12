@@ -1256,12 +1256,14 @@ def main():
       step_size = (1 - decay**(args.ema_frequency))
 
       return jax.tree_util.tree_map(
-          lambda new, old: step_size * new.astype(jnp.float32) + (1.0 - step_size) * old.astype(jnp.float32),
+          lambda new, old: step_size * new + (1.0 - step_size) * old,
           new_tensors, old_tensors)
     import time
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
 #     avg = get_params_to_save(state.params)
 #     text_avg = get_params_to_save(text_encoder_state.params)
+    avg = ema_update( rng, jax.device_get(unet_params) , avg, decay )
+    text_avg = ema_update(rng, jax.device_get(text_params) , text_avg, decay )
 
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
@@ -1291,14 +1293,15 @@ def main():
                 train_step_progress_bar.update(1)
 
                 if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
-#                     if args.ema_frequency > -1 and global_step % args.ema_frequency == 0:
-#                       it = global_step#//args.ema_frequency
-#                       decay = args.min_decay
-#                       decay = min(decay,(1 + it) / (10 + it))
-#                       rng, _ = jax.random.split(rng, 2)
-
-#                       avg = ema_update( rng, get_params_to_save(state.params) , avg, decay )
-#                       text_avg = ema_update(rng, get_params_to_save(text_encoder_state.params) , text_avg, decay )
+                    if args.ema_frequency > -1 and global_step % args.ema_frequency == 0:
+                      it = global_step#//args.ema_frequency
+                      decay = args.min_decay
+                      decay = min(decay,(1 + it) / (10 + it))
+                      rng, _ = jax.random.split(rng, 2)
+#                       params = jax.device_get(unet_params)
+# jax.device_get(unet_params)
+                      avg = ema_update( rng, jax.device_get(unet_params) , avg, decay )
+                      text_avg = ema_update(rng, jax.device_get(text_params) , text_avg, decay )
 
         #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                     if global_step % args.save_frequency == 0:
@@ -1322,19 +1325,19 @@ def main():
                         scheduler = FlaxDDIMScheduler.from_config(
                                 noise_scheduler[0].config, **scheduler_args
                         )
-                        params = jax.device_get(unet_params)
+#                         params = jax.device_get(unet_params)
 
                         unet.save_pretrained(
-                           args.output_dir+'/unet',params=unet_params
+                           args.output_dir+'/unet',params=avg
                         )
                         scheduler.save_pretrained(args.output_dir+'/scheduler')
-                        del params
-                        params2 = jax.device_get(text_params)
+#                         del params
+#                         params2 = jax.device_get(text_params)
 
                         text_encoder.save_pretrained(
-                            args.output_dir+'/text_encoder',params=params2
+                            args.output_dir+'/text_encoder',params=text_avg
                         )
-                        del params2
+#                         del params2
 
                         if args.ema_frequency > -1:
                             pass
@@ -1402,20 +1405,20 @@ def main():
                     noise_scheduler[0].config, **scheduler_args
             )
             
-            params = jax.device_get(unet_params)
+#             params = jax.device_get(unet_params)
 
             unet.save_pretrained(
-                args.output_dir+'/unet',params=params
+                args.output_dir+'/unet',params=avg
                 
             )
-            del params
-            params2 = jax.device_get(text_params)
+#             del params
+#             params2 = jax.device_get(text_params)
 
             scheduler.save_pretrained(args.output_dir+'/scheduler')
             text_encoder.save_pretrained(
-                args.output_dir+'/text_encoder',params=params
+                args.output_dir+'/text_encoder',params=text_avg
             )
-            del params2
+#             del params2
     #         scheduler = FlaxPNDMScheduler(
     #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
     #         )
