@@ -431,14 +431,14 @@ class FolderData(Dataset):
         im = Image.open(filename)
         im = self.process_im(im)
         data["image"] = im
-        caption = self.instance_prompt + self.captions[index]['text']
+        caption = self.instance_prompt + self.captions[0]['text']
         list_ = [i for i in range(100)] 
         choice = random.choice(list_)
         if self.drop:
             if choice <= 15:
               caption = ""
         data["txt"] = self.tokenize_captions(caption)
-
+        data['fixed'] = self.data
         # if self.postprocess is not None:
         #     data = self.postprocess(data)
 
@@ -905,6 +905,7 @@ def main():
             "input_ids": input_ids,
             "attention_mask":attention_mask,
             "pixel_values": pixel_values,
+            'test:
         }
         batch = {k: v.numpy() for k, v in batch.items()}
         return batch
