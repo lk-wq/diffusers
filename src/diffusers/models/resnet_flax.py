@@ -150,7 +150,7 @@ class FlaxResnetBlock2D(nn.Module):
 #         hidden_states = jnp.transpose( jnp.transpose(self.norm1(hidden_states),(0,3, 1,2)), (0,2, 3,1) )
         if save:
             save_(hidden_states,'post_norm1.npy')
-        hidden_states = nn.swish(hidden_states)
+        hidden_states = nn.gelu(hidden_states)
 #         if display:
 #             print("post hidden ----->",hidden_states, hidden_states.shape )
         if save:
@@ -217,7 +217,7 @@ class FlaxResnetBlock2D(nn.Module):
     #         if display:
 #             print("post adding shift ----->",hidden_states, hidden_states.shape )
 
-        hidden_states = nn.swish(hidden_states)
+        hidden_states = nn.gelu(hidden_states)
 #         if display:
 #             print("post swish ----->",hidden_states, hidden_states.shape )
         if save:
