@@ -972,7 +972,7 @@ def main():
 
     else:
         scheduler = optax.constant_schedule(args.learning_rate)
-        scheduler_text = optax.constant_schedule(args.learning_rate*.01)
+        scheduler_text = optax.constant_schedule(args.learning_rate)
 
     adamw = optax.adamw(
         learning_rate=scheduler,
