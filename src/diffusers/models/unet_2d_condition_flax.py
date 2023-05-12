@@ -130,8 +130,11 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 
         params_rng, dropout_rng = jax.random.split(rng)
         rngs = {"params": params_rng, "dropout": dropout_rng}
+        sample = jax.device_put(sample, device=jax.devices("cpu")[0])
+        timesteps = jax.device_put(timesteps, device=jax.devices("cpu")[0])
+        encoder_hidden_states = jax.device_put(encoder_hidden_states, device=jax.devices("cpu")[0])
 
-        return self.init(rngs, sample, timesteps, encoder_hidden_states)["params"]
+        return self.init(rngs, sample, timesteps, encoder_hidden_states,)["params"]
 
     def setup(self):
         block_out_channels = self.block_out_channels
