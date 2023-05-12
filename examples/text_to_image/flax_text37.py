@@ -992,7 +992,7 @@ def main():
     optimizer = optax.MultiSteps(
         optimizer_, args.accumulation_frequency
     )
-    optimizer2_ = optax.MultiSteps(
+    optimizer2 = optax.MultiSteps(
         optimizer_2, args.accumulation_frequency
     )
 
@@ -1016,8 +1016,8 @@ def main():
         return jax.random.PRNGKey(seed)
     rng = create_key(args.seed)
 
-    optimizer2 = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
+#     optimizer2 = optax.multi_transform(
+#       {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
     weight_dtype = jnp.float32
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
@@ -1065,6 +1065,7 @@ def main():
         in_axis_resources=None,
         out_axis_resources=(opt_state_spec, param_spec),
     )
+    
     p_get_initial_state2 = pjit(
         get_initial_state2,
         in_axis_resources=None,
@@ -1185,7 +1186,7 @@ def main():
 
         metrics = {"loss": loss}
 
-        return new_unet_params,new_unet_opt_state, new_text_params, new_text_opt_state, metrics, new_train_rng 
+        return new_unet_params,new_unet_opt_state, text_params, text_opt_state, metrics, new_train_rng 
 
     # Create parallel version of the train step
 #     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
