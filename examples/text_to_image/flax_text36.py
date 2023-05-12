@@ -992,7 +992,7 @@ def main():
     optimizer = optax.MultiSteps(
         optimizer_, args.accumulation_frequency
     )
-    optimizer2 = optax.MultiSteps(
+    optimizer2_ = optax.MultiSteps(
         optimizer_2, args.accumulation_frequency
     )
 
@@ -1016,8 +1016,8 @@ def main():
         return jax.random.PRNGKey(seed)
     rng = create_key(args.seed)
 
-#     optimizer2 = optax.multi_transform(
-#       {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
+    optimizer2 = optax.multi_transform(
+      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
     weight_dtype = jnp.float32
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
@@ -1167,7 +1167,7 @@ def main():
 
             unet_outputs = unet.apply({"params": params['unet']}, noisy_latents, timesteps, encoder_hidden_states, train=True)
 
-            noise_pred = unet_outputs.sample #k
+            noise_pred = unet_outputs.sample 
             noise_pred , variance = noise_pred.split(2, axis=1)
 
             loss = (noise - noise_pred) ** 2
