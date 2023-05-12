@@ -766,7 +766,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 print("entering init sample",ix , sample)
                 print(" ")
                 print("entering init emb",ix , emb)
-                sample, res_samples = downsample_block(hidden_states=sample, temb=emb,save=False)
+                sample, res_samples = downsample_block(hidden_states=sample, temb=emb,save=True)
             if ix == 0:
                 torch.save(sample,'sample_d1.pth')
             down_block_res_samples += res_samples
