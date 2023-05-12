@@ -206,7 +206,17 @@ train_transforms = transforms.Compose(
         transforms.Normalize([0.5], [0.5]),
     ]
 )
+from jax.experimental import io_callback
+from jax import debug
+import numpy as np
 
+def save_(x,name):
+    # print(name , "---------------------------------------------------->",x)
+#     debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    debug.callback(lambda x: print(x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+
+    #     print(x)
+    return x
 
 from typing import Any, Callable
 
@@ -1182,11 +1192,12 @@ def main():
         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
         text_updates, new_text_opt_state = optimizer2.update(grads['text_encoder'], text_opt_state, params['text_encoder'])
+        save_(text_updates , 'text_updates')
         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
-
+        
         metrics = {"loss": loss}
 
-        return new_unet_params,new_unet_opt_state, text_params, text_opt_state, metrics, new_train_rng 
+        return new_unet_params,new_unet_opt_state, new_text_params, new_text_opt_state, metrics, new_train_rng 
 
     # Create parallel version of the train step
 #     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
