@@ -89,7 +89,7 @@ def rename_key_and_reshape_tensor(pt_tuple_key, pt_tensor, random_flax_state_dic
 
 def convert_pytorch_state_dict_to_flax(pt_state_dict, flax_model, init_key=42):
     # Step 1: Convert pytorch tensor to numpy
-    pt_state_dict = {k: v.numpy() for k, v in pt_state_dict.items()}
+    pt_state_dict = {k: v.to(torch.bfloat16).numpy() for k, v in pt_state_dict.items()}
 
     # Step 2: Since the model is stateless, get random Flax params
     random_flax_params = flax_model.init_weights(PRNGKey(init_key))
