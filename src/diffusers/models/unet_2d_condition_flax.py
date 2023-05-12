@@ -302,6 +302,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         save_(t_emb,'post_time_proj_'+str(index)+'.npy')
 
         t_emb = self.time_embedding(t_emb)
+        save_(t_emb,'t_emb_stage_1_'+str(index)+'.npy')
 
         save_(sample,'sample_incoming_'+str(index)+'.npy')
 
