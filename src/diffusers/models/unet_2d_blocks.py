@@ -1464,7 +1464,9 @@ class SimpleCrossAttnDownBlock2D(nn.Module):
         for ix, (resnet, attn) in enumerate(zip(self.resnets, self.attentions)):
             # resnet
             if ix == 0 and save:
+                torch.save(hidden_states,'entering_first_rest_xattn.pth')
                 hidden_states = resnet(hidden_states, temb,save=False)
+                
             else:
                 hidden_states = resnet(hidden_states, temb)
 #             if ix == 1:
