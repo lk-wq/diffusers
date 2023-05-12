@@ -1082,8 +1082,8 @@ def main():
         out_axis_resources=(text_opt_state_spec, text_param_spec),
     )
 
-    params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
-    text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
+    params = jax.tree_util.tree_map(lambda x: np.asarray(x.astype(jnp.float32)), params)
+    text_params = jax.tree_util.tree_map(lambda x: np.asarray(x.astype(jnp.float32)), text_params)
     
 #     mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
     mesh_devices = mesh_utils.create_device_mesh((4, 2))
