@@ -1173,8 +1173,8 @@ def main():
 #     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
     p_train_step = pjit(
         train_step,
-        in_axis_resources=(param_spec, opt_state_spec,text_opt_state_spec, text_param_spec, None, None),
-        out_axis_resources=(param_spec, opt_state_spec,text_opt_state_spec, text_param_spec, None, None),
+        in_axis_resources=(param_spec, opt_state_spec, text_param_spec,text_opt_state_spec, None, None),
+        out_axis_resources=(param_spec, opt_state_spec, text_param_spec,text_opt_state_spec, None, None),
         donate_argnums=(0, 1,2,3),
     )
 #     p_get_initial_state = pjit(
