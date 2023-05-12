@@ -6,6 +6,7 @@ import random
 from pathlib import Path
 from typing import Optional
 from jax.experimental import mesh_utils
+from diffusers import DiffusionPipeline
 
 import numpy as np
 import torch
