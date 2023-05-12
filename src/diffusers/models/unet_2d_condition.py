@@ -708,6 +708,9 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
             print("self config addition hitting !!!")
             print("pre emb",emb)
             aug_emb = self.add_embedding(encoder_hidden_states)
+            torch.save(aug_emb,'aug_emb.pth')
+            torch.save(emb,'emb_pre_aug.pth')
+
             emb = emb + aug_emb
 
         if self.time_embed_act is not None:
@@ -716,11 +719,13 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
 
         if self.encoder_hid_proj is not None:
             print("hidden projection !!!! ",encoder_hidden_states.size()  )
+            torch.save(encoder_hidden_states,'encoder_hidden_states_pre_hp.pth')
             encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
             print("hidden projection post !!!! ",encoder_hidden_states.size()  )
 
         # 2. pre-process
         print("s0",sample,sample.size())
+        torch.save(sample,'sample_pre_conv.pth')
         sample = self.conv_in(sample)
         print("s1",sample, sample.size())
         # 3. down
