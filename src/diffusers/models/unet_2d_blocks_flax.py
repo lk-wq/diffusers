@@ -185,17 +185,15 @@ class FlaxDownBlock2D(nn.Module):
                 dtype=self.dtype,
             )#FlaxDownsample2D(self.out_channels, dtype=self.dtype)
 
-    def __call__(self, hidden_states, temb, deterministic=True):
+    def __call__(self, hidden_states, temb, deterministic=True,save=False):
         output_states = ()
 
         for ix, resnet in enumerate(self.resnets):
-            if ix == 2:
-                hidden_states = resnet(hidden_states, temb, deterministic=deterministic,display=True)
+            if ix == 0:
+                hidden_states = resnet(hidden_states, temb, deterministic=deterministic,save=True)
             else:
                 hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
 
-            if ix == 1:
-                print("rezzy 0 ------------------------------------------------------>",hidden_states)
             output_states += (hidden_states,)
 #         save_(hidden_states,'fin.npy')
         if self.add_downsample:
