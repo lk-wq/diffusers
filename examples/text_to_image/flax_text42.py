@@ -1038,12 +1038,12 @@ def main():
     )
 
     def get_initial_state(params):
-        params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), params)
+        params = jax.tree_util.tree_map(lambda x: x.astype(jnp.bfloat16), params)
 
         state = optimizer.init(params)
         return state, params
     def get_initial_state2(params):
-        params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), params)
+        params = jax.tree_util.tree_map(lambda x: x.astype(jnp.bfloat16), params)
 
         state = optimizer2.init(params)
         return state, params
