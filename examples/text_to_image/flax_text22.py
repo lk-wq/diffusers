@@ -449,18 +449,18 @@ class FolderData(Dataset):
         text_inputs = self.tokenizer(
                 captions,
                 padding="max_length",
-                max_length=max_length,
+                max_length=77,
                 truncation=True,
                 add_special_tokens=True,
                 return_tensors="pt",
             )
         text_input_ids = text_inputs.input_ids
-        untruncated_ids = self.tokenizer(prompt, padding="longest", return_tensors="pt").input_ids
+        untruncated_ids = self.tokenizer(captions, padding="longest", return_tensors="pt").input_ids
 
         if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(
             text_input_ids, untruncated_ids
         ):
-            removed_text = self.tokenizer.batch_decode(untruncated_ids[:, max_length - 1 : -1])
+            removed_text = self.tokenizer.batch_decode(untruncated_ids[:, 77 - 1 : -1])
         attention_mask = text_inputs.attention_mask
 
         return (text_input_ids, attention_mask)
