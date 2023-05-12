@@ -1325,10 +1325,17 @@ def main():
                         params = jax.device_get(unet_params)
 
                         unet.save_pretrained(
-                           args.output_dir+'/unet',params=params
+                           args.output_dir+'/unet',params=unet_params
                         )
                         scheduler.save_pretrained(args.output_dir+'/scheduler')
-                        
+                        del params
+                        params2 = jax.device_get(text_params)
+
+                        text_encoder.save_pretrained(
+                            args.output_dir+'/text_encoder',params=params2
+                        )
+                        del params2
+
                         if args.ema_frequency > -1:
                             pass
 #                             pipeline.save_pretrained(
@@ -1363,7 +1370,6 @@ def main():
 
         #                     blob.upload_from_filename(args.output_dir+str(global_step))
         #                     del blob
-                        del params
         #                     jax.lib.xla_bridge.get_backend().defragment()
 
 
@@ -1400,9 +1406,16 @@ def main():
 
             unet.save_pretrained(
                 args.output_dir+'/unet',params=params
+                
             )
-            scheduler.save_pretrained(args.output_dir+'/scheduler')
+            del params
+            params2 = jax.device_get(text_params)
 
+            scheduler.save_pretrained(args.output_dir+'/scheduler')
+            text_encoder.save_pretrained(
+                args.output_dir+'/text_encoder',params=params
+            )
+            del params2
     #         scheduler = FlaxPNDMScheduler(
     #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
     #         )
