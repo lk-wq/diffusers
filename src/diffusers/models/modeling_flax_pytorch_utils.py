@@ -14,7 +14,7 @@
 # limitations under the License.
 """ PyTorch - Flax general utilities."""
 import re
-
+import torch
 import jax.numpy as jnp
 from flax.traverse_util import flatten_dict, unflatten_dict
 from jax.random import PRNGKey
