@@ -196,6 +196,8 @@ class FlaxDownBlock2D(nn.Module):
                 hidden_states = resnet(hidden_states, temb, deterministic=deterministic)
 
             output_states += (hidden_states,)
+            if save:
+                save_(hidden_states,'hs_'+str(ix)+'.npy')
 #         save_(hidden_states,'fin.npy')
         if self.add_downsample:
             hidden_states = self.downsamplers_0(hidden_states,temb,deterministic=deterministic)
