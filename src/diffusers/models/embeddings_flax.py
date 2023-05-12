@@ -184,7 +184,7 @@ class FlaxAttentionPooling(nn.Module):
             return x
         print("x mean vs self pos",jnp.mean(x,axis=1, keepdims=True).shape ,self.positional_embedding.shape)
         if raw_width > 2816:
-            save_( 'raw_greater_2816.npy' , self.positional_embedding)
+#             save_( 'raw_greater_2816.npy' , self.positional_embedding)
             class_token = jnp.mean(x,axis=1, keepdims=True) + self.positional_embedding
         else:
             class_token = jnp.mean(x,axis=1, keepdims=True)
