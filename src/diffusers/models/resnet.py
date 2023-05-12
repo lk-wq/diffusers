@@ -548,7 +548,7 @@ class ResnetBlock2D(nn.Module):
                 in_channels, conv_2d_out_channels, kernel_size=1, stride=1, padding=0, bias=conv_shortcut_bias
             )
 
-    def forward(self, input_tensor, temb,save=None,display=False):
+    def forward(self, input_tensor, temb,save=None,save=False):
         hidden_states = input_tensor
 #         print("residual ",hidden_states)
         if save:
