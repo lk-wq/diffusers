@@ -1262,8 +1262,10 @@ def main():
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
 #     avg = get_params_to_save(state.params)
 #     text_avg = get_params_to_save(text_encoder_state.params)
-    avg = unet_params#jax.device_get(unet_params) #ema_update( rng, jax.device_get(unet_params) , avg, decay )
-    text_avg = text_params#jax.device_get(text_params) #ema_update(rng, jax.device_get(text_params) , text_avg, decay )
+#     avg = unet_params#jax.device_get(unet_params) #ema_update( rng, jax.device_get(unet_params) , avg, decay )
+#     text_avg = text_params#jax.device_get(text_params) #ema_update(rng, jax.device_get(text_params) , text_avg, decay )
+    avg = jax.tree_util.tree_map(lambda x: jnp.copy(x), unet_params)
+    text_avg = jax.tree_util.tree_map(lambda x: jnp.copy(x), text_params)
 
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
