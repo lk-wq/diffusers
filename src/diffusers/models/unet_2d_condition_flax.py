@@ -423,7 +423,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 #         save_(sample,'sample_up_final'+str(index)+'.npy')
         # 6. post-process
         sample = self.conv_norm_out(sample)
-        sample = nn.silu(sample)
+        sample = nn.gelu(sample)
         sample = self.conv_out(sample)
         sample = jnp.transpose(sample, (0, 3, 1, 2))
 #         save_(sample,'final_sample'+str(index)+'.npy')
