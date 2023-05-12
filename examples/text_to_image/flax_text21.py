@@ -445,9 +445,9 @@ class FolderData(Dataset):
         return data
     
     def tokenize_captions(self,captions, is_train=True):
-        inputs = self.tokenizer(captions, max_length=77, padding="max_length", truncation=True ,add_special_tokens=True,return_tensors="pt")
+#         inputs = self.tokenizer(captions, max_length=77, padding="max_length", truncation=True ,add_special_tokens=True,return_tensors="pt")
         text_inputs = self.tokenizer(
-                prompt,
+                captions,
                 padding="max_length",
                 max_length=max_length,
                 truncation=True,
