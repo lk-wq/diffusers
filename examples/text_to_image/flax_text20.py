@@ -415,7 +415,7 @@ class FolderData(Dataset):
             tokenizer_folder, 
             text_encoder=None, # pass the previously instantiated 8bit text encoder
             unet=None, 
-        )
+        ).tokenizer
         prompt_ids = torch.load('prompt_embeds.pth',map_location='cpu')
 #         prompt_ids = jnp.asarray(prompt_ids)
         self.data = prompt_ids[0].unsqueeze(0)
@@ -445,9 +445,25 @@ class FolderData(Dataset):
         return data
     
     def tokenize_captions(self,captions, is_train=True):
-        inputs = self.tokenizer(captions, max_length=77, padding="do_not_pad", truncation=True)
-        input_ids = inputs.input_ids
-        return input_ids
+        inputs = self.tokenizer(captions, max_length=77, padding="max_length", truncation=True ,add_special_tokens=True,return_tensors="pt")
+        text_inputs = self.tokenizer(
+                prompt,
+                padding="max_length",
+                max_length=max_length,
+                truncation=True,
+                add_special_tokens=True,
+                return_tensors="pt",
+            )
+        text_input_ids = text_inputs.input_ids
+        untruncated_ids = self.tokenizer(prompt, padding="longest", return_tensors="pt").input_ids
+
+        if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(
+            text_input_ids, untruncated_ids
+        ):
+            removed_text = self.tokenizer.batch_decode(untruncated_ids[:, max_length - 1 : -1])
+        attention_mask = text_inputs.attention_mask
+
+        return (text_input_ids, attention_mask)
     
     def process_im(self, im):
         i = random.choice([0,1])
@@ -869,7 +885,8 @@ def main():
     def collate_fn(examples):
         pixel_values = torch.stack([example["image"] for example in examples] )#+ [example['class_images'] for example in examples] )
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
-        input_ids = [example["txt"] for example in examples]
+        input_ids = torch.cat([example["txt"][0] for example in examples])
+        attention_mask = torch.cat([example["txt"][1] for example in examples])
 
         # Concat class and instance examples for prior preservation.
         # We do this to avoid doing two forward passes.
@@ -880,12 +897,13 @@ def main():
 #         pixel_values = torch.stack(pixel_values)
 #         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
 
-        input_ids = tokenizer.pad(
-            {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
-        ).input_ids
+#         input_ids = tokenizer.pad(
+#             {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
+#         ).input_ids
 
         batch = {
             "input_ids": input_ids,
+            "attention_mask":attention_mask,
             "pixel_values": pixel_values,
         }
         batch = {k: v.numpy() for k, v in batch.items()}
@@ -1120,6 +1138,7 @@ def main():
             )
             encoder_hidden_states = text_encoder(
                 batch["input_ids"],
+                attention_mask=batch['attention_mask'],
                 params=params['text_encoder'],
                 train=True,
             )[0]
