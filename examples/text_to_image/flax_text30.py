@@ -426,12 +426,12 @@ class FolderData(Dataset):
     def __getitem__(self, index):
         data = {}
 #         print("fn",self.captions[index])
-        filename = self.captions[0]['file_name']
+        filename = self.captions[index]['file_name']
         
         im = Image.open(filename)
         im = self.process_im(im)
         data["image"] = im
-        caption = self.instance_prompt + self.captions[0]['text']
+        caption = self.instance_prompt + self.captions[index]['text']
         list_ = [i for i in range(100)] 
         choice = random.choice(list_)
         if self.drop:
