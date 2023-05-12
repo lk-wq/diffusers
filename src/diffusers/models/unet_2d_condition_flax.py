@@ -387,7 +387,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
         # 4. mid
 #         print("going into mid block sample v t_emb vs enc hs", sample.shape,t_emb.shape, encoder_hidden_states.shape)
 #         print("before mid_block")
-#         print('sample.npy',sample)
+        print('sample.npy',sample)
 #         print('t_emb.npy 1',t_emb)
 #         print('encoder_hidden_states.npy',encoder_hidden_states)
 
