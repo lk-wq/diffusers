@@ -1038,9 +1038,13 @@ def main():
     )
 
     def get_initial_state(params):
+        params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), params)
+
         state = optimizer.init(params)
         return state, params
     def get_initial_state2(params):
+        params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), params)
+
         state = optimizer2.init(params)
         return state, params
 
@@ -1082,8 +1086,8 @@ def main():
         out_axis_resources=(text_opt_state_spec, text_param_spec),
     )
 
-    params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(np.float32), params)
-    text_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(np.float32), text_params)
+    params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
+    text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
     
 #     mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
     mesh_devices = mesh_utils.create_device_mesh((4, 2))
@@ -1103,6 +1107,8 @@ def main():
 
     with Mesh(mesh_devices, ("dp","mp")):
         opt_state, unet_params = p_get_initial_state(freeze(params) )
+#     text_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), text_params)
+#     unet_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), unet_params)
 
 #     with Mesh(mesh_devices, ("dp", "mp")):
 #         opt_state, params = p_get_initial_state(freeze(unet_params))
