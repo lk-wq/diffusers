@@ -1143,7 +1143,7 @@ def main():
                 batch["input_ids"],
                 attention_mask=batch['attention_mask'],
                 params=params['text_encoder'],
-                train=True,
+                train=False,
                 dropout_rng=dropout_rng,
             )[0]
 
