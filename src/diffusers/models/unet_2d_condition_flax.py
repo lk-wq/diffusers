@@ -367,7 +367,7 @@ class FlaxUNet2DConditionModel(nn.Module, FlaxModelMixin, ConfigMixin):
 #                 print(" ")
 #                 print("entering init temb ", t_emb )
 
-                sample, res_samples = down_block(sample, t_emb, deterministic=not train)
+                sample, res_samples = down_block(sample, t_emb, deterministic=not train,save=True)
                 save_(sample,'first_down.npy')
 #                 print("not cross post down_block",sample.shape)
 #             if ix == 0:
