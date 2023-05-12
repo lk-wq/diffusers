@@ -327,6 +327,7 @@ class FolderData(Dataset):
         drop=False,
         resize=False,
         center=False,
+        tokenizer_folder="",
         ) -> None:
         """Create a dataset from a folder of images.
         If you pass in a root directory it will be searched for images
@@ -409,6 +410,12 @@ class FolderData(Dataset):
 #         self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
         self.negative_prompt = negative_prompt
         self.instance_prompt = ip
+        self.tokenizer = pipe = DiffusionPipeline.from_pretrained(
+            tokenizer_folder, 
+            text_encoder=None, # pass the previously instantiated 8bit text encoder
+            unet=None, 
+            device_map="auto"
+        )
         prompt_ids = torch.load('prompt_embeds.pth',map_location='cpu')
 #         prompt_ids = jnp.asarray(prompt_ids)
         self.data = prompt_ids[0].unsqueeze(0)
@@ -463,6 +470,15 @@ def parse_args():
         required=True,
         help="Path to pretrained model or model identifier from huggingface.co/models.",
     )
+    parser.add_argument(
+        "--tokenizer_folder",
+        type=str,
+        default=None,
+        required=True,
+        help="Path to pretrained tokenizer from huggingface.co/models.",
+    )
+
+    
     parser.add_argument(
         "--dataset_name",
         type=str,
@@ -818,7 +834,7 @@ def main():
 #         return input_ids
 #     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
 
-    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution,resolution2=args.resolution2,drop=args.drop,resize=args.resize,center=args.center_crop)
+    dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution,resolution2=args.resolution2,drop=args.drop,resize=args.resize,center=args.center_crop,tokenizer_folder=args.tokenizer_folder)
 
     def tokenize_captions(captions, is_train=True):
 #         captions = [].
