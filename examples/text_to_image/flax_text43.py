@@ -1198,7 +1198,7 @@ def main():
         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
         text_updates, new_text_opt_state = optimizer2.update(grads['text_encoder'], text_opt_state, params['text_encoder'])
-        save_(text_updates , 'text_updates')
+#         save_(text_updates , 'text_updates')
         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
         
         metrics = {"loss": loss}
