@@ -415,7 +415,6 @@ class FolderData(Dataset):
             tokenizer_folder, 
             text_encoder=None, # pass the previously instantiated 8bit text encoder
             unet=None, 
-            device_map="auto"
         )
         prompt_ids = torch.load('prompt_embeds.pth',map_location='cpu')
 #         prompt_ids = jnp.asarray(prompt_ids)
