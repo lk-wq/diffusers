@@ -1140,7 +1140,7 @@ def main():
                 batch["input_ids"],
                 attention_mask=batch['attention_mask'],
                 params=params['text_encoder'],
-                train=True,
+                train=False,
                 dropout_rng=dropout_rng,
             )[0]
 
@@ -1163,12 +1163,12 @@ def main():
         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
-        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state, params['text_encoder'])
-        new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
+#         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state, params['text_encoder'])
+#         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
 
         metrics = {"loss": loss}
 
-        return new_unet_params,new_unet_opt_state, text_params, new_text_opt_state, metrics, new_train_rng 
+        return new_unet_params,new_unet_opt_state, text_params, text_opt_state, metrics, new_train_rng 
 
     # Create parallel version of the train step
 #     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
