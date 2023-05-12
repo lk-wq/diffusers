@@ -962,6 +962,7 @@ def main():
 
     else:
         scheduler = optax.constant_schedule(args.learning_rate)
+        scheduler_text = optax.constant_schedule(args.learning_rate*.01)
 
     adamw = optax.adamw(
         learning_rate=scheduler,
@@ -970,16 +971,29 @@ def main():
         eps=args.adam_epsilon,
         weight_decay=args.adam_weight_decay,
     )
-    
+
+    adamw2 = optax.adamw(
+        learning_rate=scheduler_text,
+        b1=args.adam_beta1,
+        b2=args.adam_beta2,
+        eps=args.adam_epsilon,
+        weight_decay=args.adam_weight_decay,
+    )
+
     optimizer_ = optax.chain(
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
     )
+    optimizer_2 = optax.chain(
+        optax.clip_by_global_norm(args.max_grad_norm),
+        adamw2,
+    )
+
     optimizer = optax.MultiSteps(
         optimizer_, args.accumulation_frequency
     )
-    optimizer2_ = optax.MultiSteps(
-        optimizer_, args.accumulation_frequency
+    optimizer2 = optax.MultiSteps(
+        optimizer_2, args.accumulation_frequency
     )
 
     def flattened_traversal(fn):
@@ -1002,8 +1016,8 @@ def main():
         return jax.random.PRNGKey(seed)
     rng = create_key(args.seed)
 
-    optimizer2 = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
+#     optimizer2 = optax.multi_transform(
+#       {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
     weight_dtype = jnp.float32
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
