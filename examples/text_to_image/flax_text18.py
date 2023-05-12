@@ -445,7 +445,7 @@ class FolderData(Dataset):
         return data
     
     def tokenize_captions(self,captions, is_train=True):
-        inputs = self.tokenizer(captions, max_length=self.tokenizer.model_max_length, padding="do_not_pad", truncation=True)
+        inputs = self.tokenizer(captions, max_length=77, padding="do_not_pad", truncation=True)
         input_ids = inputs.input_ids
         return input_ids
     
