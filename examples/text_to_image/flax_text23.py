@@ -1141,6 +1141,7 @@ def main():
                 attention_mask=batch['attention_mask'],
                 params=params['text_encoder'],
                 train=True,
+                dropout_rng=dropout_rng,
             )[0]
 
             noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
