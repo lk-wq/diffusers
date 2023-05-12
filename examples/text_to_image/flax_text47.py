@@ -1262,8 +1262,8 @@ def main():
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
 #     avg = get_params_to_save(state.params)
 #     text_avg = get_params_to_save(text_encoder_state.params)
-    avg = jax.device_get(unet_params) #ema_update( rng, jax.device_get(unet_params) , avg, decay )
-    text_avg = jax.device_get(text_params) #ema_update(rng, jax.device_get(text_params) , text_avg, decay )
+    avg = jnp.copy(unet_params)#jax.device_get(unet_params) #ema_update( rng, jax.device_get(unet_params) , avg, decay )
+    text_avg = jnp.copy(text_params)#jax.device_get(text_params) #ema_update(rng, jax.device_get(text_params) , text_avg, decay )
 
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
@@ -1300,8 +1300,9 @@ def main():
                       rng, _ = jax.random.split(rng, 2)
 #                       params = jax.device_get(unet_params)
 # jax.device_get(unet_params)
-                      avg = ema_update( rng, jax.device_get(unet_params) , avg, decay )
-                      text_avg = ema_update(rng, jax.device_get(text_params) , text_avg, decay )
+                      
+                      avg = ema_update( rng, unet_params , avg, decay )
+                      text_avg = ema_update(rng, text_params , text_avg, decay )
 
         #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                     if global_step % args.save_frequency == 0:
@@ -1328,14 +1329,14 @@ def main():
 #                         params = jax.device_get(unet_params)
 
                         unet.save_pretrained(
-                           args.output_dir+'/unet',params=avg
+                           args.output_dir+'/unet',params=jax.device_get(avg)
                         )
                         scheduler.save_pretrained(args.output_dir+'/scheduler')
 #                         del params
 #                         params2 = jax.device_get(text_params)
 
                         text_encoder.save_pretrained(
-                            args.output_dir+'/text_encoder',params=text_avg
+                            args.output_dir+'/text_encoder',params=jax.device_get(text_avg)
                         )
 #                         del params2
 
@@ -1408,7 +1409,7 @@ def main():
 #             params = jax.device_get(unet_params)
 
             unet.save_pretrained(
-                args.output_dir+'/unet',params=avg
+                args.output_dir+'/unet',params=jax.device_get(avg)
                 
             )
 #             del params
@@ -1416,7 +1417,7 @@ def main():
 
             scheduler.save_pretrained(args.output_dir+'/scheduler')
             text_encoder.save_pretrained(
-                args.output_dir+'/text_encoder',params=text_avg
+                args.output_dir+'/text_encoder',params=jax.device_get(text_avg)
             )
 #             del params2
     #         scheduler = FlaxPNDMScheduler(
