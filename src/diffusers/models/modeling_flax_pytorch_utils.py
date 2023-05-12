@@ -91,7 +91,7 @@ def convert_pytorch_state_dict_to_flax(pt_state_dict, flax_model, init_key=42):
     # Step 1: Convert pytorch tensor to numpy
 #     pt_state_dict = {k: jnp.asarray(v.numpy()).astype(jnp.bfloat16) for k, v in pt_state_dict.items()}
 
-    pt_state_dict = {k: jax.device_put(jnp.asarray( v.numpy()), jax.devices("cpu")[0]for k, v in pt_state_dict.items()}
+    pt_state_dict = {k: jax.device_put( jnp.asarray( v.numpy()), jax.devices("cpu")[0] ) for k, v in pt_state_dict.items()}
 
                # Step 2: Since the model is stateless, get random Flax params
     random_flax_params = flax_model.init_weights(PRNGKey(init_key))
