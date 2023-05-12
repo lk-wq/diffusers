@@ -201,14 +201,19 @@ class TimestepEmbedding(nn.Module):
         if condition is not None:
             sample = sample + self.cond_proj(condition)
         sample = self.linear_1(sample)
+        torch.save(sample,'sample_stage_1_.pth')
 
         if self.act is not None:
             sample = self.act(sample)
+        torch.save(sample,'sample_stage_2_.pth')
 
         sample = self.linear_2(sample)
+        torch.save(sample,'sample_stage_3_.pth')
 
         if self.post_act is not None:
             sample = self.post_act(sample)
+        torch.save(sample,'sample_stage_4_.pth')
+
         return sample
 
 
