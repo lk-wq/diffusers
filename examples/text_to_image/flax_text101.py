@@ -1178,7 +1178,7 @@ def main():
     with Mesh(mesh_devices, ("dp","mp") ):
         f = freeze(params) 
 
-        opt_state = p_get_initial_opt_state( f )
+        opt_state = p_get_initial_state_opt( f )
     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
     del f
     gc.collect()
