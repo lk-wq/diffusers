@@ -41,7 +41,7 @@ empty_dict = object()
 #             return True
 #     return False
 def _match(joinks, v):
-    shape = v.shape
+    shape = v
     """Return True if regexes in qs match any window of strings in tuple ks."""
     # compile regexes and force complete match
     if len(shape) == 1:
@@ -112,7 +112,7 @@ def _get_partition_rules():
 def set_partitions(in_dict):
     rules = _get_partition_rules()
     replace = _replacement_rules(rules)
-    initd = {k: _unmatched for k in flatten_dict(in_dict)}
-    result = {k: replace(k, v) for k, v in initd.items()}
+#     initd = {k: _unmatched for k in flatten_dict(in_dict)}
+    result = {k: replace(k, v.shape) for k, v in result.items()}
     assert _unmatched not in result.values(), "Incomplete partition spec."
     return freeze(unflatten_dict(result))
