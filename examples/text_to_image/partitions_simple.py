@@ -41,9 +41,40 @@ empty_dict = object()
 #             return True
 #     return False
 def _match(joinks, v):
+    shape = v.shape
     """Return True if regexes in qs match any window of strings in tuple ks."""
     # compile regexes and force complete match
-    
+    if len(shape) == 1:
+      if shape[0] % 4 == 0:
+        return P("dp")
+      else:
+        return P("mp")
+    if len(shape) == 2:
+      if shape[0] % 4 == 0 and shape[1] % 2 == 0:
+        return P("dp","mp")
+      if shape[0] % 2 == 0 and shape[1] % 4 == 0:
+        return P("mp","dp")
+      if shape[0] % 4 == 0:# and shape[1] % 2 == 0:
+        return P("dp",None)
+      if shape[1] % 4 == 0:# and shape[1] % 2 == 0:
+        return P(None,"dp")
+      if shape[0] % 2 == 0 and shape[1] % 2 == 0:
+        return P("mp",None)
+    if len(shape) == 4:
+      if shape[-2] % 4 == 0 and shape[-1] % 2 == 0:
+        return P(None,None,"dp","mp")
+      if shape[-2] % 2 == 0 and shape[-1] % 4 == 0:
+        return P(None,None,"mp","dp")
+      if shape[-2] % 4 == 0:# and shape[1] % 2 == 0:
+        return P(None,None,"dp",None)
+      if shape[-1] % 4 == 0:# and shape[1] % 2 == 0:
+        return P(None,None,None,"dp")
+      if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
+        return P(None,None,"mp",None)
+
+    print("fail")
+    return object()
+
 def _replacement_rules(rules):
     def replace(key, val):
 #         for rule, replacement in rules:
