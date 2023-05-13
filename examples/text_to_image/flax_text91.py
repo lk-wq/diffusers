@@ -1172,12 +1172,16 @@ def main():
     gc.collect()
 
     with Mesh( mesh_devices , ("dp","mp") ):
+        f = freeze(text_params) 
+
         text_opt_state = p_get_initial_state_opt2( f )
                 
     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
     del f
     gc.collect()
     with Mesh(mesh_devices, ("dp","mp") ):
+        f = freeze(text_params) 
+
         opt_state = p_get_initial_opt_state( f )
     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
     del f
