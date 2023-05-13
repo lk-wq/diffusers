@@ -1132,6 +1132,8 @@ def main():
         f = freeze(text_params)
         text_opt_state,text_params = p_get_initial_state2( f )
     del text_opt_state
+    import gc 
+
     gc.collect()
 
     return
