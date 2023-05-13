@@ -1071,7 +1071,7 @@ def main():
     state_shapes = jax.eval_shape(get_initial_state, params_shapes)
 
     text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
-    text_state_shapes = jax.eval_shape(get_initial_state_text, text_params_shapes)
+    text_state_shapes = jax.eval_shape(get_initial_state2, text_params_shapes)
 
     def get_opt_spec(x):
         if isinstance(x, dict):
