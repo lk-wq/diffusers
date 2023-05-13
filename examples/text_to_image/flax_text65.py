@@ -1078,7 +1078,7 @@ def main():
     text_opt_state_spec, text_param_spec = jax.tree_util.tree_map(
         get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
-        p_get_initial_state = pjit(
+    p_get_initial_state = pjit(
         get_initial_state,
         in_axis_resources=(None,None),
         out_axis_resources=(opt_state_spec, param_spec,text_param_spec),
