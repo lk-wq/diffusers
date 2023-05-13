@@ -1069,7 +1069,7 @@ def main():
 #         params = jax.tree_util.tree_map(lambda x: x, params)
 
         state = optimizer2.init(params)
-        return tuple(state)
+        return state
 
     #     def get_initial_state_text(params):
 # #         params = jax.tree_util.tree_map(lambda x: x, params)
@@ -1081,10 +1081,10 @@ def main():
     text_param_spec = set_partitions_text(unfreeze(text_params))
 
     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
-    state_shapes = jax.eval_shape(get_initial_state, params_shapes)
+    state_shapes = jax.eval_shape(get_initial_state_opt, params_shapes)
 
     text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
-    text_state_shapes = jax.eval_shape(get_initial_state2, text_params_shapes)
+    text_state_shapes = jax.eval_shape(get_initial_state_opt2, text_params_shapes)
 
     def get_opt_spec(x):
         if isinstance(x, dict):
