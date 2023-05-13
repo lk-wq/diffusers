@@ -1179,9 +1179,9 @@ def main():
 #         f = freeze(params) 
 
 #         opt_state = p_get_initial_state_opt( f )
-    f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
-    del f
-    gc.collect()
+#     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
+#     del f
+#     gc.collect()
     def partition_shape(shape):
       if len(shape) == 1:
         if shape[0] % 4 == 0:
