@@ -927,7 +927,7 @@ def main():
         train_dataset, shuffle=True, collate_fn=collate_fn, batch_size=total_train_batch_size, drop_last=True
     )
 
-    weight_dtype = jnp.float32
+    weight_dtype = jnp.bfloat16
     if args.mixed_precision == "fp16":
         weight_dtype = jnp.float16
     elif args.mixed_precision == "bf16":
@@ -1038,7 +1038,7 @@ def main():
     )
 
     def get_initial_state(params):
-        params = jax.tree_util.tree_map(lambda x: x.astype(jnp.bfloat16), params)
+        params = jax.tree_util.tree_map(lambda x: x, params)
 
         state = optimizer.init(params)
         return state, params
