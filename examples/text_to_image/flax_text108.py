@@ -37,7 +37,7 @@ from transformers import CLIPFeatureExtractor, CLIPTokenizer, FlaxCLIPTextModel,
 
 from flax.core.frozen_dict import freeze, unfreeze
 from flax.training.common_utils import onehot, stack_forest
-from partitions_sd import set_partitions
+from partitions_simple import set_partitions
 
 from typing import Dict
 import numpy as np
@@ -55,7 +55,7 @@ import functools
 import inspect
 from typing import Callable, Dict, Union, NamedTuple, Optional, Iterable, Sequence
 
-from partitions_text import set_partitions_text
+# from partitions_text import set_partitions_text
 from transformers import T5EncoderModel, FlaxT5EncoderModel
 
 import chex
@@ -1083,7 +1083,7 @@ def main():
 #         return state, params
 
     param_spec = set_partitions(unfreeze(params))
-    text_param_spec = set_partitions_text(unfreeze(text_params))
+    text_param_spec = set_partitions(unfreeze(text_params))
 
     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
     state_shapes = jax.eval_shape(get_initial_state_opt, params_shapes)
