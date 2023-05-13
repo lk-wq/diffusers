@@ -1102,13 +1102,13 @@ def main():
         get_initial_state,
         in_axis_resources=None,
         out_axis_resources=(opt_state_spec,param_spec),
-        donate_argnums=0
+#         donate_argnums=0
     )
     p_get_initial_state2 = pjit(
         get_initial_state2,
         in_axis_resources=None,
         out_axis_resources=(text_opt_state_spec,text_param_spec),
-        donate_argnums=0
+#         donate_argnums=0
 
     )    
     
