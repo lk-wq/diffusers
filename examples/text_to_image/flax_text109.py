@@ -1382,8 +1382,8 @@ def main():
 #     text_avg = get_params_to_save(text_encoder_state.params)
 #     avg = unet_params#jax.device_get(unet_params) #ema_update( rng, jax.device_get(unet_params) , avg, decay )
 #     text_avg = text_params#jax.device_get(text_params) #ema_update(rng, jax.device_get(text_params) , text_avg, decay )
-    avg = jax.tree_util.tree_map(lambda x: jnp.copy(x), unet_params)
-    text_avg = jax.tree_util.tree_map(lambda x: jnp.copy(x), text_params)
+#     avg = jax.tree_util.tree_map(lambda x: jnp.copy(x), unet_params)
+#     text_avg = jax.tree_util.tree_map(lambda x: jnp.copy(x), text_params)
 
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
@@ -1412,17 +1412,17 @@ def main():
 
                 train_step_progress_bar.update(1)
 
-                if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
-                    if args.ema_frequency > -1 and global_step % args.ema_frequency == 0:
-                      it = global_step#//args.ema_frequency
-                      decay = args.min_decay
-                      decay = min(decay,(1 + it) / (10 + it))
-                      rng, _ = jax.random.split(rng, 2)
-#                       params = jax.device_get(unet_params)
-# jax.device_get(unet_params)
+#                 if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
+#                     if args.ema_frequency > -1 and global_step % args.ema_frequency == 0:
+#                       it = global_step#//args.ema_frequency
+#                       decay = args.min_decay
+#                       decay = min(decay,(1 + it) / (10 + it))
+#                       rng, _ = jax.random.split(rng, 2)
+# #                       params = jax.device_get(unet_params)
+# # jax.device_get(unet_params)
                       
-                      avg = ema_update( rng, unet_params , avg, decay )
-                      text_avg = ema_update(rng, text_params , text_avg, decay )
+#                       avg = ema_update( rng, unet_params , avg, decay )
+#                       text_avg = ema_update(rng, text_params , text_avg, decay )
 
         #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
                     if global_step % args.save_frequency == 0:
