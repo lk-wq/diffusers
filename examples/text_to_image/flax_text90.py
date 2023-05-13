@@ -1124,7 +1124,7 @@ def main():
         in_axis_resources=None,
         out_axis_resources=text_param_spec,
     )
-    p_get_initial_state_opt = pjit(
+    p_get_initial_state_opt2 = pjit(
         get_initial_state_opt2,
         in_axis_resources=None,
         out_axis_resources=text_opt_state_spec,
