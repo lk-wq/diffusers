@@ -1132,7 +1132,7 @@ def main():
         f = freeze(params) 
 #         f2 = freeze(text_params)
         opt_state , unet_params = p_get_initial_state( f )
-    return
+#     return
 #     del params
     del f
 #     del f2
