@@ -1128,19 +1128,20 @@ def main():
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
 
+    with Mesh( mesh_devices , ("dp","mp") ):
+        f = freeze(text_params)
+        text_opt_state , text_params = p_get_initial_state2( f )
+    return
+    del f
+#     del f2
+    import gc 
+    gc.collect()
     with Mesh(mesh_devices, ("dp","mp") ):
         f = freeze(params) 
 #         f2 = freeze(text_params)
         opt_state , unet_params = p_get_initial_state( f )
 #     return
 #     del params
-    del f
-#     del f2
-    import gc 
-    gc.collect()
-    with Mesh( mesh_devices , ("dp","mp") ):
-        f = freeze(text_params)
-        text_opt_state , text_params = p_get_initial_state2( f )
     del f
 #     del f2
     import gc 
