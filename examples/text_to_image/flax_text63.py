@@ -1043,10 +1043,10 @@ def main():
         state = optimizer.init(params)
         return state, params
     def get_initial_state2(params):
-        params = jax.tree_util.tree_map(lambda x: x, params)
+#         params = jax.tree_util.tree_map(lambda x: x, params)
 
-#         state = optimizer2.init(params)
-        return params
+        state = optimizer2.init(params)
+        return state , params
 
     param_spec = set_partitions(unfreeze(params))
     text_param_spec = set_partitions_text(unfreeze(text_params))
@@ -1083,8 +1083,8 @@ def main():
     p_get_initial_state2 = pjit(
         get_initial_state2,
         in_axis_resources=None,
-#         out_axis_resources=(text_opt_state_spec, text_param_spec),
-        out_axis_resources=text_param_spec,
+        out_axis_resources=(text_opt_state_spec, text_param_spec),
+#         out_axis_resources=text_param_spec,
 
     )
 
@@ -1106,13 +1106,15 @@ def main():
     print("starting -----------------------------------------------------------> ")
 
     with Mesh(mesh_devices, ("dp","mp")):
-        opt_state, unet_params = p_get_initial_state(freeze(params) )
+        f = freeze(params) 
+        opt_state, unet_params = p_get_initial_state(f )
     del params
+    del f
     import gc 
     gc.collect()
     with Mesh(mesh_devices, ("dp","mp")):
         f = freeze(text_params)
-        text_params = p_get_initial_state2(f )
+        text_opt_state , text_params = p_get_initial_state2(f )
 
         #     text_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), text_params)
 #     unet_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), unet_params)
