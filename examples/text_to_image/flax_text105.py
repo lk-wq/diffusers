@@ -1210,13 +1210,13 @@ def main():
           return P(None,None,None,"dp")
         if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
           return P(None,None,"mp",None)
-
+        
       print("fail")
       return object()
     from jax.experimental import PartitionSpec as P 
     from jax.sharding import NamedSharding
 
-    mesh = Mesh(mesh_devices , axis_names={'dp','mp'})
+    mesh = Mesh(mesh_devices , axis_names={'mp','dp'})
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
 #     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
