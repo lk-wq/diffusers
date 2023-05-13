@@ -1089,7 +1089,7 @@ def main():
     state_shapes = jax.eval_shape(get_initial_state_opt, params_shapes)
 
     text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
-    text_state_shapes = jax.eval_shape(get_initial_state_opt2_, text_params_shapes)
+    text_state_shapes = jax.eval_shape(get_initial_state_opt2, text_params_shapes)
 
     def get_opt_spec(x):
         if isinstance(x, dict):
@@ -1104,7 +1104,7 @@ def main():
         get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
 
-    text_opt_state_spec , _ = jax.tree_util.tree_map(
+    text_opt_state_spec = jax.tree_util.tree_map(
         get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
 #     p_get_initial_state2 = pjit(
@@ -1134,7 +1134,7 @@ def main():
         donate_argnums=0
     )
     p_get_initial_state_opt2 = pjit(
-        get_initial_state_opt2_,
+        get_initial_state_opt2,
         in_axis_resources=None,
         out_axis_resources=(text_opt_state_spec,text_param_spec),
         donate_argnums=0
@@ -1168,20 +1168,6 @@ def main():
     gc.collect()
 
     with Mesh( mesh_devices , ("dp","mp") ):
-        f = freeze(text_params)
-        text_params_ = p_get_initial_state_opt2( f )
-    f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
-    del f
-    gc.collect()
-    with Mesh(mesh_devices, ("dp","mp") ):
-        f = freeze(params) 
-        unet_params = p_get_initial_state( f )
-
-    f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
-    del f
-    gc.collect()
-
-    with Mesh( mesh_devices , ("dp","mp") ):
         f = freeze(text_params) 
 
         text_opt_state = p_get_initial_state_opt2( f )
@@ -1193,6 +1179,19 @@ def main():
         f = freeze(params) 
 
         opt_state = p_get_initial_opt_state( f )
+    f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
+    del f
+    gc.collect()
+    with Mesh( mesh_devices , ("dp","mp") ):
+        f = freeze(text_params)
+        text_params_ = p_get_initial_state_opt2( f )
+    f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
+    del f
+    gc.collect()
+    with Mesh(mesh_devices, ("dp","mp") ):
+        f = freeze(params) 
+        unet_params = p_get_initial_state( f )
+
     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
     del f
     gc.collect()
