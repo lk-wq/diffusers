@@ -1065,7 +1065,7 @@ def main():
 #         params = jax.tree_util.tree_map(lambda x: x, params)
 
         state = optimizer2.init(params)
-        return params
+        return state , params
 
     param_spec = set_partitions(unfreeze(params))
     text_param_spec = set_partitions_text(unfreeze(text_params))
