@@ -1127,11 +1127,13 @@ def main():
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
-    return
 
     with Mesh( mesh_devices , ("dp","mp") ):
         f = freeze(text_params)
         text_opt_state,text_params = p_get_initial_state2( f )
+    text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
+    text_opt_state = jax.tree_util.tree_map(lambda x: np.asarray(x), text_opt_state)
+
     del text_opt_state
     import gc 
     del text_params
