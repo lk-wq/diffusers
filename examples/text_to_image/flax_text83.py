@@ -1127,6 +1127,7 @@ def main():
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
+    return
 
     with Mesh( mesh_devices , ("dp","mp") ):
         f = freeze(text_params)
@@ -1137,7 +1138,6 @@ def main():
 
     gc.collect()
 
-    return
     del f
 #     del f2
     import gc 
