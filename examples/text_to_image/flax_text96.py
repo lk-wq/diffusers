@@ -1070,6 +1070,11 @@ def main():
 
         state = optimizer2.init(params)
         return state
+    def get_initial_state_opt2_(params):
+#         params = jax.tree_util.tree_map(lambda x: x, params)
+
+        state = optimizer2.init(params)
+        return state , params
 
     #     def get_initial_state_text(params):
 # #         params = jax.tree_util.tree_map(lambda x: x, params)
@@ -1084,7 +1089,7 @@ def main():
     state_shapes = jax.eval_shape(get_initial_state_opt, params_shapes)
 
     text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
-    text_state_shapes = jax.eval_shape(get_initial_state_opt2, text_params_shapes)
+    text_state_shapes = jax.eval_shape(get_initial_state_opt2_, text_params_shapes)
 
     def get_opt_spec(x):
         if isinstance(x, dict):
@@ -1099,7 +1104,7 @@ def main():
         get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
 
-    text_opt_state_spec = jax.tree_util.tree_map(
+    text_opt_state_spec , _ = jax.tree_util.tree_map(
         get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
 #     p_get_initial_state2 = pjit(
