@@ -1137,16 +1137,16 @@ def main():
     print("starting -----------------------------------------------------------> ")
     import gc 
     gc.collect()
+    with Mesh(mesh_devices, ("dp","mp") ):
+        f = freeze(params) 
+        opt_state , unet_params = p_get_initial_state( f )
+    f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
+    del f
+    gc.collect()
 
     with Mesh( mesh_devices , ("dp","mp") ):
         f = freeze(text_params)
         text_opt_state , text_params = p_get_initial_state2( f )
-    f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
-    del f
-    gc.collect()
-    with Mesh(mesh_devices, ("dp","mp") ):
-        f = freeze(params) 
-        opt_state , unet_params = p_get_initial_state( f )
     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
     del f
     gc.collect()
