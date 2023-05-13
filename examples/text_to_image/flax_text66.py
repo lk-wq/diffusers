@@ -1047,7 +1047,12 @@ def main():
 
 #         state = optimizer2.init(params)
 #         return state , params
-    def get_initial_state(params, text_params):
+    def get_initial_state(params):
+#         params = jax.tree_util.tree_map(lambda x: x, params)
+
+        state = optimizer.init(params)
+        return state, params
+    def get_initial_state2(params, text_params):
 #         params = jax.tree_util.tree_map(lambda x: x, params)
 
         state = optimizer.init(params)
@@ -1079,7 +1084,7 @@ def main():
         get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
     p_get_initial_state = pjit(
-        get_initial_state,
+        get_initial_state2,
         in_axis_resources=(None,None),
         out_axis_resources=(opt_state_spec, param_spec,text_param_spec),
     )
@@ -1117,7 +1122,7 @@ def main():
     with Mesh(mesh_devices, ("dp","mp") ):
         f = freeze(params) 
         f2 = freeze(text_params)
-        opt_state , unet_params, text_params = p_get_initial_state( f,f2 )
+        opt_state , unet_params, text_params = p_get_initial_state2( f,f2 )
     
     del params
     del f
