@@ -1182,21 +1182,43 @@ def main():
     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
     del f
     gc.collect()
-    return
-    with Mesh( mesh_devices , ("dp","mp") ):
-        f = freeze(text_params)
-        text_params = p_get_initial_state2( f )
-    f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
-    del f
-    gc.collect()
-    with Mesh(mesh_devices, ("dp","mp") ):
-        f = freeze(params) 
-        unet_params = p_get_initial_state( f )
+    def partition_shape(shape):
+      if len(shape) == 1:
+        if shape[0] % 4 == 0:
+          return P("dp")
+        else:
+          return P("mp")
+      if len(shape) == 2:
+        if shape[0] % 4 == 0 and shape[1] % 2 == 0:
+          return P("dp","mp")
+        if shape[0] % 2 == 0 and shape[1] % 4 == 0:
+          return P("mp","dp")
+        if shape[0] % 4 == 0:# and shape[1] % 2 == 0:
+          return P("dp",None)
+        if shape[1] % 4 == 0:# and shape[1] % 2 == 0:
+          return P(None,"dp")
+        if shape[0] % 2 == 0 and shape[1] % 2 == 0:
+          return P("mp",None)
+      if len(shape) == 4:
+        if shape[-2] % 4 == 0 and shape[-1] % 2 == 0:
+          return P(None,None,"dp","mp")
+        if shape[-2] % 2 == 0 and shape[-1] % 4 == 0:
+          return P(None,None,"mp","dp")
+        if shape[-2] % 4 == 0:# and shape[1] % 2 == 0:
+          return P(None,None,"dp",None)
+        if shape[-1] % 4 == 0:# and shape[1] % 2 == 0:
+          return P(None,None,None,"dp")
+        if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
+          return P(None,None,"mp",None)
 
-    f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
-    del f
-    gc.collect()
+      print("fail")
+      return object()
+    from jax.experimental import PartitionSpec as P 
+    from jax.sharding import NamedSharding
 
+    mesh = Mesh(devices , axis_names={'dp','mp'})
+    text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_text_shape(x.shape)) ), text_params)
+    params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
 #     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: np.asarray(x), text_opt_state)
 
