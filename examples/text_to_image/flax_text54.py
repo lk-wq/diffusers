@@ -1109,7 +1109,8 @@ def main():
     import gc 
     gc.collect()
     with Mesh(mesh_devices, ("dp","mp")):
-        text_opt_state, text_params = p_get_initial_state2(freeze(text_params) )
+        f = freeze(text_params)
+        text_opt_state, text_params = p_get_initial_state2(f )
 
         #     text_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), text_params)
 #     unet_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), unet_params)
