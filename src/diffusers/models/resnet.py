@@ -601,6 +601,7 @@ class ResnetBlock2D(nn.Module):
             scale, shift = torch.chunk(temb, 2, dim=1)
             hidden_states = hidden_states * (1 + scale) + shift
         if save:
+            torch.save(temb,'saving_tensor_temb.pth')
             torch.save(hidden_states,'saving_tensor6.pth')
 
         hidden_states = self.nonlinearity(hidden_states)
