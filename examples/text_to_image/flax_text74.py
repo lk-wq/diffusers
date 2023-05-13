@@ -1140,7 +1140,7 @@ def main():
     gc.collect()
     with Mesh( mesh_devices , ("dp","mp") ):
         f = freeze(text_params)
-        text_opt_state , text_params = p_get_initial_state2( text_params )
+        text_opt_state , text_params = p_get_initial_state2( f )
     del f
 #     del f2
     import gc 
