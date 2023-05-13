@@ -59,6 +59,7 @@ from partitions_text import set_partitions_text
 from transformers import T5EncoderModel, FlaxT5EncoderModel
 
 import chex
+from jax_smi import initialise_tracking
 
 """
 Stochastically rounded operations between JAX tensors.
@@ -769,6 +770,8 @@ def get_zero(params):
 
 
 def main():
+    initialise_tracking()
+
     args = parse_args()
 
     logging.basicConfig(
@@ -1126,12 +1129,12 @@ def main():
     print("starting -----------------------------------------------------------> ")
 
     with Mesh(mesh_devices, ("dp","mp") ):
-#         f = freeze(params) 
+        f = freeze(params) 
 #         f2 = freeze(text_params)
-        opt_state , unet_params = p_get_initial_state( params )
-    
+        opt_state , unet_params = p_get_initial_state( f )
+    return
     del params
-#     del f
+    del f
 #     del f2
     import gc 
     gc.collect()
