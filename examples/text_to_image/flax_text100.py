@@ -1136,7 +1136,7 @@ def main():
     p_get_initial_state_opt2 = pjit(
         get_initial_state_opt2,
         in_axis_resources=None,
-        out_axis_resources=(text_opt_state_spec,text_param_spec),
+        out_axis_resources=text_opt_state_spec,
         donate_argnums=0
     )
     
@@ -1184,7 +1184,7 @@ def main():
     gc.collect()
     with Mesh( mesh_devices , ("dp","mp") ):
         f = freeze(text_params)
-        text_params_ = p_get_initial_state_opt2( f )
+        text_params = p_get_initial_state2( f )
     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
     del f
     gc.collect()
