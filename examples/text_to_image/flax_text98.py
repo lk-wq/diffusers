@@ -1169,7 +1169,7 @@ def main():
 
     with Mesh( mesh_devices , ("dp","mp") ):
         f = freeze(text_params)
-        text_opt_state , text_params = p_get_initial_state_opt2( f )
+        text_params_ = p_get_initial_state_opt2( f )
     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
     del f
     gc.collect()
