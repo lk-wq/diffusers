@@ -1095,11 +1095,11 @@ def main():
             return text_param_spec
         return None
     
-    opt_state_spec, param_spec2 = jax.tree_util.tree_map(
+    opt_state_spec = jax.tree_util.tree_map(
         get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
 
-    text_opt_state_spec, text_param_spec2 = jax.tree_util.tree_map(
+    text_opt_state_spec = jax.tree_util.tree_map(
         get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
 #     p_get_initial_state2 = pjit(
