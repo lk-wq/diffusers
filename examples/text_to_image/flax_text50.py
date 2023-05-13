@@ -1028,7 +1028,7 @@ def main():
 
 #     optimizer2 = optax.multi_transform(
 #       {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
-    weight_dtype = jnp.float32
+    weight_dtype = jnp.bfloat16
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
     )
@@ -1102,12 +1102,13 @@ def main():
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
-    with Mesh(mesh_devices, ("dp","mp")):
-        text_opt_state, text_params = p_get_initial_state2(freeze(text_params) )
 
     with Mesh(mesh_devices, ("dp","mp")):
         opt_state, unet_params = p_get_initial_state(freeze(params) )
-#     text_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), text_params)
+    with Mesh(mesh_devices, ("dp","mp")):
+        text_opt_state, text_params = p_get_initial_state2(freeze(text_params) )
+
+        #     text_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), text_params)
 #     unet_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), unet_params)
 
 #     with Mesh(mesh_devices, ("dp", "mp")):
