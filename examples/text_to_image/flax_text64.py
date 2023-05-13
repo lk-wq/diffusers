@@ -1037,16 +1037,21 @@ def main():
         args.pretrained_model_name_or_path, subfolder="text_encoder",dtype=weight_dtype
     )
 
-    def get_initial_state(params):
+#     def get_initial_state(params):
+# #         params = jax.tree_util.tree_map(lambda x: x, params)
+
+#         state = optimizer.init(params)
+#         return state, params
+#     def get_initial_state2(params):
+# #         params = jax.tree_util.tree_map(lambda x: x, params)
+
+#         state = optimizer2.init(params)
+#         return state , params
+    def get_initial_state(params, text_params):
 #         params = jax.tree_util.tree_map(lambda x: x, params)
 
         state = optimizer.init(params)
-        return state, params
-    def get_initial_state2(params):
-#         params = jax.tree_util.tree_map(lambda x: x, params)
-
-        state = optimizer2.init(params)
-        return state , params
+        return state, params, text_params
 
     param_spec = set_partitions(unfreeze(params))
     text_param_spec = set_partitions_text(unfreeze(text_params))
@@ -1073,20 +1078,24 @@ def main():
     text_opt_state_spec, text_param_spec = jax.tree_util.tree_map(
         get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
-
-    p_get_initial_state = pjit(
+        p_get_initial_state = pjit(
         get_initial_state,
-        in_axis_resources=None,
-        out_axis_resources=(opt_state_spec, param_spec),
+        in_axis_resources=(None,None),
+        out_axis_resources=(opt_state_spec, param_spec,text_param_spec),
     )
-    
-    p_get_initial_state2 = pjit(
-        get_initial_state2,
-        in_axis_resources=None,
-        out_axis_resources=(text_opt_state_spec, text_param_spec),
-#         out_axis_resources=text_param_spec,
 
-    )
+#     p_get_initial_state = pjit(
+#         get_initial_state,
+#         in_axis_resources=None,
+#         out_axis_resources=(opt_state_spec, param_spec),
+#     )
+    
+#     p_get_initial_state2 = pjit(
+#         get_initial_state2,
+#         in_axis_resources=None,
+#         out_axis_resources=(text_opt_state_spec, text_param_spec),
+# #         out_axis_resources=text_param_spec,
+#     )
 
     params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
@@ -1105,16 +1114,19 @@ def main():
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
 
-    with Mesh(mesh_devices, ("dp","mp")):
+    with Mesh(mesh_devices, ("dp","mp") ):
         f = freeze(params) 
-        opt_state, unet_params = p_get_initial_state(f )
+        f2 = freeze(text_params)
+        opt_state , unet_params, text_params = p_get_initial_state( f,f2 )
+    
     del params
     del f
+    del f2
     import gc 
     gc.collect()
-    with Mesh(mesh_devices, ("dp","mp")):
-        f = freeze(text_params)
-        text_opt_state , text_params = p_get_initial_state2(f )
+#     with Mesh( mesh_devices , ("dp","mp") ):
+#         f = freeze(text_params)
+#         text_opt_state , text_params = p_get_initial_state2( f )
 
         #     text_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), text_params)
 #     unet_params = jax.tree_util.tree_map(lambda x: x.astype(jnp.float32), unet_params)
