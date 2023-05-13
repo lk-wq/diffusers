@@ -1038,7 +1038,7 @@ def main():
     )
 
     def get_initial_state(params):
-        params = jax.tree_util.tree_map(lambda x: x, params)
+#         params = jax.tree_util.tree_map(lambda x: x, params)
 
         state = optimizer.init(params)
         return state, params
