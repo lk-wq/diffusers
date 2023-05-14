@@ -487,6 +487,14 @@ class FolderData(Dataset):
 
 logger = logging.getLogger(__name__)
 import random
+from jax.experimental import io_callback
+from jax import debug
+import numpy as np
+
+def save_(x,name):
+    # print(name , "---------------------------------------------------->",x)
+    debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    return x
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Simple example of a training script.")
@@ -1236,11 +1244,11 @@ def main():
     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = text_opt_state#.inner_states 
     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
-    
-    
+    save_(params['text_embedding']['linear_1']['kernel'],'k1.npy')
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
+    save_(unet_params['text_embedding']['linear_1']['kernel'],'k2.npy')
 
     #     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: np.asarray(x), text_opt_state)
@@ -1411,7 +1419,7 @@ def main():
     client = storage.Client()
     bucket = client.bucket(args.bucketname)
     
-#     for ix , epoch in enumerate(epochs):
+#     for ix , epoch in enumerate(epochs):k
 #         # ======================== Training ================================
     with Mesh(mesh_devices, ("dp","mp")):
         for ix , epoch in enumerate(epochs):
@@ -1500,7 +1508,7 @@ def main():
 #                             pipeline.save_pretrained(
 #                                 args.output_dir,
 #                                 params={
-# #                                     "text_encoder": get_params_to_save(text_encoder_state.params),
+# #                                     "text_encoder": get_params_to_save(text_encoder_state.params),l
 # #                                     "vae": get_params_to_save(vae_params),
 #                                       "unet": unet_params,
 # #                                     "safety_checker": safety_checker.params,
