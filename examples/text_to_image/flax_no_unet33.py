@@ -1100,9 +1100,10 @@ def main():
 
 #     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
 #     state_shapes = jax.eval_shape(get_initial_state_opt, params_shapes)
-
-    text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
-    text_state_shapes = jax.eval_shape(get_initial_state_opt2, text_params_shapes)
+    opt = optimizer.state(text_params)
+#     text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
+    text_state_shapes = jax.tree_util.tree_map(lambda x: x.shape, opt)
+#     text_state_shapes = jax.eval_shape(get_initial_state_opt2, text_params_shapes)
 
     def get_opt_spec(x):
         if isinstance(x, dict):
@@ -1225,18 +1226,23 @@ def main():
           return P(None,None,"mp",None)
         
       print("fail")
-      return None
+      return P(None)
     from jax.experimental import PartitionSpec as P 
     from jax.sharding import NamedSharding
 
     mesh = Mesh(mesh_devices , axis_names={'dp','mp'})
 #     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
-
+    text_opt_state = optimizer.init(text_params)
+#     text_opt_state = text_opt_state#.inner_states 
+    text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
+    
+    
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
-    text_opt_state = optimizer.init(params)
-#     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
+    text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
+
+    #     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: np.asarray(x), text_opt_state)
 
 #     del text_params
