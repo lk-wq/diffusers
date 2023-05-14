@@ -1005,7 +1005,7 @@ def main():
     optimizer = optax.MultiSteps(
         optimizer_, args.accumulation_frequency
     )
-    optimizer2 = optax.MultiSteps(
+    optimizer2_ = optax.MultiSteps(
         optimizer_2, args.accumulation_frequency
     )
 
@@ -1029,8 +1029,8 @@ def main():
         return jax.random.PRNGKey(seed)
     rng = create_key(args.seed)
 
-#     optimizer2 = optax.multi_transform(
-#       {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
+    optimizer2 = optax.multi_transform(
+      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
     weight_dtype = jnp.bfloat16
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
@@ -1265,9 +1265,9 @@ def main():
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
 
-    def train_step(text_params,text_opt_state, batch, train_rng):
+    def train_step(unet_params,text_params,text_opt_state, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-        params = {"text_encoder": text_params}#, "unet": unet_params}
+        params = {"text_encoder": text_params, "unet": unet_params}
 
         def compute_loss(params):
             # Convert images to latent space
@@ -1300,7 +1300,7 @@ def main():
 
 #             encoder_hidden_states 
 
-            unet_outputs = unet.apply(unet_params, noisy_latents, timesteps, encoder_hidden_states, train=False)
+            unet_outputs = unet.apply(params['unet'], noisy_latents, timesteps, encoder_hidden_states, train=False)
 
             noise_pred = unet_outputs.sample 
             noise_pred , variance = noise_pred.split(2, axis=1)
@@ -1327,9 +1327,9 @@ def main():
 #     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
     p_train_step = pjit(
         train_step,
-        in_axis_resources=( text_param_spec,text_opt_state_spec, None, None),
-        out_axis_resources=( text_param_spec,text_opt_state_spec, None, None),
-        donate_argnums=(0, 1),
+        in_axis_resources=( param_spec,text_param_spec,text_opt_state_spec, None, None),
+        out_axis_resources=( param_spec,text_param_spec,text_opt_state_spec, None, None),
+        donate_argnums=(0, 1,2),
     )
 #     p_get_initial_state = pjit(
 #         get_initial_state,
@@ -1390,7 +1390,6 @@ def main():
     
 #     for ix , epoch in enumerate(epochs):
 #         # ======================== Training ================================
-    global unet_params
     with Mesh(mesh_devices, ("dp","mp")):
         for ix , epoch in enumerate(epochs):
             # ======================== Training ================================
@@ -1405,7 +1404,7 @@ def main():
             for batch in train_dataloader:
 #                 batch = shard(batch)
                 # batch = shard(batch)
-                text_params, text_opt_state, train_metric, train_rngs = p_train_step(text_params, text_opt_state, batch, train_rngs)
+                unet_params,text_params, text_opt_state, train_metric, train_rngs = p_train_step(unet_params,text_params, text_opt_state, batch, train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
