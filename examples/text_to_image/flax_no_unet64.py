@@ -1290,7 +1290,7 @@ def main():
 #                 batch = shard(batch)
                 # batch = shard(batch)
                 save_(unet_params['time_embedding']['linear_1']['kernel'],'k3.npy')
-                grads = compute_loss(text_params, batch,train_rngs)
+                grads = compute_loss( batch,train_rngs)
 #                 text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
                 
 #                 text_params = optax.apply_updates(text_params, text_updates)
