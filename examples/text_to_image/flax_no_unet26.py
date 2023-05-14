@@ -1051,7 +1051,7 @@ def main():
             d[key] = 'none'
     fd = flax.core.frozen_dict.freeze({"params":d})
     optimizer = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optax.set_to_zero()}, flax.core.frozen_dict.freeze(label_fn))
+      {'adam': optimizer2_, 'none': optax.set_to_zero()}, flax.core.frozen_dict.freeze( label_fn(text_params) ) )
 
 #     def get_initial_state(params):
 # #         params = jax.tree_util.tree_map(lambda x: x, params)
