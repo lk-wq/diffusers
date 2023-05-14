@@ -1230,7 +1230,7 @@ def main():
     from jax.experimental import PartitionSpec as P 
     from jax.sharding import NamedSharding
 
-    mesh = Mesh(mesh_devices , axis_names={'dp','mp'})
+    mesh = Mesh(mesh_devices , axis_names={'mp','dp'})
 #     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     text_opt_state = optimizer.init(text_params)
