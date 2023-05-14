@@ -1002,15 +1002,15 @@ def main():
         adamw2,
     )
 
-    optimizer = optax.MultiSteps(
-        optimizer_, args.accumulation_frequency
-    )
+#     optimizer = optax.MultiSteps(
+#         optimizer_, args.accumulation_frequency
+#     )
     optimizer2_ = optax.MultiSteps(
         optimizer_2, args.accumulation_frequency
     )
-    optimizer3_ = optax.MultiSteps(
-        optimizer_2, args.accumulation_frequency*2
-    )
+#     optimizer3_ = optax.MultiSteps(
+#         optimizer_2, args.accumulation_frequency*2
+#     )
 
     def flattened_traversal(fn):
       """Returns function that is called with `(path, param)` instead of pytree."""
@@ -1033,7 +1033,7 @@ def main():
     rng = create_key(args.seed)
 
     optimizer = optax.multi_transform(
-      {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
+      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
     weight_dtype = jnp.bfloat16
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
@@ -1177,7 +1177,7 @@ def main():
                 
 #     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
 #     del f
-    gc.collect()
+#     gc.collect()
 #     with Mesh(mesh_devices, ("dp","mp") ):
 #         f = freeze(params) 
 
