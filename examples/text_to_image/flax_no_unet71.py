@@ -1169,7 +1169,7 @@ def main():
         metrics = {"loss": loss}
 
 #         return unet_params, new_text_params, new_text_opt_state, metrics, new_train_rng 
-    def compute_loss(batch,rngs):
+    def compute_loss(params,batch,rngs):
         # Convert images to latent space
 #             latents = vae_outputs.latent_dist.sample(sample_rng)
         # (NHWC) -> (NCHW)
@@ -1191,7 +1191,7 @@ def main():
         encoder_hidden_states = text_encoder(
             batch["input_ids"],
             attention_mask=batch['attention_mask'],
-            params=text_params,
+            params=params,
             train=True,
             dropout_rng=rngs,
         )[0]
