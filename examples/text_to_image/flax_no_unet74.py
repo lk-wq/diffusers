@@ -1289,7 +1289,7 @@ def main():
     #             save_(unet_params['time_embedding']['linear_1']['kernel'],'k3_pre.npy')
     #             print("unet params pre ---->" ,unet_params['time_embedding']['linear_1']['kernel'])
 
-                loss = compute_loss(text_params , batch , train_rngs )
+                loss = loss_jit(text_params , batch , train_rngs )
 #                 text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
 
 #                 text_params = optax.apply_updates(text_params, text_updates)
