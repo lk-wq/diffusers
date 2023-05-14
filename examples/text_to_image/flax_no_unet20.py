@@ -1219,7 +1219,7 @@ def main():
     from jax.experimental import PartitionSpec as P 
     from jax.sharding import NamedSharding
 
-    mesh = Mesh(mesh_devices , axis_names={'mp','dp'})
+    mesh = Mesh(mesh_devices , axis_names={'dp','mp'})
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(text_params))
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(params))
     text_opt_state = freeze(optimizer.init(unfreeze(text_params)))
