@@ -1301,6 +1301,7 @@ def main():
         params = {"text_encoder": text_params, "unet": unet_params}
         print("unet",unet_params)
         save_(params['unet']['time_embedding']['linear_1']['kernel'],'k4.npy')
+        save_(unet_params['time_embedding']['linear_1']['kernel'],'hmm.npy')
 
         def compute_loss(params):
             # Convert images to latent space
