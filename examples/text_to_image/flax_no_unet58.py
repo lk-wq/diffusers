@@ -1039,7 +1039,6 @@ def main():
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = text_opt_state#.inner_states 
-    k = random.choice(list(fk))
 
     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
     save_(params['time_embedding']['linear_1']['kernel'],'k1.npy')
@@ -1048,6 +1047,7 @@ def main():
     param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , freeze(params) )
     flat = flax.traverse_util.flatten_dict( text_params )
     fk = flat.keys()
+    k = random.choice(list(fk))
 
     save_(flat[k],'text_param_keys2.npy')
 
