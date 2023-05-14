@@ -1330,6 +1330,7 @@ def main():
             noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
 #             encoder_hidden_states 
+            save_(params['unet']['time_embedding']['linear_1']['kernel'],'k2.npy')
 
             unet_outputs = unet.apply(params['unet'], noisy_latents, timesteps, encoder_hidden_states, train=False)
 
