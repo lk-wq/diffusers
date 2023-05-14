@@ -109,12 +109,12 @@ def _get_partition_rules():
     ]
 
 
-def set_partitions(in_dict,freeze=False):
+def set_partitions(in_dict,freeze_=False):
     rules = _get_partition_rules()
     replace = _replacement_rules(rules)
 #     initd = {k: _unmatched for k in flatten_dict(in_dict)}
     result = {k: replace(k, v.shape) for k, v in flatten_dict(in_dict).items()}
     assert _unmatched not in result.values(), "Incomplete partition spec."
-    if freeze:
+    if freeze_:
         freeze(unflatten_dict(result))
     return unflatten_dict(result)
