@@ -1291,7 +1291,7 @@ def main():
     def train_step(unet_params,text_params,text_opt_state, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
         params = {"text_encoder": text_params, "unet": unet_params}
-
+        print("unet",unet_params)
         def compute_loss(params):
             # Convert images to latent space
 #             latents = vae_outputs.latent_dist.sample(sample_rng)
@@ -1338,7 +1338,7 @@ def main():
 #         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
 #         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
-        text_updates, new_text_opt_state = optimizer2.update(grads['text_encoder'], text_opt_state,text_params)
+        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,text_params)
 #         save_(text_updates , 'text_updates')
         new_text_params = optax.apply_updates(text_params, text_updates)
         
