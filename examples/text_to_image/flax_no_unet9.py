@@ -1008,6 +1008,9 @@ def main():
     optimizer2_ = optax.MultiSteps(
         optimizer_2, args.accumulation_frequency
     )
+    optimizer2_ = optax.MultiSteps(
+        optimizer_2, args.accumulation_frequency*2
+    )
 
     def flattened_traversal(fn):
       """Returns function that is called with `(path, param)` instead of pytree."""
@@ -1030,7 +1033,7 @@ def main():
     rng = create_key(args.seed)
 
     optimizer2 = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
+      {'adam': optimizer2_, 'none': optimizer3_}, label_fn)
     weight_dtype = jnp.bfloat16
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
