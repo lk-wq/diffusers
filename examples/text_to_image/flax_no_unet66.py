@@ -1199,8 +1199,8 @@ def main():
         noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
 #             encoder_hidden_states 
-        save_(params['unet']['time_embedding']['linear_1']['kernel'],'k3_post.npy')
-        print("unet params post ---->" ,unet_params)
+        save_(unet_params['time_embedding']['linear_1']['kernel'],'k3_post.npy')
+        print("unet params post ---->" ,unet_params['time_embedding']['linear_1']['kernel'])
         unet_outputs = unet.apply(unet_params, noisy_latents, timesteps, encoder_hidden_states, train=False)
 
         noise_pred = unet_outputs.sample 
@@ -1290,7 +1290,7 @@ def main():
 #                 batch = shard(batch)
             # batch = shard(batch)
             save_(unet_params['time_embedding']['linear_1']['kernel'],'k3_pre.npy')
-            print("unet params pre ---->" ,unet_params)
+            print("unet params pre ---->" ,unet_params['time_embedding']['linear_1']['kernel'])
 
             grads = compute_loss( batch , train_rngs )
 #                 text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
