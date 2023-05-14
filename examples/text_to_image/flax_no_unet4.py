@@ -1311,11 +1311,11 @@ def main():
             return loss
 
         grad_fn = jax.value_and_grad(compute_loss)
-        loss, grads = grad_fn(text_params)
+        loss, grads = grad_fn({'text_encoder':text_params})
 #         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
 #         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
-        text_updates, new_text_opt_state = optimizer2.update(grads, text_opt_state,text_params)
+        text_updates, new_text_opt_state = optimizer2.update(grads['text_encoder'], text_opt_state,text_params)
 #         save_(text_updates , 'text_updates')
         new_text_params = optax.apply_updates(text_params, text_updates)
         
