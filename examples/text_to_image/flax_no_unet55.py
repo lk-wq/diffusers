@@ -814,63 +814,6 @@ def main():
         elif args.output_dir is not None:
             os.makedirs(args.output_dir, exist_ok=True)
 
-    # Get the datasets: you can either provide your own training and evaluation files (see below)
-    # or specify a Dataset from the hub (the dataset will be downloaded automatically from the datasets Hub).
-
-    # In distributed training, the load_dataset function guarantees that only one local process can concurrently
-    # download the dataset.
-#     if args.dataset_name is not None:
-#         # Downloading and loading a dataset from the hub.
-#         dataset = load_dataset(
-#             args.dataset_name,
-#             args.dataset_config_name,
-#             cache_dir=args.cache_dir,
-#         )
-#     else:
-#         data_files = {}
-#         if args.train_data_dir is not None:
-#             data_files["train"] = os.path.join(args.train_data_dir, "**")
-#         dataset = load_dataset(
-#             "imagefolder",
-#             data_files=data_files,
-#             cache_dir=args.cache_dir,
-#         )
-        # See more about loading custom images at
-        # https://huggingface.co/docs/datasets/v2.4.0/en/image_load#imagefolder
-    # Preprocessing the datasets.
-    # We need to tokenize inputs and targets.
-#     column_names = dataset["train"].column_names
-
-    # 6. Get the column names for input/target.
-#     dataset_columns = dataset_name_mapping.get(args.dataset_name, None)
-#     if args.image_column is None:
-#         image_column = dataset_columns[0] if dataset_columns is not None else column_names[0]
-#     else:
-#         image_column = args.image_column
-#         if image_column not in column_names:
-#             raise ValueError(
-#                 f"--image_column' value '{args.image_column}' needs to be one of: {', '.join(column_names)}"
-#             )
-
-    # Preprocessing the datasets.
-    # We need to tokenize input captions and transform the images.
-#     def tokenize_captions(examples, is_train=True):
-#         captions = []
-#         for caption in examples[caption_column]:
-#             if isinstance(caption, str):
-#                 captions.append(caption)
-#             elif isinstance(caption, (list, np.ndarray)):
-#                 # take a random caption if there are multiple
-#                 captions.append(random.choice(caption) if is_train else caption[0])
-#             else:
-#                 raise ValueError(
-#                     f"Caption column `{caption_column}` should contain either strings or lists of strings."
-#                 )
-#         inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
-#         input_ids = inputs.input_ids
-#         return input_ids
-#     tokenizer = CLIPTokenizer.from_pretrained(args.pretrained_model_name_or_path, subfolder="tokenizer")
-
     dataset = FolderData(args.train_data_dir,args.pretrained_model_name_or_path,negative_prompt=args.negative_prompt,section0=args.section0,section1=args.section1,if_=args.img_folder,ip=args.instance_prompt,resolution=args.resolution,resolution2=args.resolution2,drop=args.drop,resize=args.resize,center=args.center_crop,tokenizer_folder=args.tokenizer_folder)
 
     def tokenize_captions(captions, is_train=True):
@@ -878,23 +821,6 @@ def main():
         inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
         input_ids = inputs.input_ids
         return input_ids
-
-#     train_transforms = transforms.Compose(
-#         [
-#             transforms.Resize((args.resolution, args.resolution), interpolation=transforms.InterpolationMode.BILINEAR),
-#             transforms.CenterCrop(args.resolution) if args.center_crop else transforms.RandomCrop(args.resolution),
-#             transforms.RandomHorizontalFlip() if args.random_flip else transforms.Lambda(lambda x: x),
-#             transforms.ToTensor(),
-#             transforms.Normalize([0.5], [0.5]),
-#         ]
-#     )
-
-#     def preprocess_train(examples):
-#         images = [image.convert("RGB") for image in examples[image_column]]
-#         examples["pixel_values"] = [train_transforms(image) for image in images]
-#         examples["input_ids"] = tokenize_captions(examples)
-
-#         return examples
 
     if jax.process_index() == 0:
         if args.max_train_samples is not None:
@@ -910,19 +836,6 @@ def main():
         attention_mask = torch.cat([example["txt"][1] for example in examples])
         fixed = [example["fixed"] for example in examples]
         fixed = torch.cat(fixed)
-
-        # Concat class and instance examples for prior preservation.
-        # We do this to avoid doing two forward passes.
-#         if args.with_prior_preservation:
-#             input_ids += [example["class_prompt_ids"] for example in examples]
-#             pixel_values += [example["class_images"] for example in examples]
-
-#         pixel_values = torch.stack(pixel_values)
-#         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
-
-#         input_ids = tokenizer.pad(
-#             {"input_ids": input_ids}, padding="max_length", max_length=tokenizer.model_max_length, return_tensors="pt"
-#         ).input_ids
 
         batch = {
             "input_ids": input_ids,
@@ -1062,75 +975,6 @@ def main():
     optimizer = optax.multi_transform(
       {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn )
 
-#     def get_initial_state(params):
-# #         params = jax.tree_util.tree_map(lambda x: x, params)
-
-#         state = optimizer.init(params)
-#         return state, params
-#     def get_initial_state2(params):
-# #         params = jax.tree_util.tree_map(lambda x: x, params)
-
-#         state = optimizer2.init(params)
-#         return state , params
-    def get_initial_state(params):
-#         params = jax.tree_util.tree_map(lambda x: x, params)
-
-#         state = optimizer.init(params)
-        return params
-    def get_initial_state_opt(params):
-#         params = jax.tree_util.tree_map(lambda x: x, params)
-
-        state = optimizer.init(params)
-        return state
-    def get_initial_state2(params):
-#         params = jax.tree_util.tree_map(lambda x: x, params)
-
-#         state = optimizer.init(params)
-        return params
-    def get_initial_state_opt2(params):
-#         params = jax.tree_util.tree_map(lambda x: x, params)
-
-        state = optimizer.init(params)
-        return state
-    def get_initial_state_opt2_(params):
-#         params = jax.tree_util.tree_map(lambda x: x, params)
-
-        state = optimizer2.init(params)
-        return state , params
-
-    #     def get_initial_state_text(params):
-# #         params = jax.tree_util.tree_map(lambda x: x, params)
-
-#         state = optimizer2.init(params)
-#         return state, params
-
-    param_spec = set_partitions(unfreeze(params),freeze_=True)
-    text_param_spec = set_partitions(unfreeze(text_params))
-
-#     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
-#     state_shapes = jax.eval_shape(get_initial_state_opt, params_shapes)
-    opt = optimizer.init(text_params)
-#     text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
-    text_state_shapes = jax.tree_util.tree_map(lambda x: x.shape, opt)
-#     text_state_shapes = jax.eval_shape(get_initial_state_opt2, text_params_shapes)
-
-    def get_opt_spec(x):
-        if isinstance(x, dict):
-            return param_spec
-        return None
-    def get_opt_spec2(x):
-        if isinstance(x, dict):
-            return text_param_spec
-        return None
-    
-#     opt_state_spec = jax.tree_util.tree_map(
-#         get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
-#     )
-
-    text_opt_state_spec = jax.tree_util.tree_map(
-        get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
-    )
-
     params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
     
@@ -1202,7 +1046,7 @@ def main():
     param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , params)
 
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
-    unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(params))
+    unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     save_(unet_params['time_embedding']['linear_1']['kernel'],'k2.npy')
 #     text_opt_state_spec = jax.tree_util.tree_map(
