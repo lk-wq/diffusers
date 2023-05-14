@@ -1198,10 +1198,9 @@ def main():
 
         noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
-#             encoder_hidden_states 
         save_(unet_params['time_embedding']['linear_1']['kernel'],'k3_post.npy')
-        print("unet params post ---->" ,unet_params['time_embedding']['linear_1']['kernel'])
-        unet_outputs = unet.apply(unet_params, noisy_latents, timesteps, encoder_hidden_states, train=False)
+#         print("unet params post ---->" ,unet_params['time_embedding']['linear_1']['kernel'])
+        unet_outputs = unet.apply(params=unet_params, noisy_latents, timesteps, encoder_hidden_states, train=False)
 
         noise_pred = unet_outputs.sample 
         noise_pred , variance = noise_pred.split(2, axis=1)
@@ -1283,9 +1282,7 @@ def main():
 
         steps_per_epoch = len(train_dataset) // total_train_batch_size
         train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
-        # train
 
-        # train
         for batch in train_dataloader:
 #                 batch = shard(batch)
             # batch = shard(batch)
