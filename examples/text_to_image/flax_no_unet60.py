@@ -1169,7 +1169,7 @@ def main():
 #         metrics = {"loss": loss}
 
 #         return unet_params, new_text_params, new_text_opt_state, metrics, new_train_rng 
-    def compute_loss(params):
+    def compute_loss(params,batch,rngs):
         # Convert images to latent space
 #             latents = vae_outputs.latent_dist.sample(sample_rng)
         # (NHWC) -> (NCHW)
@@ -1178,7 +1178,7 @@ def main():
 #             latents = latents * 0.18215
 
         # Sample noise that we'll add to the latents
-        noise_rng, timestep_rng = jax.random.split(sample_rng)
+        noise_rng, timestep_rng = jax.random.split(rngs)
         noise = jax.random.normal(noise_rng, latents.shape)
         # Sample a random timestep for each image
         bsz = latents.shape[0]
@@ -1191,17 +1191,17 @@ def main():
         encoder_hidden_states = text_encoder(
             batch["input_ids"],
             attention_mask=batch['attention_mask'],
-            params=params['text_encoder'],
+            params=params,
             train=True,
-            dropout_rng=dropout_rng,
+            dropout_rng=rngs,
         )[0]
 
         noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
 #             encoder_hidden_states 
-        save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
+#         save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
 
-        unet_outputs = unet.apply(params['unet'], noisy_latents, timesteps, encoder_hidden_states, train=False)
+        unet_outputs = unet.apply(unet_params, noisy_latents, timesteps, encoder_hidden_states, train=False)
 
         noise_pred = unet_outputs.sample 
         noise_pred , variance = noise_pred.split(2, axis=1)
