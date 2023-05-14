@@ -1289,10 +1289,10 @@ def main():
     #             save_(unet_params['time_embedding']['linear_1']['kernel'],'k3_pre.npy')
     #             print("unet params pre ---->" ,unet_params['time_embedding']['linear_1']['kernel'])
 
-                loss, grads = grad_fun(text_params , batch , train_rngs )
-                text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
+                loss = compute_loss(text_params , batch , train_rngs )
+#                 text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
 
-                text_params = optax.apply_updates(text_params, text_updates)
+#                 text_params = optax.apply_updates(text_params, text_updates)
 
 #                 unet_params,text_params, text_opt_state, train_metric, train_rngs = p_train_step(unet_params,text_params, text_opt_state, batch, train_rngs)
 
