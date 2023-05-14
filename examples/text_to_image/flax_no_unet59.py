@@ -1111,89 +1111,112 @@ def main():
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
     import random
-    def train_step(unet_params,text_params,text_opt_state, batch, train_rng):
-        dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-        params = {"text_encoder": text_params, "unet": unet_params}
-#         print("unet",unet_params)
-#         save_(params['unet']['time_embedding']['linear_1']['kernel'],'k4.npy')
-#         save_(unet_params['time_embedding']['linear_1']['kernel'],'hmm.npy')
-#         flat = flax.traverse_util.flatten_dict( text_params )
-#         fk = flat.keys()
-#         k = random.choice(list(fk))
-#         save_(flat[k],'text_param_keys.npy')
-        
-#         flat = flax.traverse_util.flatten_dict( unet_params )
-#         fk = flat.keys()
-#         k = random.choice(list(fk))
-#         save_(flat[k],'unet_param_keys.npy')
+#     def train_step(unet_params,text_params,text_opt_state, batch, train_rng):
+#         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+#         params = {"text_encoder": text_params, "unet": unet_params}
 
-        def compute_loss(params):
-            # Convert images to latent space
+#         def compute_loss(params):
+#             # Convert images to latent space
+# #             latents = vae_outputs.latent_dist.sample(sample_rng)
+#             # (NHWC) -> (NCHW)
+#             latents = batch["pixel_values"]
+# #             latents = jnp.transpose(latents, (0, 3, 1, 2))
+# #             latents = latents * 0.18215
+
+#             # Sample noise that we'll add to the latents
+#             noise_rng, timestep_rng = jax.random.split(sample_rng)
+#             noise = jax.random.normal(noise_rng, latents.shape)
+#             # Sample a random timestep for each image
+#             bsz = latents.shape[0]
+#             timesteps = jax.random.randint(
+#                 timestep_rng,
+#                 (bsz,),
+#                 0,
+#                 noise_scheduler[0].config.num_train_timesteps,
+#             )
+#             encoder_hidden_states = text_encoder(
+#                 batch["input_ids"],
+#                 attention_mask=batch['attention_mask'],
+#                 params=params['text_encoder'],
+#                 train=True,
+#                 dropout_rng=dropout_rng,
+#             )[0]
+
+#             noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
+
+# #             encoder_hidden_states 
+#             save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
+            
+#             unet_outputs = unet.apply(params['unet'], noisy_latents, timesteps, encoder_hidden_states, train=False)
+
+#             noise_pred = unet_outputs.sample 
+#             noise_pred , variance = noise_pred.split(2, axis=1)
+
+#             loss = (noise - noise_pred) ** 2
+#             loss = loss.mean()
+
+#             return loss
+
+#         grad_fn = jax.value_and_grad(compute_loss)
+#         loss, grads = grad_fn(params)
+# #         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
+# #         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
+        
+#         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
+# #         save_(text_updates , 'text_updates')
+#         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
+        
+#         metrics = {"loss": loss}
+
+#         return unet_params, new_text_params, new_text_opt_state, metrics, new_train_rng 
+    def compute_loss(params):
+        # Convert images to latent space
 #             latents = vae_outputs.latent_dist.sample(sample_rng)
-            # (NHWC) -> (NCHW)
-            latents = batch["pixel_values"]
+        # (NHWC) -> (NCHW)
+        latents = batch["pixel_values"]
 #             latents = jnp.transpose(latents, (0, 3, 1, 2))
 #             latents = latents * 0.18215
 
-            # Sample noise that we'll add to the latents
-            noise_rng, timestep_rng = jax.random.split(sample_rng)
-            noise = jax.random.normal(noise_rng, latents.shape)
-            # Sample a random timestep for each image
-            bsz = latents.shape[0]
-            timesteps = jax.random.randint(
-                timestep_rng,
-                (bsz,),
-                0,
-                noise_scheduler[0].config.num_train_timesteps,
-            )
-            encoder_hidden_states = text_encoder(
-                batch["input_ids"],
-                attention_mask=batch['attention_mask'],
-                params=params['text_encoder'],
-                train=True,
-                dropout_rng=dropout_rng,
-            )[0]
+        # Sample noise that we'll add to the latents
+        noise_rng, timestep_rng = jax.random.split(sample_rng)
+        noise = jax.random.normal(noise_rng, latents.shape)
+        # Sample a random timestep for each image
+        bsz = latents.shape[0]
+        timesteps = jax.random.randint(
+            timestep_rng,
+            (bsz,),
+            0,
+            noise_scheduler[0].config.num_train_timesteps,
+        )
+        encoder_hidden_states = text_encoder(
+            batch["input_ids"],
+            attention_mask=batch['attention_mask'],
+            params=params['text_encoder'],
+            train=True,
+            dropout_rng=dropout_rng,
+        )[0]
 
-            noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
+        noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
 #             encoder_hidden_states 
-            save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
-            
-            unet_outputs = unet.apply(params['unet'], noisy_latents, timesteps, encoder_hidden_states, train=False)
+        save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
 
-            noise_pred = unet_outputs.sample 
-            noise_pred , variance = noise_pred.split(2, axis=1)
+        unet_outputs = unet.apply(params['unet'], noisy_latents, timesteps, encoder_hidden_states, train=False)
 
-            loss = (noise - noise_pred) ** 2
-            loss = loss.mean()
+        noise_pred = unet_outputs.sample 
+        noise_pred , variance = noise_pred.split(2, axis=1)
 
-            return loss
+        loss = (noise - noise_pred) ** 2
+        loss = loss.mean()
 
-        grad_fn = jax.value_and_grad(compute_loss)
-        loss, grads = grad_fn(params)
-#         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
-#         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
-        
-        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,text_params)
-#         save_(text_updates , 'text_updates')
-        new_text_params = optax.apply_updates(text_params, text_updates)
-        
-        metrics = {"loss": loss}
-
-        return unet_params, new_text_params, new_text_opt_state, metrics, new_train_rng 
-
+        return loss
     # Create parallel version of the train step
-#     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
-    p_train_step = pjit(
-        train_step,
-        in_axis_resources=( param_spec,text_param_spec,text_opt_state_spec, None, None),
-        out_axis_resources=( param_spec,text_param_spec,text_opt_state_spec, None, None),
-        donate_argnums=(0, 1,2),
-    )
-#     p_get_initial_state = pjit(
-#         get_initial_state,
-#         in_axis_resources=None,
-#         out_axis_resources=(opt_state_spec, param_spec),
+
+#     p_train_step = pjit(
+#         train_step,
+#         in_axis_resources=( param_spec,text_param_spec,text_opt_state_spec, None, None),
+#         out_axis_resources=( param_spec,text_param_spec,text_opt_state_spec, None, None),
+#         donate_argnums=(0, 1, 2),
 #     )
 
     # Train!
@@ -1249,6 +1272,9 @@ def main():
     
 #     for ix , epoch in enumerate(epochs):k
 #         # ======================== Training ================================
+    loss_jit = jax.jit(compute_loss)
+    gradfun = jax.jit(jax.grad(loss_jit))
+
     with Mesh(mesh_devices, ("dp","mp")):
         for ix , epoch in enumerate(epochs):
             # ======================== Training ================================
@@ -1264,12 +1290,16 @@ def main():
 #                 batch = shard(batch)
                 # batch = shard(batch)
                 save_(unet_params['time_embedding']['linear_1']['kernel'],'k3.npy')
+                grads = grad_fun(text_params, batch,train_rngs)
+                text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
+#         save_(text_updates , 'text_updates')
+                text_params = optax.apply_updates(text_params, text_updates)
 
-                unet_params,text_params, text_opt_state, train_metric, train_rngs = p_train_step(unet_params,text_params, text_opt_state, batch, train_rngs)
+                #unet_params,text_params, text_opt_state, tra#in_metric, train_rngs = p_train_step(unet_params,text_params, text_opt_state, batch, train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
-                train_metrics.append(train_metric)
+#                 train_metrics.append(train_metric)
 
                 train_step_progress_bar.update(1)
 
