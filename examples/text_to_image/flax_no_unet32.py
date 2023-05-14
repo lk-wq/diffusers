@@ -1235,7 +1235,7 @@ def main():
 
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
-    text_opt_state = optimizer.init_text(params)
+    text_opt_state = optimizer.init(params)
 #     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: np.asarray(x), text_opt_state)
 
