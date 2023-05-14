@@ -1048,7 +1048,7 @@ def main():
             d[key] = 'adam'
         else:
             d[key] = 'none'
-    fd = flax.core.frozen_dict.freeze(d)
+    fd = flax.core.frozen_dict.freeze({"params":d})
     optimizer = optax.multi_transform(
       {'adam': optimizer2_, 'none': optax.set_to_zero()}, fd)
 
