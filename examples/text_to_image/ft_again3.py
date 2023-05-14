@@ -1030,7 +1030,7 @@ def main():
     rng = create_key(args.seed)
 
     optimizer = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn)
+      {'adam': optimizer2, 'none': optax.set_to_zero()}, label_fn)
     weight_dtype = jnp.bfloat16
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
