@@ -1191,9 +1191,9 @@ def main():
 #     text_opt_state = text_opt_state#.inner_states 
     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
     save_(params['time_embedding']['linear_1']['kernel'],'k1.npy')
-    text_opt_state_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) ), text_opt_state)
-    text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) ), text_params)
-    param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) ), params)
+    text_opt_state_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_opt_state)
+    text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
+    param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , params)
 
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(params))
