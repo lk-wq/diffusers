@@ -1050,6 +1050,7 @@ def main():
     
 #     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     flat = flax.traverse_util.flatten_dict( text_params )
+    
     d = {}
     for i in flat.keys():
         key = ".".join(list(i))
@@ -1295,13 +1296,22 @@ def main():
 
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
-
+    import random
     def train_step(unet_params,text_params,text_opt_state, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
         params = {"text_encoder": text_params, "unet": unet_params}
-        print("unet",unet_params)
-        save_(params['unet']['time_embedding']['linear_1']['kernel'],'k4.npy')
-        save_(unet_params['time_embedding']['linear_1']['kernel'],'hmm.npy')
+#         print("unet",unet_params)
+#         save_(params['unet']['time_embedding']['linear_1']['kernel'],'k4.npy')
+#         save_(unet_params['time_embedding']['linear_1']['kernel'],'hmm.npy')
+        flat = flax.traverse_util.flatten_dict( text_params )
+        fk = flat.keys()
+        k = random.choice(fk)
+        save_(flat[k],'text_param_keys.npy')
+        
+        flat = flax.traverse_util.flatten_dict( unet_params )
+        fk = flat.keys()
+        k = random.choice(fk)
+        save_(flat[k],'unet_param_keys.npy')
 
         def compute_loss(params):
             # Convert images to latent space
