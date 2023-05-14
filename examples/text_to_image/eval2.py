@@ -1203,7 +1203,7 @@ def main():
         
         metrics = {"loss": loss}
 
-        return new_unet_params, new_text_params, metrics, new_train_rng 
+        return unet_params, text_params, metrics, new_train_rng 
 
     # Create parallel version of the train step
 #     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
