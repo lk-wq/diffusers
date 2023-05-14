@@ -1051,7 +1051,7 @@ def main():
             d[key] = 'none'
     fd = flax.core.frozen_dict.freeze({"params":d})
     optimizer = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optax.set_to_zero()}, flax.core.frozen_dict.freeze( label_fn(text_params) ) )
+      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn )
 
 #     def get_initial_state(params):
 # #         params = jax.tree_util.tree_map(lambda x: x, params)
@@ -1225,14 +1225,16 @@ def main():
           return P(None,None,"mp",None)
         
       print("fail")
-      return object()
+      return None
     from jax.experimental import PartitionSpec as P 
     from jax.sharding import NamedSharding
 
     mesh = Mesh(mesh_devices , axis_names={'dp','mp'})
+    text_opt_state = optimizer.init(text_params)
+    text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(text_opt_state))
+
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(text_params))
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(params))
-    text_opt_state = optimizer.init(text_params)
 #     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: np.asarray(x), text_opt_state)
 
