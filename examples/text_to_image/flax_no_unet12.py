@@ -1116,32 +1116,32 @@ def main():
 #         out_axis_resources=(opt_state_spec, param_spec,text_param_spec),
 #     )
 
-    p_get_initial_state = pjit(
-        get_initial_state,
-        in_axis_resources=None,
-        out_axis_resources=param_spec,
-        donate_argnums=0
-    )
-    p_get_initial_state_opt = pjit(
-        get_initial_state_opt,
-        in_axis_resources=None,
-        out_axis_resources=opt_state_spec,
-        donate_argnums=0
+#     p_get_initial_state = pjit(
+#         get_initial_state,
+#         in_axis_resources=None,
+#         out_axis_resources=param_spec,
+#         donate_argnums=0
+#     )
+#     p_get_initial_state_opt = pjit(
+#         get_initial_state_opt,
+#         in_axis_resources=None,
+#         out_axis_resources=opt_state_spec,
+#         donate_argnums=0
 
-    )
+#     )
 
-    p_get_initial_state2 = pjit(
-        get_initial_state2,
-        in_axis_resources=None,
-        out_axis_resources=text_param_spec,
-        donate_argnums=0
-    )
-    p_get_initial_state_opt2 = pjit(
-        get_initial_state_opt2,
-        in_axis_resources=None,
-        out_axis_resources=text_opt_state_spec,
-        donate_argnums=0
-    )
+#     p_get_initial_state2 = pjit(
+#         get_initial_state2,
+#         in_axis_resources=None,
+#         out_axis_resources=text_param_spec,
+#         donate_argnums=0
+#     )
+#     p_get_initial_state_opt2 = pjit(
+#         get_initial_state_opt2,
+#         in_axis_resources=None,
+#         out_axis_resources=text_opt_state_spec,
+#         donate_argnums=0
+#     )
     
     
 #     p_get_initial_state2 = pjit(
