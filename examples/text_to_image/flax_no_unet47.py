@@ -1305,12 +1305,12 @@ def main():
 #         save_(unet_params['time_embedding']['linear_1']['kernel'],'hmm.npy')
         flat = flax.traverse_util.flatten_dict( text_params )
         fk = flat.keys()
-        k = random.choice(fk)
+        k = random.choice(list(fk))
         save_(flat[k],'text_param_keys.npy')
         
         flat = flax.traverse_util.flatten_dict( unet_params )
         fk = flat.keys()
-        k = random.choice(fk)
+        k = random.choice(list(fk))
         save_(flat[k],'unet_param_keys.npy')
 
         def compute_loss(params):
