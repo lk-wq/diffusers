@@ -59,7 +59,7 @@ from typing import Callable, Dict, Union, NamedTuple, Optional, Iterable, Sequen
 from transformers import T5EncoderModel, FlaxT5EncoderModel
 
 import chex
-# from jax_smi import initialise_tracking
+from jax_smi import initialise_tracking
 
 """
 Stochastically rounded operations between JAX tensors.
@@ -778,7 +778,7 @@ def get_zero(params):
 
 
 def main():
-#     initialise_tracking()
+    initialise_tracking()
 
     args = parse_args()
 
