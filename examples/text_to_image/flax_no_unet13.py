@@ -1085,14 +1085,14 @@ def main():
 #         state = optimizer2.init(params)
 #         return state, params
 
-    param_spec = set_partitions(unfreeze(params))
-    text_param_spec = set_partitions(unfreeze(text_params))
+#     param_spec = set_partitions(unfreeze(params))
+#     text_param_spec = set_partitions(unfreeze(text_params))
 
-    params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
-    state_shapes = jax.eval_shape(get_initial_state_opt, params_shapes)
+#     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
+#     state_shapes = jax.eval_shape(get_initial_state_opt, params_shapes)
 
-    text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
-    text_state_shapes = jax.eval_shape(get_initial_state_opt2, text_params_shapes)
+#     text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
+#     text_state_shapes = jax.eval_shape(get_initial_state_opt2, text_params_shapes)
 
     def get_opt_spec(x):
         if isinstance(x, dict):
@@ -1103,13 +1103,13 @@ def main():
             return text_param_spec
         return None
     
-    opt_state_spec = jax.tree_util.tree_map(
-        get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
-    )
+#     opt_state_spec = jax.tree_util.tree_map(
+#         get_opt_spec, state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
+#     )
 
-    text_opt_state_spec = jax.tree_util.tree_map(
-        get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
-    )
+#     text_opt_state_spec = jax.tree_util.tree_map(
+#         get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
+#     )
 #     p_get_initial_state2 = pjit(
 #         get_initial_state2,
 #         in_axis_resources=(None,None),
