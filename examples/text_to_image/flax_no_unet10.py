@@ -1008,7 +1008,7 @@ def main():
     optimizer2_ = optax.MultiSteps(
         optimizer_2, args.accumulation_frequency
     )
-    optimizer2_ = optax.MultiSteps(
+    optimizer3_ = optax.MultiSteps(
         optimizer_2, args.accumulation_frequency*2
     )
 
