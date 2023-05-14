@@ -1151,6 +1151,12 @@ def main():
     gc.collect()
 
     def partition_shape(shape):
+      for i in shape:
+        if 6 in shape:
+            if len(shape) == 1:
+                return P(None)
+            if len(shape) == 4:
+                return P(None,None,None,None)
       if len(shape) == 1:
         if shape[0] % 4 == 0:
           return P("dp")
