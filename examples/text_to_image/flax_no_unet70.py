@@ -1111,62 +1111,62 @@ def main():
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
     import random
-#     def train_step(unet_params,text_params,text_opt_state, batch, train_rng):
-#         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-#         params = {"text_encoder": text_params, "unet": unet_params}
+    def train_step(unet_params,text_params,text_opt_state, batch, train_rng):
+        dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+        params = {"text_encoder": text_params, "unet": unet_params}
 
-#         def compute_loss(params):
-#             # Convert images to latent space
-# #             latents = vae_outputs.latent_dist.sample(sample_rng)
-#             # (NHWC) -> (NCHW)
-#             latents = batch["pixel_values"]
-# #             latents = jnp.transpose(latents, (0, 3, 1, 2))
-# #             latents = latents * 0.18215
+        def compute_loss(params):
+            # Convert images to latent space
+#             latents = vae_outputs.latent_dist.sample(sample_rng)
+            # (NHWC) -> (NCHW)
+            latents = batch["pixel_values"]
+#             latents = jnp.transpose(latents, (0, 3, 1, 2))
+#             latents = latents * 0.18215
 
-#             # Sample noise that we'll add to the latents
-#             noise_rng, timestep_rng = jax.random.split(sample_rng)
-#             noise = jax.random.normal(noise_rng, latents.shape)
-#             # Sample a random timestep for each image
-#             bsz = latents.shape[0]
-#             timesteps = jax.random.randint(
-#                 timestep_rng,
-#                 (bsz,),
-#                 0,
-#                 noise_scheduler[0].config.num_train_timesteps,
-#             )
-#             encoder_hidden_states = text_encoder(
-#                 batch["input_ids"],
-#                 attention_mask=batch['attention_mask'],
-#                 params=params['text_encoder'],
-#                 train=True,
-#                 dropout_rng=dropout_rng,
-#             )[0]
+            # Sample noise that we'll add to the latents
+            noise_rng, timestep_rng = jax.random.split(sample_rng)
+            noise = jax.random.normal(noise_rng, latents.shape)
+            # Sample a random timestep for each image
+            bsz = latents.shape[0]
+            timesteps = jax.random.randint(
+                timestep_rng,
+                (bsz,),
+                0,
+                noise_scheduler[0].config.num_train_timesteps,
+            )
+            encoder_hidden_states = text_encoder(
+                batch["input_ids"],
+                attention_mask=batch['attention_mask'],
+                params=params['text_encoder'],
+                train=True,
+                dropout_rng=dropout_rng,
+            )[0]
 
-#             noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
+            noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
-# #             encoder_hidden_states 
+#             encoder_hidden_states 
 #             save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
             
-#             unet_outputs = unet.apply(params['unet'], noisy_latents, timesteps, encoder_hidden_states, train=False)
+            unet_outputs = unet.apply({"params": unet_params},noisy_latents, timesteps, encoder_hidden_states, train=False)
 
-#             noise_pred = unet_outputs.sample 
-#             noise_pred , variance = noise_pred.split(2, axis=1)
+            noise_pred = unet_outputs.sample 
+            noise_pred , variance = noise_pred.split(2, axis=1)
 
-#             loss = (noise - noise_pred) ** 2
-#             loss = loss.mean()
+            loss = (noise - noise_pred) ** 2
+            loss = loss.mean()
 
-#             return loss
+            return loss
 
-#         grad_fn = jax.value_and_grad(compute_loss)
-#         loss, grads = grad_fn(params)
-# #         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
-# #         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
+        grad_fn = jax.value_and_grad(compute_loss)
+        loss, grads = grad_fn(params)
+#         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
+#         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
-#         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
-# #         save_(text_updates , 'text_updates')
-#         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
+        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
+#         save_(text_updates , 'text_updates')
+        new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
         
-#         metrics = {"loss": loss}
+        metrics = {"loss": loss}
 
 #         return unet_params, new_text_params, new_text_opt_state, metrics, new_train_rng 
     def compute_loss(batch,rngs):
@@ -1272,193 +1272,193 @@ def main():
 #     for ix , epoch in enumerate(epochs):k
 #         # ======================== Training ================================
     loss_jit = jax.jit(compute_loss)
-    grad_fun = jax.jit(jax.grad(loss_jit))
+    grad_fun = jax.jit(jax.value_and_grad(loss_jit))
 
-#     with Mesh(mesh_devices, ("dp","mp")):
-    for ix , epoch in enumerate(epochs):
-        # ======================== Training ================================
+    with Mesh(mesh_devices, ("dp","mp")):
+        for ix , epoch in enumerate(epochs):
+            # ======================== Training ================================
 
-        train_metrics = []
+            train_metrics = []
 
-        steps_per_epoch = len(train_dataset) // total_train_batch_size
-        train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
+            steps_per_epoch = len(train_dataset) // total_train_batch_size
+            train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
 
-        for batch in train_dataloader:
-#                 batch = shard(batch)
-            # batch = shard(batch)
-            save_(unet_params['time_embedding']['linear_1']['kernel'],'k3_pre.npy')
-            print("unet params pre ---->" ,unet_params['time_embedding']['linear_1']['kernel'])
+            for batch in train_dataloader:
+    #                 batch = shard(batch)
+                # batch = shard(batch)
+    #             save_(unet_params['time_embedding']['linear_1']['kernel'],'k3_pre.npy')
+    #             print("unet params pre ---->" ,unet_params['time_embedding']['linear_1']['kernel'])
 
-            grads = compute_loss( batch , train_rngs )
-#                 text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
+                loss, grads = grad_fun(text_params , batch , train_rngs )
+                text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
 
-#                 text_params = optax.apply_updates(text_params, text_updates)
+                text_params = optax.apply_updates(text_params, text_updates)
 
-            #unet_params,text_params, text_opt_state, tra#in_metric, train_rngs = p_train_step(unet_params,text_params, text_opt_state, batch, train_rngs)
+#                 unet_params,text_params, text_opt_state, train_metric, train_rngs = p_train_step(unet_params,text_params, text_opt_state, batch, train_rngs)
 
-#             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
-            # start = time.perf_counter()
-#                 train_metrics.append(train_metric)
+    #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+                # start = time.perf_counter()
+                train_metrics.append({'loss':loss})
 
-            train_step_progress_bar.update(1)
+                train_step_progress_bar.update(1)
 
-            if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
-#                     if args.ema_frequency > -1 and global_step % args.ema_frequency == 0:
-#                       it = global_step#//args.ema_frequency
-#                       decay = args.min_decay
-#                       decay = min(decay,(1 + it) / (10 + it))
-#                       rng, _ = jax.random.split(rng, 2)
-# #                       params = jax.device_get(unet_params)
-# # jax.device_get(unet_params)
+                if global_step % args.accumulation_frequency == 0 and global_step > args.restart_from and jax.process_index() == 0:
+    #                     if args.ema_frequency > -1 and global_step % args.ema_frequency == 0:
+    #                       it = global_step#//args.ema_frequency
+    #                       decay = args.min_decay
+    #                       decay = min(decay,(1 + it) / (10 + it))
+    #                       rng, _ = jax.random.split(rng, 2)
+    # #                       params = jax.device_get(unet_params)
+    # # jax.device_get(unet_params)
 
-#                       avg = ema_update( rng, unet_params , avg, decay )
-#                       text_avg = ema_update(rng, text_params , text_avg, decay )
+    #                       avg = ema_update( rng, unet_params , avg, decay )
+    #                       text_avg = ema_update(rng, text_params , text_avg, decay )
 
-    #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
-                if global_step % args.save_frequency == 0:
-                    print("saving -----------------------------------------------> " , global_step)
-#                         scheduler = FlaxDDIMScheduler(
-#                             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-#                             # clip_sample=False,
-#                             num_train_timesteps=1000,
-#                             prediction_type="v_prediction",
-#                             set_alpha_to_one=False,
-#                             steps_offset=1,
-#                             # skip_prk_steps=True,
-#                         )
-            #         scheduler = FlaxPNDMScheduler(
-            #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-            #         )
-                    scheduler_args = {}
+        #             if global_step % 512 == 0 and jax.process_index() == 0 and global_step > 0:
+                    if global_step % args.save_frequency == 0:
+                        print("saving -----------------------------------------------> " , global_step)
+    #                         scheduler = FlaxDDIMScheduler(
+    #                             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+    #                             # clip_sample=False,
+    #                             num_train_timesteps=1000,
+    #                             prediction_type="v_prediction",
+    #                             set_alpha_to_one=False,
+    #                             steps_offset=1,
+    #                             # skip_prk_steps=True,
+    #                         )
+                #         scheduler = FlaxPNDMScheduler(
+                #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+                #         )
+                        scheduler_args = {}
 
-                    scheduler_args["variance_type"] = 'fixed_small'
+                        scheduler_args["variance_type"] = 'fixed_small'
 
-                    scheduler = FlaxDDIMScheduler.from_config(
-                            noise_scheduler[0].config, **scheduler_args
-                    )
-#                         params = jax.device_get(unet_params)
+                        scheduler = FlaxDDIMScheduler.from_config(
+                                noise_scheduler[0].config, **scheduler_args
+                        )
+    #                         params = jax.device_get(unet_params)
 
-                    unet.save_pretrained(
-                       args.output_dir+'/unet',params=jax.device_get(avg)
-                    )
-                    scheduler.save_pretrained(args.output_dir+'/scheduler')
-#                         del params
-#                         params2 = jax.device_get(text_params)
+                        unet.save_pretrained(
+                           args.output_dir+'/unet',params=jax.device_get(avg)
+                        )
+                        scheduler.save_pretrained(args.output_dir+'/scheduler')
+    #                         del params
+    #                         params2 = jax.device_get(text_params)
 
-                    text_encoder.save_pretrained(
-                        args.output_dir+'/text_encoder',params=jax.device_get(text_avg)
-                    )
-#                         del params2
+                        text_encoder.save_pretrained(
+                            args.output_dir+'/text_encoder',params=jax.device_get(text_avg)
+                        )
+    #                         del params2
 
-                    if args.ema_frequency > -1:
-                        pass
-#                             pipeline.save_pretrained(
-#                                 args.output_dir,
-#                                 params={
-# #                                     "text_encoder": text_avg,
-# #                                     "vae": get_params_to_save(vae_params),
-#                                     "unet": unet_params,
-# #                                     "safety_checker": safety_checker.params,
+                        if args.ema_frequency > -1:
+                            pass
+    #                             pipeline.save_pretrained(
+    #                                 args.output_dir,
+    #                                 params={
+    # #                                     "text_encoder": text_avg,
+    # #                                     "vae": get_params_to_save(vae_params),
+    #                                     "unet": unet_params,
+    # #                                     "safety_checker": safety_checker.params,
 
-#                                 },
-#                             )
-                    else:
-                        pass
-#                             pipeline.save_pretrained(
-#                                 args.output_dir,
-#                                 params={
-# #                                     "text_encoder": get_params_to_save(text_encoder_state.params),l
-# #                                     "vae": get_params_to_save(vae_params),
-#                                       "unet": unet_params,
-# #                                     "safety_checker": safety_checker.params,
+    #                                 },
+    #                             )
+                        else:
+                            pass
+    #                             pipeline.save_pretrained(
+    #                                 args.output_dir,
+    #                                 params={
+    # #                                     "text_encoder": get_params_to_save(text_encoder_state.params),l
+    # #                                     "vae": get_params_to_save(vae_params),
+    #                                       "unet": unet_params,
+    # #                                     "safety_checker": safety_checker.params,
 
-#                                 },
-#                             )
+    #                                 },
+    #                             )
 
-    #                     blob = bucket.blob(args.output_dir+str(global_step))
-                    try:
-                        upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir+str(global_step))
-                        print("upload SUCCESS ===============================================>")
-                    except:
-                        print("upload fail =================>")
+        #                     blob = bucket.blob(args.output_dir+str(global_step))
+                        try:
+                            upload_local_directory_to_gcs(args.output_dir, bucket, args.bucketdir+str(global_step))
+                            print("upload SUCCESS ===============================================>")
+                        except:
+                            print("upload fail =================>")
 
-    #                     blob.upload_from_filename(args.output_dir+str(global_step))
-    #                     del blob
-    #                     jax.lib.xla_bridge.get_backend().defragment()
-
-
-            global_step += 1
-            if global_step >= args.max_train_steps:
-                break
+        #                     blob.upload_from_filename(args.output_dir+str(global_step))
+        #                     del blob
+        #                     jax.lib.xla_bridge.get_backend().defragment()
 
 
-#             train_metric = jax_utils.unreplicate(train_metric)
+                global_step += 1
+                if global_step >= args.max_train_steps:
+                    break
 
-        train_step_progress_bar.close()
-        epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
 
-    # Create the pipeline using using the trained modules and save it.
-    if jax.process_index() == 0:
-#             scheduler = FlaxDDIMScheduler(
-#                 beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-#                 # clip_sample=False,
-#                 num_train_timesteps=1000,
-#                 prediction_type="v_prediction",
-#                 set_alpha_to_one=False,
-#                 steps_offset=1,
-#                 # skip_prk_steps=True,
-#             )
-        scheduler_args = {}
+    #             train_metric = jax_utils.unreplicate(train_metric)
 
-        scheduler_args["variance_type"] = 'fixed_small'
+            train_step_progress_bar.close()
+            epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
 
-        scheduler = FlaxDDIMScheduler.from_config(
-                noise_scheduler[0].config, **scheduler_args
-        )
+        # Create the pipeline using using the trained modules and save it.
+        if jax.process_index() == 0:
+    #             scheduler = FlaxDDIMScheduler(
+    #                 beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+    #                 # clip_sample=False,
+    #                 num_train_timesteps=1000,
+    #                 prediction_type="v_prediction",
+    #                 set_alpha_to_one=False,
+    #                 steps_offset=1,
+    #                 # skip_prk_steps=True,
+    #             )
+            scheduler_args = {}
 
-#             params = jax.device_get(unet_params)
+            scheduler_args["variance_type"] = 'fixed_small'
 
-        unet.save_pretrained(
-            args.output_dir+'/unet',params=jax.device_get(avg)
+            scheduler = FlaxDDIMScheduler.from_config(
+                    noise_scheduler[0].config, **scheduler_args
+            )
 
-        )
-#             del params
-#             params2 = jax.device_get(text_params)
+    #             params = jax.device_get(unet_params)
 
-        scheduler.save_pretrained(args.output_dir+'/scheduler')
-        text_encoder.save_pretrained(
-            args.output_dir+'/text_encoder',params=jax.device_get(text_avg)
-        )
-#             del params2
-#         scheduler = FlaxPNDMScheduler(
-#             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-#         )
+            unet.save_pretrained(
+                args.output_dir+'/unet',params=jax.device_get(avg)
 
-        if args.ema_frequency > -1:
-            pass
-#                 pipeline.save_pretrained(
-#                     args.output_dir,
-#                     params={
-# #                         "text_encoder": text_avg,
-#                         "unet": unet_params,
+            )
+    #             del params
+    #             params2 = jax.device_get(text_params)
 
-#                     },
-#                 )
-        else:
-            pass
-#                 unet_params = jax.device_get(unet_params)
+            scheduler.save_pretrained(args.output_dir+'/scheduler')
+            text_encoder.save_pretrained(
+                args.output_dir+'/text_encoder',params=jax.device_get(text_avg)
+            )
+    #             del params2
+    #         scheduler = FlaxPNDMScheduler(
+    #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+    #         )
 
-#                 pipeline.save_pretrained(
-#                     args.output_dir,
-#                     params={
-# #                         "text_encoder": get_params_to_save(text_encoder_state.params),
-# #                         "vae": get_params_to_save(vae_params),
-#                           "unet": unet_params,
-# #                         "safety_checker": safety_checker.params,
+            if args.ema_frequency > -1:
+                pass
+    #                 pipeline.save_pretrained(
+    #                     args.output_dir,
+    #                     params={
+    # #                         "text_encoder": text_avg,
+    #                         "unet": unet_params,
 
-#                     },
-#                 )
-        upload_local_directory_to_gcs(args.output_dir , bucket, args.bucketdir)
+    #                     },
+    #                 )
+            else:
+                pass
+    #                 unet_params = jax.device_get(unet_params)
+
+    #                 pipeline.save_pretrained(
+    #                     args.output_dir,
+    #                     params={
+    # #                         "text_encoder": get_params_to_save(text_encoder_state.params),
+    # #                         "vae": get_params_to_save(vae_params),
+    #                           "unet": unet_params,
+    # #                         "safety_checker": safety_checker.params,
+
+    #                     },
+    #                 )
+            upload_local_directory_to_gcs(args.output_dir , bucket, args.bucketdir)
 
 
 if __name__ == "__main__":
