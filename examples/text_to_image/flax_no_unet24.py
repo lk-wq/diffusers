@@ -1031,7 +1031,6 @@ def main():
     def create_key(seed=0):
         return jax.random.PRNGKey(seed)
     rng = create_key(args.seed)
-
     weight_dtype = jnp.bfloat16
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
@@ -1040,6 +1039,8 @@ def main():
     text_encoder, text_params = FlaxT5EncoderModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="text_encoder",dtype=weight_dtype
     )
+    
+#     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     flat = flax.traverse_util.flatten_dict( text_params )
     d = {}
     for i in flat.keys():
@@ -1050,7 +1051,7 @@ def main():
             d[key] = 'none'
     fd = flax.core.frozen_dict.freeze({"params":d})
     optimizer = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optax.set_to_zero()}, fd)
+      {'adam': optimizer2_, 'none': optax.set_to_zero()}, flax.core.frozen_dict.freeze(label_fn))
 
 #     def get_initial_state(params):
 # #         params = jax.tree_util.tree_map(lambda x: x, params)
