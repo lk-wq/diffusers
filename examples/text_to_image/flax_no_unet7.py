@@ -1390,6 +1390,7 @@ def main():
     
 #     for ix , epoch in enumerate(epochs):
 #         # ======================== Training ================================
+    global unet_params
     with Mesh(mesh_devices, ("dp","mp")):
         for ix , epoch in enumerate(epochs):
             # ======================== Training ================================
