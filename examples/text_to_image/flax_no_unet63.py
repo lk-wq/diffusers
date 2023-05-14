@@ -1169,7 +1169,7 @@ def main():
 #         metrics = {"loss": loss}
 
 #         return unet_params, new_text_params, new_text_opt_state, metrics, new_train_rng 
-    def compute_loss(params,batch,rngs):
+    def compute_loss(batch,rngs):
         # Convert images to latent space
 #             latents = vae_outputs.latent_dist.sample(sample_rng)
         # (NHWC) -> (NCHW)
@@ -1191,7 +1191,7 @@ def main():
         encoder_hidden_states = text_encoder(
             batch["input_ids"],
             attention_mask=batch['attention_mask'],
-            params=params,
+            params=text_params,
             train=True,
             dropout_rng=rngs,
         )[0]
@@ -1290,10 +1290,10 @@ def main():
 #                 batch = shard(batch)
                 # batch = shard(batch)
                 save_(unet_params['time_embedding']['linear_1']['kernel'],'k3.npy')
-                grads = grad_fun(text_params, batch,train_rngs)
-                text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
-#         save_(text_updates , 'text_updates')
-                text_params = optax.apply_updates(text_params, text_updates)
+                grads = compute_loss(text_params, batch,train_rngs)
+#                 text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
+                
+#                 text_params = optax.apply_updates(text_params, text_updates)
 
                 #unet_params,text_params, text_opt_state, tra#in_metric, train_rngs = p_train_step(unet_params,text_params, text_opt_state, batch, train_rngs)
 
