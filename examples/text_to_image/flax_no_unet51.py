@@ -1130,46 +1130,6 @@ def main():
     text_opt_state_spec = jax.tree_util.tree_map(
         get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
     )
-#     p_get_initial_state2 = pjit(
-#         get_initial_state2,
-#         in_axis_resources=(None,None),
-#         out_axis_resources=(opt_state_spec, param_spec,text_param_spec),
-#     )
-
-#     p_get_initial_state = pjit(
-#         get_initial_state,
-#         in_axis_resources=None,
-#         out_axis_resources=param_spec,
-#         donate_argnums=0
-#     )
-#     p_get_initial_state_opt = pjit(
-#         get_initial_state_opt,
-#         in_axis_resources=None,
-#         out_axis_resources=opt_state_spec,
-#         donate_argnums=0
-
-#     )
-
-#     p_get_initial_state2 = pjit(
-#         get_initial_state2,
-#         in_axis_resources=None,
-#         out_axis_resources=text_param_spec,
-#         donate_argnums=0
-#     )
-#     p_get_initial_state_opt2 = pjit(
-#         get_initial_state_opt2,
-#         in_axis_resources=None,
-#         out_axis_resources=text_opt_state_spec,
-#         donate_argnums=0
-#     )
-    
-    
-#     p_get_initial_state2 = pjit(
-#         get_initial_state2,
-#         in_axis_resources=None,
-#         out_axis_resources=(text_opt_state_spec,text_param_spec),
-# #         out_axis_resources=text_param_spec,
-#     )
 
     params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
@@ -1190,21 +1150,6 @@ def main():
     import gc 
     gc.collect()
 
-#     with Mesh( mesh_devices , ("dp","mp") ):
-#         f = freeze(text_params) 
-
-#         text_opt_state = p_get_initial_state_opt2( f )
-                
-#     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
-#     del f
-#     gc.collect()
-#     with Mesh(mesh_devices, ("dp","mp") ):
-#         f = freeze(params) 
-
-#         opt_state = p_get_initial_state_opt( f )
-#     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
-#     del f
-#     gc.collect()
     def partition_shape(shape):
       if len(shape) == 1:
         if shape[0] % 4 == 0:
@@ -1246,10 +1191,18 @@ def main():
 #     text_opt_state = text_opt_state#.inner_states 
     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
     save_(params['time_embedding']['linear_1']['kernel'],'k1.npy')
+    text_opt_state_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) ), text_opt_state)
+    text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) ), text_params)
+    param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) ), params)
+
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(params))
     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     save_(unet_params['time_embedding']['linear_1']['kernel'],'k2.npy')
+#     text_opt_state_spec = jax.tree_util.tree_map(
+#         get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
+#     )
+
 
     #     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: np.asarray(x), text_opt_state)
