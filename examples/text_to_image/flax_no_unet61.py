@@ -1273,7 +1273,7 @@ def main():
 #     for ix , epoch in enumerate(epochs):k
 #         # ======================== Training ================================
     loss_jit = jax.jit(compute_loss)
-    gradfun = jax.jit(jax.grad(loss_jit))
+    grad_fun = jax.jit(jax.grad(loss_jit))
 
     with Mesh(mesh_devices, ("dp","mp")):
         for ix , epoch in enumerate(epochs):
