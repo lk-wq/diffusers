@@ -1226,7 +1226,7 @@ def main():
           return P(None,None,"mp",None)
         
       print("fail")
-      return P(None)
+      return P()
     from jax.experimental import PartitionSpec as P 
     from jax.sharding import NamedSharding
 
