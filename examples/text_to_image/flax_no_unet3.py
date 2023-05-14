@@ -1291,7 +1291,7 @@ def main():
             encoder_hidden_states = text_encoder(
                 batch["input_ids"],
                 attention_mask=batch['attention_mask'],
-                params=params['text_encoder'],
+                params=text_encoder,
                 train=True,
                 dropout_rng=dropout_rng,
             )[0]
