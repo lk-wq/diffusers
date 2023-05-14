@@ -1100,7 +1100,7 @@ def main():
 
 #     params_shapes = jax.tree_util.tree_map(lambda x: x.shape, params)
 #     state_shapes = jax.eval_shape(get_initial_state_opt, params_shapes)
-    opt = optimizer.state(text_params)
+    opt = optimizer.init(text_params)
 #     text_params_shapes = jax.tree_util.tree_map(lambda x: x.shape, text_params)
     text_state_shapes = jax.tree_util.tree_map(lambda x: x.shape, opt)
 #     text_state_shapes = jax.eval_shape(get_initial_state_opt2, text_params_shapes)
