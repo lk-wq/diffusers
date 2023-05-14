@@ -1267,9 +1267,9 @@ def main():
 
     def train_step(text_params,text_opt_state, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-#         params = {"text_encoder": text_params, "unet": unet_params}
+        params = {"text_encoder": text_params}#, "unet": unet_params}
 
-        def compute_loss(text_params):
+        def compute_loss(params):
             # Convert images to latent space
 #             latents = vae_outputs.latent_dist.sample(sample_rng)
             # (NHWC) -> (NCHW)
@@ -1291,7 +1291,7 @@ def main():
             encoder_hidden_states = text_encoder(
                 batch["input_ids"],
                 attention_mask=batch['attention_mask'],
-                params=text_encoder,
+                params=params['text_encoder'],
                 train=True,
                 dropout_rng=dropout_rng,
             )[0]
@@ -1311,7 +1311,7 @@ def main():
             return loss
 
         grad_fn = jax.value_and_grad(compute_loss)
-        loss, grads = grad_fn({'text_encoder':text_params})
+        loss, grads = grad_fn(params)
 #         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
 #         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
