@@ -1032,8 +1032,8 @@ def main():
         return jax.random.PRNGKey(seed)
     rng = create_key(args.seed)
 
-    optimizer2 = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optimizer3_}, label_fn)
+    optimizer = optax.multi_transform(
+      {'adam': optimizer_2, 'none': optax.set_to_zero()}, label_fn)
     weight_dtype = jnp.bfloat16
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
@@ -1170,13 +1170,13 @@ def main():
     import gc 
     gc.collect()
 
-    with Mesh( mesh_devices , ("dp","mp") ):
-        f = freeze(text_params) 
+#     with Mesh( mesh_devices , ("dp","mp") ):
+#         f = freeze(text_params) 
 
-        text_opt_state = p_get_initial_state_opt2( f )
+#         text_opt_state = p_get_initial_state_opt2( f )
                 
-    f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
-    del f
+#     f = jax.tree_util.tree_map(lambda x: np.asarray(x), f)
+#     del f
     gc.collect()
 #     with Mesh(mesh_devices, ("dp","mp") ):
 #         f = freeze(params) 
@@ -1222,6 +1222,7 @@ def main():
     mesh = Mesh(mesh_devices , axis_names={'mp','dp'})
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(text_params))
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(params))
+    text_opt_state = optimizer.init(text_params)
 #     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: np.asarray(x), text_opt_state)
 
