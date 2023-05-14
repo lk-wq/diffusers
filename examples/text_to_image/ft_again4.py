@@ -1119,13 +1119,13 @@ def main():
         out_axis_resources=param_spec,
         donate_argnums=0
     )
-    p_get_initial_state_opt = pjit(
-        get_initial_state_opt,
-        in_axis_resources=None,
-        out_axis_resources=opt_state_spec,
-        donate_argnums=0
+#     p_get_initial_state_opt = pjit(
+#         get_initial_state_opt,
+#         in_axis_resources=None,
+#         out_axis_resources=opt_state_spec,
+#         donate_argnums=0
 
-    )
+#     )
 
     p_get_initial_state2 = pjit(
         get_initial_state2,
@@ -1139,7 +1139,6 @@ def main():
         out_axis_resources=text_opt_state_spec,
         donate_argnums=0
     )
-    
     
 #     p_get_initial_state2 = pjit(
 #         get_initial_state2,
