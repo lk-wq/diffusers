@@ -1265,11 +1265,11 @@ def main():
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
 
-    def train_step(unet_params,text_params,text_opt_state, batch, train_rng):
+    def train_step(text_params,text_opt_state, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-        params = {"text_encoder": text_params, "unet": unet_params}
+#         params = {"text_encoder": text_params, "unet": unet_params}
 
-        def compute_loss(params):
+        def compute_loss(text_params):
             # Convert images to latent space
 #             latents = vae_outputs.latent_dist.sample(sample_rng)
             # (NHWC) -> (NCHW)
@@ -1300,7 +1300,7 @@ def main():
 
 #             encoder_hidden_states 
 
-            unet_outputs = unet.apply({"params": params['unet']}, noisy_latents, timesteps, encoder_hidden_states, train=False)
+            unet_outputs = unet.apply(unet_params, noisy_latents, timesteps, encoder_hidden_states, train=False)
 
             noise_pred = unet_outputs.sample 
             noise_pred , variance = noise_pred.split(2, axis=1)
@@ -1311,13 +1311,13 @@ def main():
             return loss
 
         grad_fn = jax.value_and_grad(compute_loss)
-        loss, grads = grad_fn(params)
+        loss, grads = grad_fn(text_params)
 #         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
 #         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
-        text_updates, new_text_opt_state = optimizer2.update(grads['text_encoder'], text_opt_state, params['text_encoder'])
+        text_updates, new_text_opt_state = optimizer2.update(grads, text_opt_state,text_params)
 #         save_(text_updates , 'text_updates')
-        new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
+        new_text_params = optax.apply_updates(text_params, text_updates)
         
         metrics = {"loss": loss}
 
@@ -1327,9 +1327,9 @@ def main():
 #     p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0, 1))
     p_train_step = pjit(
         train_step,
-        in_axis_resources=(param_spec, text_param_spec,text_opt_state_spec, None, None),
-        out_axis_resources=(param_spec, text_param_spec,text_opt_state_spec, None, None),
-        donate_argnums=(0, 1,2),
+        in_axis_resources=( text_param_spec,text_opt_state_spec, None, None),
+        out_axis_resources=( text_param_spec,text_opt_state_spec, None, None),
+        donate_argnums=(0, 1),
     )
 #     p_get_initial_state = pjit(
 #         get_initial_state,
@@ -1404,7 +1404,7 @@ def main():
             for batch in train_dataloader:
 #                 batch = shard(batch)
                 # batch = shard(batch)
-                unet_params,text_params, text_opt_state, train_metric, train_rngs = p_train_step(unet_params,text_params, text_opt_state, batch, train_rngs)
+                text_params, text_opt_state, train_metric, train_rngs = p_train_step(text_params, text_opt_state, batch, train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
