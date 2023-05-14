@@ -1300,6 +1300,8 @@ def main():
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
         params = {"text_encoder": text_params, "unet": unet_params}
         print("unet",unet_params)
+        save_(params['unet']['time_embedding']['linear_1']['kernel'],'k4.npy')
+
         def compute_loss(params):
             # Convert images to latent space
 #             latents = vae_outputs.latent_dist.sample(sample_rng)
@@ -1330,8 +1332,8 @@ def main():
             noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
 #             encoder_hidden_states 
-            save_(params['unet']['time_embedding']['linear_1']['kernel'],'k3.npy')
-
+            save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
+            
             unet_outputs = unet.apply(params['unet'], noisy_latents, timesteps, encoder_hidden_states, train=False)
 
             noise_pred = unet_outputs.sample 
@@ -1436,6 +1438,8 @@ def main():
             for batch in train_dataloader:
 #                 batch = shard(batch)
                 # batch = shard(batch)
+                save_(unet_params['time_embedding']['linear_1']['kernel'],'k3.npy')
+
                 unet_params,text_params, text_opt_state, train_metric, train_rngs = p_train_step(unet_params,text_params, text_opt_state, batch, train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
