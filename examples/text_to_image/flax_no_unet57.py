@@ -1039,16 +1039,27 @@ def main():
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = text_opt_state#.inner_states 
+    k = random.choice(list(fk))
+
     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
     save_(params['time_embedding']['linear_1']['kernel'],'k1.npy')
     text_opt_state_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_opt_state)
     text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
     param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , freeze(params) )
+    flat = flax.traverse_util.flatten_dict( text_params )
+    fk = flat.keys()
+
+    save_(flat[k],'text_param_keys2.npy')
 
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(params))
     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     save_(unet_params['time_embedding']['linear_1']['kernel'],'k2.npy')
+    flat = flax.traverse_util.flatten_dict( text_params )
+    fk = flat.keys()
+
+    save_(flat[k],'text_param_keys2.npy')
+
 #     text_opt_state_spec = jax.tree_util.tree_map(
 #         get_opt_spec2, text_state_shapes, is_leaf=lambda x: isinstance(x, (dict, optax.EmptyState))
 #     )
