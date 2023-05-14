@@ -1247,7 +1247,7 @@ def main():
     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
     save_(params['time_embedding']['linear_1']['kernel'],'k1.npy')
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
-    unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
+    unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), freeze(params))
     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     save_(unet_params['time_embedding']['linear_1']['kernel'],'k2.npy')
 
@@ -1303,15 +1303,15 @@ def main():
 #         print("unet",unet_params)
 #         save_(params['unet']['time_embedding']['linear_1']['kernel'],'k4.npy')
 #         save_(unet_params['time_embedding']['linear_1']['kernel'],'hmm.npy')
-        flat = flax.traverse_util.flatten_dict( text_params )
-        fk = flat.keys()
-        k = random.choice(list(fk))
-        save_(flat[k],'text_param_keys.npy')
+#         flat = flax.traverse_util.flatten_dict( text_params )
+#         fk = flat.keys()
+#         k = random.choice(list(fk))
+#         save_(flat[k],'text_param_keys.npy')
         
-        flat = flax.traverse_util.flatten_dict( unet_params )
-        fk = flat.keys()
-        k = random.choice(list(fk))
-        save_(flat[k],'unet_param_keys.npy')
+#         flat = flax.traverse_util.flatten_dict( unet_params )
+#         fk = flat.keys()
+#         k = random.choice(list(fk))
+#         save_(flat[k],'unet_param_keys.npy')
 
         def compute_loss(params):
             # Convert images to latent space
