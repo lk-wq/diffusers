@@ -1040,7 +1040,7 @@ def main():
     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = text_opt_state#.inner_states 
 
-#     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
+    text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
 
     text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
     param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , params )
