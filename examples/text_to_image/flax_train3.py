@@ -1068,7 +1068,7 @@ def main():
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
     import random
-    def train_step(unet_params,text_opt_statetext_params, batch, train_rng):
+    def train_step(unet_params,text_opt_state,text_params, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
         params = {"text_encoder": text_params, "unet": unet_params}
 
