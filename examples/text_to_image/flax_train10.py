@@ -1195,6 +1195,7 @@ def main():
     for batch in train_dataloader:
         batch
         break
+    import time
     with Mesh(mesh_devices, ("dp","mp")):
 #         for ix , epoch in enumerate(epochs):
             # ======================== Training ================================
@@ -1217,7 +1218,8 @@ def main():
 #                 text_params = optax.apply_updates(text_params, text_updates)
 
             unet_params,text_opt_state,text_params, train_metric, train_rngs = p_train_step(unet_params,text_opt_state,text_params, batch, train_rngs)
-
+            if ix % 32 == 0:
+                time.sleep(1)
 #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
             # start = time.perf_counter()
 #                 train_metrics.append({'loss':loss})
