@@ -1315,7 +1315,6 @@ def main():
                 batch["input_ids"],
                 attention_mask=batch['attention_mask'],
                 params=params,
-                train=True,
                 dropout_rng=train_rngs,
             )[0]
 
