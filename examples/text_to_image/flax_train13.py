@@ -1114,9 +1114,9 @@ def main():
 
             return loss
 
-        grad_fn = jax.value_and_grad(compute_loss)
-#         loss = compute_loss(params)
-        loss, grads = grad_fn(params)
+#         grad_fn = jax.value_and_grad(compute_loss)
+        loss = compute_loss(params)
+#         loss, grads = grad_fn(params)
 #         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
 #         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
