@@ -1316,67 +1316,67 @@ def main():
 #             epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
 
         # Create the pipeline using using the trained modules and save it.
-        if jax.process_index() == 0:
-    #             scheduler = FlaxDDIMScheduler(
-    #                 beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
-    #                 # clip_sample=False,
-    #                 num_train_timesteps=1000,
-    #                 prediction_type="v_prediction",
-    #                 set_alpha_to_one=False,
-    #                 steps_offset=1,
-    #                 # skip_prk_steps=True,
-    #             )
-            scheduler_args = {}
+#         if jax.process_index() == 0:
+#     #             scheduler = FlaxDDIMScheduler(
+#     #                 beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", 
+#     #                 # clip_sample=False,
+#     #                 num_train_timesteps=1000,
+#     #                 prediction_type="v_prediction",
+#     #                 set_alpha_to_one=False,
+#     #                 steps_offset=1,
+#     #                 # skip_prk_steps=True,
+#     #             )
+#             scheduler_args = {}
 
-            scheduler_args["variance_type"] = 'fixed_small'
+#             scheduler_args["variance_type"] = 'fixed_small'
 
-            scheduler = FlaxDDIMScheduler.from_config(
-                    noise_scheduler[0].config, **scheduler_args
-            )
+#             scheduler = FlaxDDIMScheduler.from_config(
+#                     noise_scheduler[0].config, **scheduler_args
+#             )
 
-    #             params = jax.device_get(unet_params)
+#     #             params = jax.device_get(unet_params)
 
-            unet.save_pretrained(
-                args.output_dir+'/unet',params=jax.device_get(avg)
+#             unet.save_pretrained(
+#                 args.output_dir+'/unet',params=jax.device_get(avg)
 
-            )
-    #             del params
-    #             params2 = jax.device_get(text_params)
+#             )
+#     #             del params
+#     #             params2 = jax.device_get(text_params)
 
-            scheduler.save_pretrained(args.output_dir+'/scheduler')
-            text_encoder.save_pretrained(
-                args.output_dir+'/text_encoder',params=jax.device_get(text_avg)
-            )
-    #             del params2
-    #         scheduler = FlaxPNDMScheduler(
-    #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-    #         )
+#             scheduler.save_pretrained(args.output_dir+'/scheduler')
+#             text_encoder.save_pretrained(
+#                 args.output_dir+'/text_encoder',params=jax.device_get(text_avg)
+#             )
+#     #             del params2
+#     #         scheduler = FlaxPNDMScheduler(
+#     #             beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+#     #         )
 
-            if args.ema_frequency > -1:
-                pass
-    #                 pipeline.save_pretrained(
-    #                     args.output_dir,
-    #                     params={
-    # #                         "text_encoder": text_avg,
-    #                         "unet": unet_params,
+#             if args.ema_frequency > -1:
+#                 pass
+#     #                 pipeline.save_pretrained(
+#     #                     args.output_dir,
+#     #                     params={
+#     # #                         "text_encoder": text_avg,
+#     #                         "unet": unet_params,
 
-    #                     },
-    #                 )
-            else:
-                pass
-    #                 unet_params = jax.device_get(unet_params)
+#     #                     },
+#     #                 )
+#             else:
+#                 pass
+#     #                 unet_params = jax.device_get(unet_params)
 
-    #                 pipeline.save_pretrained(
-    #                     args.output_dir,
-    #                     params={
-    # #                         "text_encoder": get_params_to_save(text_encoder_state.params),
-    # #                         "vae": get_params_to_save(vae_params),
-    #                           "unet": unet_params,
-    # #                         "safety_checker": safety_checker.params,
+#     #                 pipeline.save_pretrained(
+#     #                     args.output_dir,
+#     #                     params={
+#     # #                         "text_encoder": get_params_to_save(text_encoder_state.params),
+#     # #                         "vae": get_params_to_save(vae_params),
+#     #                           "unet": unet_params,
+#     # #                         "safety_checker": safety_checker.params,
 
-    #                     },
-    #                 )
-            upload_local_directory_to_gcs(args.output_dir , bucket, args.bucketdir)
+#     #                     },
+#     #                 )
+#             upload_local_directory_to_gcs(args.output_dir , bucket, args.bucketdir)
 
 
 if __name__ == "__main__":
