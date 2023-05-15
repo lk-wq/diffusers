@@ -1204,7 +1204,7 @@ def main():
 #             steps_per_epoch = len(train_dataset) // total_train_batch_size
 #             train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
 
-        for ix range(10000):
+        for ix in range(10000):
             print(ix)
 #                 batch = shard(batch)
             # batch = shard(batch)
