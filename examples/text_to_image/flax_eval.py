@@ -778,7 +778,7 @@ def get_zero(params):
 
 
 def main():
-    initialise_tracking()
+#     initialise_tracking()
 
     args = parse_args()
 
