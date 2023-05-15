@@ -1037,7 +1037,7 @@ def main():
     mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
 #     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
-#     text_opt_state = optimizer.init(text_params)
+    text_opt_state = optimizer.init(text_params)
 #     text_opt_state = text_opt_state#.inner_states 
 
 #     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
@@ -1052,7 +1052,7 @@ def main():
 
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
-#     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
+    text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
 #     flat = flax.traverse_util.flatten_dict( text_params )
 #     fk = flat.keys()
 
@@ -1068,7 +1068,7 @@ def main():
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
     import random
-    def train_step(unet_params,text_params, batch, train_rng):
+    def train_step(unet_params,text_opt_statetext_params, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
         params = {"text_encoder": text_params, "unet": unet_params}
 
@@ -1114,26 +1114,26 @@ def main():
 
             return loss
 
-#         grad_fn = jax.value_and_grad(compute_loss)
-        loss = compute_loss(params)
-#         loss, grads = grad_fn(params)
+        grad_fn = jax.value_and_grad(compute_loss)
+#         loss = compute_loss(params)
+        loss, grads = grad_fn(params)
 #         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
 #         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
-#         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
+        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
 #         save_(text_updates , 'text_updates')
-#         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
+        new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
         
         metrics = {"loss": loss}
 
-        return unet_params, text_params, metrics, new_train_rng 
+        return unet_params,new_text_opt_state, new_text_params, metrics, new_train_rng 
     # Create parallel version of the train step
 
     p_train_step = pjit(
         train_step,
-        in_axis_resources=( param_spec,text_param_spec,None,None ),
-        out_axis_resources=( param_spec,text_param_spec, None, None),
-        donate_argnums=(0, 1),
+        in_axis_resources=( param_spec,text_opt_state, text_param_spec,None,None ),
+        out_axis_resources=( param_spec,text_opt_state,text_param_spec, None, None),
+        donate_argnums=(0, 1,2),
     )
 
     # Train!
@@ -1212,7 +1212,7 @@ def main():
 
 #                 text_params = optax.apply_updates(text_params, text_updates)
 
-                unet_params,text_params, train_metric, train_rngs = p_train_step(unet_params,text_params, batch, train_rngs)
+                unet_params,text_opt_state,text_params, train_metric, train_rngs = p_train_step(unet_params,text_opt_state,text_params, batch, train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
