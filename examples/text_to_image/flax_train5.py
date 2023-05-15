@@ -1131,8 +1131,8 @@ def main():
 
     p_train_step = pjit(
         train_step,
-        in_axis_resources=( param_spec,text_opt_state, text_param_spec,None,None ),
-        out_axis_resources=( param_spec,text_opt_state,text_param_spec, None, None),
+        in_axis_resources=( param_spec,text_opt_state_spec, text_param_spec,None,None ),
+        out_axis_resources=( param_spec,text_opt_state_spec,text_param_spec, None, None),
         donate_argnums=(0, 1,2),
     )
 
