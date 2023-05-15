@@ -1254,7 +1254,7 @@ def main():
                 bi = batch['input_ids']
                 pixels = batch['pixel_values']
                 mask = batch['attention_mask']
-                unet_params,text_params, train_metric, train_rngs = p_train_step(unet_params,text_params, batch, pixels,mask,train_rngs)
+                unet_params,text_params, train_metric, train_rngs = p_train_step(unet_params,text_params, bi, pixels,mask,train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
