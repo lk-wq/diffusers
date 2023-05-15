@@ -1007,7 +1007,7 @@ def main():
         else:
           return P("mp")
       if len(shape) == 2:
-        if shape[0] % 4 == 0 and shape[1] % 2 == 0:
+        if shape[0] % 4 == 0 and shape[1] % 2 == 0 and shape[0] > shape[1]:
           return P("dp","mp")
         if shape[0] % 2 == 0 and shape[1] % 4 == 0:
           return P("mp","dp")
@@ -1214,7 +1214,7 @@ def main():
 
     p_train_step = pjit(
         train_step,
-        in_axis_resources=( param_spec,text_param_spec, None, None),
+        in_axis_resources=( param_spec,text_param_spec, P(", None),
         out_axis_resources=( param_spec,text_param_spec, None, None),
         donate_argnums=(0, 1, 2),
     )
@@ -1274,7 +1274,7 @@ def main():
 #         # ======================== Training ================================
 #     loss_jit = jax.jit(compute_loss)
 #     grad_fun = jax.jit(jax.value_and_grad(loss_jit))
-    return
+#     return
     with Mesh(mesh_devices, ("dp","mp")):
         for ix , epoch in enumerate(epochs):
             # ======================== Training ================================
