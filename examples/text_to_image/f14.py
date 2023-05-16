@@ -1235,7 +1235,7 @@ def main():
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
-                train_metrics.append({'loss':loss})
+                train_metrics.append( train_metric )
 
                 train_step_progress_bar.update(1)
 
