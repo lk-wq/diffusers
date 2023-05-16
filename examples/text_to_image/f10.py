@@ -942,6 +942,16 @@ def main():
       return mask
     label_fn = flattened_traversal(
         lambda path, _: 'adam' if check_str(path) else 'none')
+    label_fn2 = flattened_traversal(
+        lambda path, _: 'adam' if check_str2(path) else 'none')
+    def check_str2(path):
+      for s in path:
+        if 'atte' in s:
+            print("success ---> " , path )
+            return True
+#       print("fail ----> ", path )      
+      return False
+
     def check_str(path):
       for s in path:
         if '23' in s:
@@ -974,6 +984,8 @@ def main():
     fd = flax.core.frozen_dict.freeze({"params":d})
     optimizer = optax.multi_transform(
       {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn )
+    optimizer2 = optax.multi_transform(
+      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn2 )
 
     params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
     text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
@@ -1055,7 +1067,7 @@ def main():
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     
-    opt_state = optimizer2_.init(unet_params)
+    opt_state = optimizer2.init(unet_params)
     opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), opt_state)
     opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
 
@@ -1123,7 +1135,7 @@ def main():
         grad_fn = jax.value_and_grad(compute_loss)
 #         loss = compute_loss(params)
         loss, grads = grad_fn(params)
-        unet_updates, new_unet_opt_state = optimizer2_.update(grads['unet'], unet_opt_state, params['unet'])
+        unet_updates, new_unet_opt_state = optimizer2.update(grads['unet'], unet_opt_state, params['unet'])
         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
