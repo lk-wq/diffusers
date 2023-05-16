@@ -1137,7 +1137,7 @@ def main():
         
         metrics = {"loss": loss}
 
-        return new_unet_params, text_opt_state,text_params, metrics, new_train_rng 
+        return unet_params, text_opt_state,text_params, metrics, new_train_rng 
 
     p_train_step = pjit(
         train_step,
