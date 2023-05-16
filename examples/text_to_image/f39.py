@@ -1113,8 +1113,8 @@ def main():
 
 #             encoder_hidden_states 
 #             save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
-            
-            unet_outputs = unet.apply({"params": params['unet']},noisy_latents, timesteps, encoder_hidden_states, train=True)
+            with jax.default_matmul_precision('float32'):
+                unet_outputs = unet.apply({"params": params['unet']},noisy_latents, timesteps, encoder_hidden_states, train=True)
 
             noise_pred = unet_outputs.sample 
             noise_pred , variance = noise_pred.split(2, axis=1)
