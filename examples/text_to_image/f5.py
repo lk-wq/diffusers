@@ -1038,7 +1038,7 @@ def main():
 #     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     text_opt_state = optimizer.init(text_params)
-    opt_state = optimizer2.init(params)
+    opt_state = optimizer2_.init(params)
 
     #     text_opt_state = text_opt_state#.inner_states 
 
