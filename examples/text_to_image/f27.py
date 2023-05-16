@@ -969,11 +969,11 @@ def main():
     rng = create_key(args.seed)
     weight_dtype = jnp.bfloat16
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="unet",dtype=weight_dtype
+        "new_attempt17", subfolder="unet",dtype=weight_dtype
     )
     
     text_encoder, text_params = FlaxT5EncoderModel.from_pretrained(
-        args.pretrained_model_name_or_path, subfolder="text_encoder",dtype=weight_dtype
+        "new_attempt16", subfolder="text_encoder",dtype=weight_dtype
     )
     
 #     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
