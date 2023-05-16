@@ -946,7 +946,7 @@ def main():
         lambda path, _: 'adam' if check_str2(path) else 'none')
     def check_str2(path):
       for s in path:
-        if 'atte' in s:
+        if 'atte' in s or 'up_block' in s or 'norm' in s or 'bias' in s:
             print("success ---> " , path )
             return True
 #       print("fail ----> ", path )      
@@ -1235,7 +1235,7 @@ def main():
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
-#                 train_metrics.append({'loss':loss})
+                train_metrics.append({'loss':loss})
 
                 train_step_progress_bar.update(1)
 
