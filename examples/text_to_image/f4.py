@@ -1114,19 +1114,19 @@ def main():
 
             return loss
 
-#         grad_fn = jax.value_and_grad(compute_loss)
-        loss = compute_loss(params)
-#         loss, grads = grad_fn(params)
+        grad_fn = jax.value_and_grad(compute_loss)
+#         loss = compute_loss(params)
+        loss, grads = grad_fn(params)
 #         unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], unet_opt_state, params['unet'])
 #         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
-#         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
+        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
 #         save_(text_updates , 'text_updates')
-#         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
+        new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
         
         metrics = {"loss": loss}
 
-        return unet_params, text_opt_state,text_params, metrics, new_train_rng 
+        return unet_params, new_text_opt_state,new_text_params, metrics, new_train_rng 
     def compute_loss(params,batch,rngs):
         # Convert images to latent space
 #             latents = vae_outputs.latent_dist.sample(sample_rng)
