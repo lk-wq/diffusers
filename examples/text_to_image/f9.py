@@ -1055,7 +1055,7 @@ def main():
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     
-    opt_state = optimizer2_.init(text_params)
+    opt_state = optimizer2_.init(unet_params)
     opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), opt_state)
     opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
 
@@ -1133,53 +1133,12 @@ def main():
         metrics = {"loss": loss}
 
         return new_unet_opt_state,new_unet_params, new_text_opt_state,new_text_params, metrics, new_train_rng 
-    def compute_loss(params,batch,rngs):
-        # Convert images to latent space
-#             latents = vae_outputs.latent_dist.sample(sample_rng)
-        # (NHWC) -> (NCHW)
-        latents = batch["pixel_values"]
-#             latents = jnp.transpose(latents, (0, 3, 1, 2))
-#             latents = latents * 0.18215
-
-        # Sample noise that we'll add to the latents
-        noise_rng, timestep_rng = jax.random.split(rngs)
-        noise = jax.random.normal(noise_rng, latents.shape)
-        # Sample a random timestep for each image
-        bsz = latents.shape[0]
-        timesteps = jax.random.randint(
-            timestep_rng,
-            (bsz,),
-            0,
-            noise_scheduler[0].config.num_train_timesteps,
-        )
-        encoder_hidden_states = text_encoder(
-            batch["input_ids"],
-            attention_mask=batch['attention_mask'],
-            params=params,
-            train=True,
-            dropout_rng=rngs,
-        )[0]
-
-        noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
-
-        save_(unet_params['time_embedding']['linear_1']['kernel'],'k3_post.npy')
-#         print("unet params post ---->" ,unet_params['time_embedding']['linear_1']['kernel'])
-        unet_outputs = unet.apply({"params": unet_params},noisy_latents, timesteps, encoder_hidden_states, train=False)
-
-        noise_pred = unet_outputs.sample 
-        noise_pred , variance = noise_pred.split(2, axis=1)
-
-        loss = (noise - noise_pred) ** 2
-        loss = loss.mean()
-
-        return loss
-    # Create parallel version of the train step
 
     p_train_step = pjit(
         train_step,
         in_axis_resources=( opt_state_spec,param_spec,text_opt_state_spec,text_param_spec,P("dp",None),P("dp",None),P("dp",None),None ),
         out_axis_resources=(opt_state_spec, param_spec,text_opt_state_spec,text_param_spec, None, None),
-        donate_argnums=(0, 1),
+        donate_argnums=(0, 1,2,3),
     )
 
     # Train!
