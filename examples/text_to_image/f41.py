@@ -1113,8 +1113,7 @@ def main():
 
 #             encoder_hidden_states 
 #             save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
-            with jax.default_matmul_precision('float32'):
-                unet_outputs = unet.apply({"params": params['unet']},noisy_latents, timesteps, encoder_hidden_states, train=True)
+            unet_outputs = unet.apply({"params": params['unet']},noisy_latents, timesteps, encoder_hidden_states, train=True)
 
             noise_pred = unet_outputs.sample 
             noise_pred , variance = noise_pred.split(2, axis=1)
@@ -1143,7 +1142,7 @@ def main():
         train_step,
         in_axis_resources=( param_spec,text_opt_state_spec,text_param_spec,P("dp",None),P("dp",None),P("dp",None),None ),
         out_axis_resources=( param_spec,text_opt_state_spec,text_param_spec, None, None),
-        donate_argnums=(0, 1,2,3),
+        donate_argnums=(0, 1,2),
     )
 
     # Train!
@@ -1224,7 +1223,8 @@ def main():
                 bi = batch['input_ids'].astype(jnp.float32)
                 pixels = batch['pixel_values'].astype(jnp.float32)
                 mask = batch['attention_mask']
-                unet_params,text_opt_state,text_params, train_metric, train_rngs = p_train_step(unet_params,text_opt_state,text_params, bi, pixels,mask,train_rngs)
+                with jax.default_matmul_precision('float32'):
+                    unet_params,text_opt_state,text_params, train_metric, train_rngs = p_train_step(unet_params,text_opt_state,text_params, bi, pixels,mask,train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
