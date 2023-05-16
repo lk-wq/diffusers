@@ -1049,19 +1049,19 @@ def main():
     mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
 #     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
-    text_opt_state = optimizer.init(text_params)
-
-    text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
     text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
     param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , params )
 
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), params)
-    text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_opt_state)
+    text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     
     opt_state = optimizer2.init(unet_params)
-    opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), opt_state)
+    opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), opt_state)
     opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
+    text_opt_state = optimizer.init(text_params)
+
+    text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
 
     noise_scheduler = FlaxDDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
