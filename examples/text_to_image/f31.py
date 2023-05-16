@@ -969,7 +969,7 @@ def main():
     rng = create_key(args.seed)
     weight_dtype = jnp.bfloat16
     unet, params = FlaxUNet2DConditionModel.from_pretrained(
-        "new_attempt16", subfolder="unet",dtype=weight_dtype
+        "new_attempt17", subfolder="unet",dtype=weight_dtype
     )
     
     text_encoder, text_params = FlaxT5EncoderModel.from_pretrained(
@@ -1057,12 +1057,12 @@ def main():
     text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
     param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , params )
 
-    text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_params)
+    text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.float32), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), params)
     
-    opt_state = optimizer2.init(unet_params)
-    opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), opt_state)
-    opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
+#     opt_state = optimizer2.init(unet_params)
+#     opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), opt_state)
+#     opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
     
     text_opt_state = optimizer.init(text_params)
     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
@@ -1078,7 +1078,7 @@ def main():
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
     import random
-    def train_step(unet_opt_state,unet_params,text_opt_state,text_params, input_ids, pixels, mask, train_rng):
+    def train_step(unet_params,text_opt_state,text_params, input_ids, pixels, mask, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
         params = {"text_encoder": text_params, "unet": unet_params}
 
@@ -1127,22 +1127,22 @@ def main():
         grad_fn = jax.value_and_grad(compute_loss)
 #         loss = compute_loss(params)
         loss, grads = grad_fn(params)
-        unet_updates, new_unet_opt_state = optimizer2.update(grads['unet'], unet_opt_state, params['unet'])
-        new_unet_params = optax.apply_updates(params['unet'], unet_updates)
+#         unet_updates, new_unet_opt_state = optimizer2.update(grads['unet'], unet_opt_state, params['unet'])
+#         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
-#         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
-#         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
+        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
+        new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
 #         save_2_(grads['text_encoder'])
 #         print("grads ------------------------------>",grads['unet'])
         
         metrics = {"loss": loss}
 
-        return new_unet_opt_state,new_unet_params, text_opt_state,text_params, metrics, new_train_rng 
+        return new_unet_params, text_opt_state,text_params, metrics, new_train_rng 
 
     p_train_step = pjit(
         train_step,
-        in_axis_resources=( opt_state_spec,param_spec,text_opt_state_spec,text_param_spec,P("dp",None),P("dp",None),P("dp",None),None ),
-        out_axis_resources=(opt_state_spec, param_spec,text_opt_state_spec,text_param_spec, None, None),
+        in_axis_resources=( param_spec,text_opt_state_spec,text_param_spec,P("dp",None),P("dp",None),P("dp",None),None ),
+        out_axis_resources=( param_spec,text_opt_state_spec,text_param_spec, None, None),
         donate_argnums=(0, 1,2,3),
     )
 
@@ -1224,7 +1224,7 @@ def main():
                 bi = batch['input_ids']
                 pixels = batch['pixel_values']
                 mask = batch['attention_mask']
-                opt_state,unet_params,text_opt_state,text_params, train_metric, train_rngs = p_train_step(opt_state,unet_params,text_opt_state,text_params, bi, pixels,mask,train_rngs)
+                unet_params,text_opt_state,text_params, train_metric, train_rngs = p_train_step(unet_params,text_opt_state,text_params, bi, pixels,mask,train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
