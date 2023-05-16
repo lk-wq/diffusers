@@ -1051,17 +1051,9 @@ def main():
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     text_opt_state = optimizer.init(text_params)
 
-    #     text_opt_state = text_opt_state#.inner_states 
-
     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
-
     text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
     param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , params )
-#     flat = flax.traverse_util.flatten_dict( text_params )
-#     fk = flat.keys()
-#     k = random.choice(list(fk))
-
-#     save_(flat[k],'text_param_keys2.npy')
 
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
@@ -1071,10 +1063,6 @@ def main():
     opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), opt_state)
     opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
 
-    #     flat = flax.traverse_util.flatten_dict( text_params )
-#     fk = flat.keys()
-
-#     save_(flat[k],'text_param_keys2.npy')
     noise_scheduler = FlaxDDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
     noise_scheduler_state = noise_scheduler[1]#.create_state()
@@ -1122,7 +1110,7 @@ def main():
 #             encoder_hidden_states 
 #             save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
             
-            unet_outputs = unet.apply({"params": params['unet']},noisy_latents, timesteps, encoder_hidden_states, train=False)
+            unet_outputs = unet.apply({"params": params['unet']},noisy_latents, timesteps, encoder_hidden_states, train=True)
 
             noise_pred = unet_outputs.sample 
             noise_pred , variance = noise_pred.split(2, axis=1)
@@ -1139,7 +1127,6 @@ def main():
         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
-#         save_(text_updates , 'text_updates')
         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
         
         metrics = {"loss": loss}
