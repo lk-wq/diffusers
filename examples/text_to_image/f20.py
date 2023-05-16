@@ -1058,8 +1058,8 @@ def main():
     opt_state = optimizer2.init(unet_params)
     opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), opt_state)
     opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
+    
     text_opt_state = optimizer.init(text_params)
-
     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
 
     noise_scheduler = FlaxDDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
@@ -1122,15 +1122,16 @@ def main():
         grad_fn = jax.value_and_grad(compute_loss)
 #         loss = compute_loss(params)
         loss, grads = grad_fn(params)
-        unet_updates, new_unet_opt_state = optimizer2.update(grads['unet'], unet_opt_state, params['unet'])
-        new_unet_params = optax.apply_updates(params['unet'], unet_updates)
+#         unet_updates, new_unet_opt_state = optimizer2.update(grads['unet'], unet_opt_state, params['unet'])
+#         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
+        print("grads ------------------------------>",grads['text_encoder'])
         
         metrics = {"loss": loss}
 
-        return new_unet_opt_state,new_unet_params, new_text_opt_state,new_text_params, metrics, new_train_rng 
+        return unet_opt_state,unet_params, new_text_opt_state,new_text_params, metrics, new_train_rng 
 
     p_train_step = pjit(
         train_step,
