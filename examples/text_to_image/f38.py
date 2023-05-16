@@ -1221,8 +1221,8 @@ def main():
 #                 text_updates, text_opt_state = optimizer.update(grads, text_opt_state,text_params)
 
 #                 text_params = optax.apply_updates(text_params, text_updates)
-                bi = batch['input_ids']
-                pixels = batch['pixel_values']
+                bi = batch['input_ids'].astype(jnp.float32)
+                pixels = batch['pixel_values'].astype(jnp.float32)
                 mask = batch['attention_mask']
                 unet_params,text_opt_state,text_params, train_metric, train_rngs = p_train_step(unet_params,text_opt_state,text_params, bi, pixels,mask,train_rngs)
 
