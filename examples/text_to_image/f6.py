@@ -1038,12 +1038,10 @@ def main():
 #     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     text_opt_state = optimizer.init(text_params)
-    opt_state = optimizer2_.init(params)
 
     #     text_opt_state = text_opt_state#.inner_states 
 
     text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
-    opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
 
     text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
     param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , params )
@@ -1056,7 +1054,10 @@ def main():
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), params)
     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
+    
+    opt_state = optimizer2_.init(text_params)
     opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), opt_state)
+    opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
 
     #     flat = flax.traverse_util.flatten_dict( text_params )
 #     fk = flat.keys()
