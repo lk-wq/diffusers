@@ -1058,7 +1058,7 @@ def main():
     param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , params )
 
     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_params)
-    unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), params)
+    unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.float32), params)
     
 #     opt_state = optimizer2.init(unet_params)
 #     opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), opt_state)
@@ -1137,7 +1137,7 @@ def main():
         
         metrics = {"loss": loss}
 
-        return unet_params, text_opt_state,text_params, metrics, new_train_rng 
+        return unet_params, new_text_opt_state,new_text_params, metrics, new_train_rng 
 
     p_train_step = pjit(
         train_step,
