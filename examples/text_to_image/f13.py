@@ -946,7 +946,7 @@ def main():
         lambda path, _: 'adam' if check_str2(path) else 'none')
     def check_str2(path):
       for s in path:
-        if 'atte' in s or 'up_block' in s or 'norm' in s or 'bias' in s:
+        if 'atte' in s or 'up_blocks_3' in s or 'norm' in s or 'bias' in s:
             print("success ---> " , path )
             return True
 #       print("fail ----> ", path )      
