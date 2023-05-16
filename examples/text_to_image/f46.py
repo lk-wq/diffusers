@@ -1119,7 +1119,7 @@ def main():
             noise_pred , variance = noise_pred.split(2, axis=1)
 
             loss = (noise - noise_pred) ** 2
-            loss = 0*loss.mean()
+            loss = loss.mean()
 
             return loss
 
@@ -1131,7 +1131,7 @@ def main():
         
 #         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
 #         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
-#         save_2_(grads['text_encoder'])
+        save_2_(grads['unet'])
 #         print("grads ------------------------------>",grads['unet'])
         
         metrics = {"loss": loss}
