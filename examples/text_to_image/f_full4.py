@@ -967,7 +967,7 @@ def main():
 
     def check_str(path):
       s = ".".join(path)
-      if 'block.23' in s or 'Atte' in s or 'bias' in s or 'norm' in s or 'block.0.' in s or 'block.12' in s:
+      if 'block.23' in s or 'Atte' in s or 'bias' in s or 'norm' in s:# or 'block.0.' in s or 'block.12' in s:
             print("success ---> " , path )
             return True
 #       print("fail ----> ", path )      
