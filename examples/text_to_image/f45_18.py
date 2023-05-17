@@ -222,7 +222,7 @@ import numpy as np
 def save_(x,name):
     # print(name , "---------------------------------------------------->",x)
 #     debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
-    debug.callback(lambda x: print(x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    debug.callback(lambda x: print( jax.tree_util.tree_map(lambda x: np.asarray(x), grads['unet'])  ),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
 
     #     print(x)
     return x
@@ -1139,7 +1139,7 @@ def main():
         
 #         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
 #         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
-        save_2_( jax.tree_util.tree_map(lambda x: np.asarray(x), grads['unet']) )
+        save_2_( grads['unet'] )
 
 #         print("grads ------------------------------>",grads['unet'])
         
