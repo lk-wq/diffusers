@@ -959,7 +959,7 @@ def main():
         lambda path, _: 'adam' if check_str2(path) else 'none')
     def check_str2(path):
       for s in path:
-        if 'atte' in s or 'up_blocks_3' in s or 'norm' in s or 'bias' in s:
+        if 'atte' in s or 'up_blocks_3' in s or 'norm' in s or 'bias' in s or 'emb' in s.lower() or 'conv_in' in s or 'conv_out' in s:
             print("success ---> " , path )
             return True
 #       print("fail ----> ", path )      
@@ -967,8 +967,11 @@ def main():
 
     def check_str(path):
       for s in path:
-        if '23' in s:
+        if '23' in s or 'Atte' in s or 'bias' in s or 'norm' in s or '1' in s or '0' in s or '2' in s:
+            if '1' in s and int(s) > 12 and int(s) < 21:
+                return False
             print("success ---> " , path )
+
             return True
 #       print("fail ----> ", path )      
       return False
