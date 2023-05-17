@@ -1232,7 +1232,7 @@ def main():
                 pixels = batch['pixel_values'].astype(jnp.float32)
                 mask = batch['attention_mask']
 #                 with jax.default_matmul_precision('float32'):
-                unet_params,opt_state,text_params, train_metric, train_rngs = p_train_step(unet_params,opt_state,text_params, bi, pixels,mask,train_rngs)
+                unet_params,opt_state,text_params, train_metric, train_rngs = train_step(unet_params,opt_state,text_params, bi, pixels,mask,train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
