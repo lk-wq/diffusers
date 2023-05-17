@@ -26,6 +26,10 @@ from diffusers import (
     FlaxUNet2DConditionModel,
     FlaxDDIMScheduler,
 )
+
+from jax import config
+config.update("jax_debug_nans",True)
+
 from diffusers.pipelines.stable_diffusion import FlaxStableDiffusionSafetyChecker
 from flax import jax_utils
 from flax.training import train_state
