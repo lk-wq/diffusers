@@ -30,8 +30,10 @@ from diffusers import (
 from jax import config
 # config.update("jax_debug_nans",True)
 # config.update("jax_disable_jit",True)
-config.update("jax_enable_x64",True)
+# config.update("jax_enable_x64",True)
 
+# config.update("jax_enable_x64",True)
+from jax import make_jaxpr
 from diffusers.pipelines.stable_diffusion import FlaxStableDiffusionSafetyChecker
 from flax import jax_utils
 from flax.training import train_state
@@ -1131,7 +1133,7 @@ def main():
 
         grad_fn = jax.value_and_grad(compute_loss)
 #         loss = compute_loss(params)
-        loss, grads = grad_fn(params)
+        loss, grads = make_jaxpr(grad_fn)(params)
         unet_updates, new_unet_opt_state = optimizer2.update(grads['unet'], opt_state, params['unet'])
         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
         
