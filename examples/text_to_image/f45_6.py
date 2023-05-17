@@ -1135,7 +1135,7 @@ def main():
         
 #         text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
 #         new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
-        save_2_(grads['unet'])
+#         save_2_(grads['unet'])
 #         print("grads ------------------------------>",grads['unet'])
         
         metrics = {"loss": loss}
