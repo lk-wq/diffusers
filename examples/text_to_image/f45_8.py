@@ -29,6 +29,7 @@ from diffusers import (
 
 from jax import config
 config.update("jax_debug_nans",True)
+config.update("jax_disable_jit",True)
 
 from diffusers.pipelines.stable_diffusion import FlaxStableDiffusionSafetyChecker
 from flax import jax_utils
@@ -64,7 +65,7 @@ from transformers import T5EncoderModel, FlaxT5EncoderModel
 
 import chex
 from jax_smi import initialise_tracking
-
+from jax import make_jaxpr
 """
 Stochastically rounded operations between JAX tensors.
 You can find an up-to-date source and full description here: https://github.com/nestordemeure/jochastic
