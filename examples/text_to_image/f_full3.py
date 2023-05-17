@@ -966,12 +966,9 @@ def main():
       return False
 
     def check_str(path):
-      for s in path:
-        if '23' in s or 'Atte' in s or 'bias' in s or 'norm' in s or '1' in s or '0' in s or '2' in s:
-            if '1' in s and int(s) > 12 and int(s) < 21:
-                return False
+      s = ".".join(path)
+      if 'block.23' in s or 'Atte' in s or 'bias' in s or 'norm' in s or 'block.0.' in s or 'block.12' in s:
             print("success ---> " , path )
-
             return True
 #       print("fail ----> ", path )      
       return False
