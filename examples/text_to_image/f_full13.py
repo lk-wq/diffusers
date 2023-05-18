@@ -223,7 +223,7 @@ def save_3_(x):
     # print(name , "---------------------------------------------------->",x)
 #     debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
 #     debug.callback(lambda x: print( jax.tree_util.tree_map(lambda y:  np.asarray(y) if np.isnan(y).any() else None , x)  ),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
-    debug.callback(lambda x: print( jax.tree_util.tree_map(lambda y: None , x )  ) ,x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+    debug.callback(lambda x: print("hi") ,x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
 
     #     print(x)
     return x
