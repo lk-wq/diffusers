@@ -1366,7 +1366,7 @@ def main():
     #             params = jax.device_get(unet_params)
 
             unet.save_pretrained(
-                args.output_dir+'/unet',params=jax.device_get(avg)
+                args.output_dir+'/unet',params=jax.device_get(unet_params)
 
             )
     #             del params
@@ -1374,7 +1374,7 @@ def main():
 
             scheduler.save_pretrained(args.output_dir+'/scheduler')
             text_encoder.save_pretrained(
-                args.output_dir+'/text_encoder',params=jax.device_get(text_avg)
+                args.output_dir+'/text_encoder',params=jax.device_get(text_params)
             )
     #             del params2
     #         scheduler = FlaxPNDMScheduler(
@@ -1382,7 +1382,7 @@ def main():
     #         )
 
             if args.ema_frequency > -1:
-                pass
+#                 pass
     #                 pipeline.save_pretrained(
     #                     args.output_dir,
     #                     params={
