@@ -989,7 +989,7 @@ def main():
     )
     
     text_encoder, text_params = FlaxT5EncoderModel.from_pretrained(
-        "new_attempt16", subfolder="text_encoder",dtype=weight_dtype
+        "new_attempt17", subfolder="text_encoder",dtype=weight_dtype
     )
     
 #     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
