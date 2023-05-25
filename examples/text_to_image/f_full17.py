@@ -401,7 +401,7 @@ class FolderData(Dataset):
         if resize:
             self.tform1 = transforms.Compose(
                 [
-            transforms.Resize( resolution2, interpolation=transforms.InterpolationMode.BILINEAR),
+            transforms.Resize( resolution2, interpolation=transforms.InterpolationMode.BICUBIC),
             transforms.RandomCrop(resolution),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
