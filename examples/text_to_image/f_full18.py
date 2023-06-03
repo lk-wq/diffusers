@@ -1064,7 +1064,7 @@ def main():
         
       print("fail")
       return P()
-    from jax.experimental import PartitionSpec as P 
+    from jax.sharding import PartitionSpec as P 
     from jax.sharding import NamedSharding
 
     mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
