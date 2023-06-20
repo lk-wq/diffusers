@@ -849,6 +849,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
         down_block_res_samples = (sample,)
         for downsample_block in self.down_blocks:
             if not torch.is_tensor(encoder_hidden_stateslist):
+                    print('mm',count)
                     emb = emblist[count]
                     encoder_hidden_states = encoder_hidden_stateslist[count]
                     encoder_attention_mask = encoder_attention_masklist[count]
