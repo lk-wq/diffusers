@@ -853,7 +853,10 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                     print('mm',count)
                     emb = emblist[count]
                     encoder_hidden_states = encoder_hidden_stateslist[count]
-                    encoder_attention_mask = encoder_attention_masklist[count]
+                    try:
+                        encoder_attention_mask = encoder_attention_masklist[count]
+                    else:
+                        encoder_attention_mask = None
 
 
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
@@ -888,7 +891,10 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
             if not torch.is_tensor(encoder_hidden_stateslist):
                     emb = emblist[count]
                     encoder_hidden_states = encoder_hidden_stateslist[count]
-                    encoder_attention_masklist = encoder_attention_masklist[count]
+                    try:
+                        encoder_attention_mask = encoder_attention_masklist[count]
+                    else:
+                        encoder_attention_mask = None
 
             sample = self.mid_block(
                 sample,
@@ -917,7 +923,10 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
             if not torch.is_tensor(encoder_hidden_stateslist):
                     emb = emblist[count]
                     encoder_hidden_states = encoder_hidden_stateslist[count]
-                    encoder_attention_masklist = encoder_attention_masklist[count]
+                    try:
+                        encoder_attention_mask = encoder_attention_masklist[count]
+                    else:
+                        encoder_attention_mask = None
 
             if hasattr(upsample_block, "has_cross_attention") and upsample_block.has_cross_attention:
                 sample = upsample_block(
