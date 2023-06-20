@@ -637,10 +637,10 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
         self,
         sample: torch.FloatTensor,
         timestep: Union[torch.Tensor, float, int],
-        encoder_hidden_states: torch.Tensor,
+        encoder_hidden_states: Union[torch.Tensor,list],
         class_labels: Optional[torch.Tensor] = None,
         timestep_cond: Optional[torch.Tensor] = None,
-        attention_mask: Optional[torch.Tensor] = None,
+        attention_mask: Optional[Union[torch.Tensor,list]] = None,
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         added_cond_kwargs: Optional[Dict[str, torch.Tensor]] = None,
         down_block_additional_residuals: Optional[Tuple[torch.Tensor]] = None,
@@ -700,13 +700,24 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
             #   (1 = keep,      0 = discard)
             # convert mask into a bias that can be added to attention scores:
             #       (keep = +0,     discard = -10000.0)
-            attention_mask = (1 - attention_mask.to(sample.dtype)) * -10000.0
-            attention_mask = attention_mask.unsqueeze(1)
+            if torch.is_tensor(attention_mask):
+                attention_mask = (1 - attention_mask.to(sample.dtype)) * -10000.0
+                attention_mask = attention_mask.unsqueeze(1)
 
         # convert encoder_attention_mask to a bias the same way we do for attention_mask
+        encoder_hidden_stateslist = encoder_hidden_states
         if encoder_attention_mask is not None:
-            encoder_attention_mask = (1 - encoder_attention_mask.to(sample.dtype)) * -10000.0
-            encoder_attention_mask = encoder_attention_mask.unsqueeze(1)
+            if torch.is_tensor(encoder_attention_mask):
+
+                encoder_attention_mask = (1 - encoder_attention_mask.to(sample.dtype)) * -10000.0
+                encoder_attention_mask = encoder_attention_mask.unsqueeze(1)
+            else:
+                encoder_attention_masklist = []
+                for i in encoder_attention_mask:
+                    encoder_attention_mask = (1 - encoder_attention_mask.to(sample.dtype)) * -10000.0
+                    encoder_attention_mask = encoder_attention_mask.unsqueeze(1)
+                    encoder_attention_mask.append(encoder_attention_mask)
+
 
         # 0. center input if necessary
         if self.config.center_input_sample:
@@ -755,45 +766,96 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 emb = torch.cat([emb, class_emb], dim=-1)
             else:
                 emb = emb + class_emb
+        if torch.is_tensor(encoder_hidden_states):
+            if self.config.addition_embed_type == "text":
+                aug_emb = self.add_embedding(encoder_hidden_states)
+                emb = emb + aug_emb
+            elif self.config.addition_embed_type == "text_image":
+                # Kadinsky 2.1 - style
+                if "image_embeds" not in added_cond_kwargs:
+                    raise ValueError(
+                        f"{self.__class__} has the config param `addition_embed_type` set to 'text_image' which requires the keyword argument `image_embeds` to be passed in `added_cond_kwargs`"
+                    )
+    
+                image_embs = added_cond_kwargs.get("image_embeds")
+                text_embs = added_cond_kwargs.get("text_embeds", encoder_hidden_states)
+    
+                aug_emb = self.add_embedding(text_embs, image_embs)
+                emb = emb + aug_emb
+    
+            if self.time_embed_act is not None:
+                emb = self.time_embed_act(emb)
 
-        if self.config.addition_embed_type == "text":
-            aug_emb = self.add_embedding(encoder_hidden_states)
-            emb = emb + aug_emb
-        elif self.config.addition_embed_type == "text_image":
-            # Kadinsky 2.1 - style
-            if "image_embeds" not in added_cond_kwargs:
-                raise ValueError(
-                    f"{self.__class__} has the config param `addition_embed_type` set to 'text_image' which requires the keyword argument `image_embeds` to be passed in `added_cond_kwargs`"
-                )
+            if self.encoder_hid_proj is not None and self.config.encoder_hid_dim_type == "text_proj":
+                encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
+            elif self.encoder_hid_proj is not None and self.config.encoder_hid_dim_type == "text_image_proj":
+                # Kadinsky 2.1 - style
+                if "image_embeds" not in added_cond_kwargs:
+                    raise ValueError(
+                        f"{self.__class__} has the config param `encoder_hid_dim_type` set to 'text_image_proj' which requires the keyword argument `image_embeds` to be passed in  `added_conditions`"
+                    )
+    
+                image_embeds = added_cond_kwargs.get("image_embeds")
+                encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states, image_embeds)
+        else:
+            emblist = []
+            if self.config.addition_embed_type == "text":
+                for i in encoder_hidden_states:
+                    aug_emb = self.add_embedding(i)
+                    embtemp = emb + aug_emb
+                    emblist.append(embtemp)
+            elif self.config.addition_embed_type == "text_image":
+                # Kadinsky 2.1 - style
+                if "image_embeds" not in added_cond_kwargs:
+                    raise ValueError(
+                        f"{self.__class__} has the config param `addition_embed_type` set to 'text_image' which requires the keyword argument `image_embeds` to be passed in `added_cond_kwargs`"
+                    )
+    
+                image_embs = added_cond_kwargs.get("image_embeds")
+                text_embs = added_cond_kwargs.get("text_embeds", encoder_hidden_states)
+    
+                aug_emb = self.add_embedding(text_embs, image_embs)
+                emb = emb + aug_emb
+            if self.time_embed_act is not None:
+                emblist2 = []
+                for i in emblist:
+                    embtemp = self.time_embed_act(i)
+                    emblist2.append(emb)
+                emblist = emblist2
+                del emblist2
 
-            image_embs = added_cond_kwargs.get("image_embeds")
-            text_embs = added_cond_kwargs.get("text_embeds", encoder_hidden_states)
-
-            aug_emb = self.add_embedding(text_embs, image_embs)
-            emb = emb + aug_emb
-
-        if self.time_embed_act is not None:
-            emb = self.time_embed_act(emb)
-
-        if self.encoder_hid_proj is not None and self.config.encoder_hid_dim_type == "text_proj":
-            encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states)
-        elif self.encoder_hid_proj is not None and self.config.encoder_hid_dim_type == "text_image_proj":
-            # Kadinsky 2.1 - style
-            if "image_embeds" not in added_cond_kwargs:
-                raise ValueError(
-                    f"{self.__class__} has the config param `encoder_hid_dim_type` set to 'text_image_proj' which requires the keyword argument `image_embeds` to be passed in  `added_conditions`"
-                )
-
-            image_embeds = added_cond_kwargs.get("image_embeds")
-            encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states, image_embeds)
+            if self.encoder_hid_proj is not None and self.config.encoder_hid_dim_type == "text_proj":
+                emblist2 = []
+                for i in emblist:
+                    encoder_hidden_statestemp = self.encoder_hid_proj(i)
+                    emblist2.append(encoder_hidden_statestemp)
+                emblist = emblist2
+                del emblist2
+            elif self.encoder_hid_proj is not None and self.config.encoder_hid_dim_type == "text_image_proj":
+                # Kadinsky 2.1 - style
+                if "image_embeds" not in added_cond_kwargs:
+                    raise ValueError(
+                        f"{self.__class__} has the config param `encoder_hid_dim_type` set to 'text_image_proj' which requires the keyword argument `image_embeds` to be passed in  `added_conditions`"
+                    )
+    
+                image_embeds = added_cond_kwargs.get("image_embeds")
+                encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states, image_embeds)
 
         # 2. pre-process
         sample = self.conv_in(sample)
-
+            
         # 3. down
+        count = 0
         down_block_res_samples = (sample,)
         for downsample_block in self.down_blocks:
+            if not torch.is_tensor(encoder_hidden_stateslist):
+                    emb = emblist[count]
+                    encoder_hidden_states = encoder_hidden_stateslist[count]
+                    encoder_attention_mask = encoder_attention_masklist[count]
+
+
             if hasattr(downsample_block, "has_cross_attention") and downsample_block.has_cross_attention:
+                
                 sample, res_samples = downsample_block(
                     hidden_states=sample,
                     temb=emb,
@@ -803,8 +865,9 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                     encoder_attention_mask=encoder_attention_mask,
                 )
             else:
-                sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
 
+                sample, res_samples = downsample_block(hidden_states=sample, temb=emb)
+            count += 1
             down_block_res_samples += res_samples
 
         if down_block_additional_residuals is not None:
@@ -820,6 +883,11 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
 
         # 4. mid
         if self.mid_block is not None:
+            if not torch.is_tensor(encoder_hidden_stateslist):
+                    emb = emblist[count]
+                    encoder_hidden_states = encoder_hidden_stateslist[count]
+                    encoder_attention_masklist = encoder_attention_masklist[count]
+
             sample = self.mid_block(
                 sample,
                 emb,
@@ -828,6 +896,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 cross_attention_kwargs=cross_attention_kwargs,
                 encoder_attention_mask=encoder_attention_mask,
             )
+            count += 1
 
         if mid_block_additional_residual is not None:
             sample = sample + mid_block_additional_residual
@@ -843,6 +912,10 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
             # upsample size, we do it here
             if not is_final_block and forward_upsample_size:
                 upsample_size = down_block_res_samples[-1].shape[2:]
+            if not torch.is_tensor(encoder_hidden_stateslist):
+                    emb = emblist[count]
+                    encoder_hidden_states = encoder_hidden_stateslist[count]
+                    encoder_attention_masklist = encoder_attention_masklist[count]
 
             if hasattr(upsample_block, "has_cross_attention") and upsample_block.has_cross_attention:
                 sample = upsample_block(
