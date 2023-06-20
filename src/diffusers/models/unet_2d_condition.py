@@ -855,7 +855,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                     encoder_hidden_states = encoder_hidden_stateslist[count]
                     try:
                         encoder_attention_mask = encoder_attention_masklist[count]
-                    else:
+                    except:
                         encoder_attention_mask = None
 
 
@@ -893,7 +893,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                     encoder_hidden_states = encoder_hidden_stateslist[count]
                     try:
                         encoder_attention_mask = encoder_attention_masklist[count]
-                    else:
+                    except:
                         encoder_attention_mask = None
 
             sample = self.mid_block(
@@ -925,7 +925,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                     encoder_hidden_states = encoder_hidden_stateslist[count]
                     try:
                         encoder_attention_mask = encoder_attention_masklist[count]
-                    else:
+                    except:
                         encoder_attention_mask = None
 
             if hasattr(upsample_block, "has_cross_attention") and upsample_block.has_cross_attention:
