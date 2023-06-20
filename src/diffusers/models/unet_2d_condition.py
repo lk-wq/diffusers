@@ -840,7 +840,8 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
     
                 image_embeds = added_cond_kwargs.get("image_embeds")
                 encoder_hidden_states = self.encoder_hid_proj(encoder_hidden_states, image_embeds)
-
+            if len(emblist) == 0:
+                emblist = [emb.clone() for i in range(len(encoder_hidden_stateslist) )]
         # 2. pre-process
         sample = self.conv_in(sample)
             
