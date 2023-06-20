@@ -943,7 +943,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 sample = upsample_block(
                     hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
                 )
-            counter += 1
+            count += 1
         print('count',count)
         # 6. post-process
         if self.conv_norm_out:
