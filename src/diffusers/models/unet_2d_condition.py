@@ -850,7 +850,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
         down_block_res_samples = (sample,)
         for downsample_block in self.down_blocks:
             if not torch.is_tensor(encoder_hidden_stateslist):
-                    print('mm',count)
+                    # print('mm',count)
                     emb = emblist[count]
                     encoder_hidden_states = encoder_hidden_stateslist[count]
                     try:
@@ -943,7 +943,7 @@ class UNet2DConditionModel(ModelMixin, ConfigMixin, UNet2DConditionLoadersMixin)
                 sample = upsample_block(
                     hidden_states=sample, temb=emb, res_hidden_states_tuple=res_samples, upsample_size=upsample_size
                 )
-
+        print('count',count)
         # 6. post-process
         if self.conv_norm_out:
             sample = self.conv_norm_out(sample)
