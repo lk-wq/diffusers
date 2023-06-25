@@ -208,6 +208,12 @@ def parse_args():
         ),
     )
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
+    parser.add_argument(
+        "--model_parallel",
+        action="store_true",
+        default=False,
+        help="Use model parallel training, where layers are sharded across multiple devices",
+    )
 
     args = parser.parse_args()
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
@@ -385,6 +391,19 @@ def main():
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="unet", dtype=weight_dtype
     )
+    if args.model_parallel:
+        mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
+        text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
+        unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
+        vae_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , vae_params )
+    
+        text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_params)
+        unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), unet_params)
+        vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), vae_params)
+        
+        unet_opt_state = optimizer2.init(unet_params)
+        unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), unet_opt_state )
+    
 
     # Optimization
     if args.scale_lr:
@@ -415,10 +434,73 @@ def main():
     # Initialize our training
     rng = jax.random.PRNGKey(args.seed)
     train_rngs = jax.random.split(rng, jax.local_device_count())
+    if args.model_parallel:
 
-    def train_step(state, text_encoder_params, vae_params, batch, train_rng):
+    def train_step(unet_params, opt_state,text_encoder_params,vae_params, batch, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+        # params = {"text_encoder": text_params, "unet": unet_params}
 
+        def compute_loss(params):
+            # Convert images to latent space
+            vae_outputs = vae.apply(
+                    {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
+                )
+            latents = vae_outputs.latent_dist.sample(sample_rng)
+            # (NHWC) -> (NCHW)
+            latents = jnp.transpose(latents, (0, 3, 1, 2))
+            latents = latents * vae.config.scaling_factor
+
+            # Sample noise that we'll add to the latents
+            noise_rng, timestep_rng = jax.random.split(sample_rng)
+            noise = jax.random.normal(noise_rng, latents.shape)
+            # Sample a random timestep for each image
+            bsz = latents.shape[0]
+            timesteps = jax.random.randint(
+                timestep_rng,
+                (bsz,),
+                0,
+                noise_scheduler[0].config.num_train_timesteps,
+            )
+            encoder_hidden_states = text_encoder(
+                batch['input_ids'],
+                params=text_encoder_params,
+                train=True,
+                dropout_rng=dropout_rng,
+            )[0]
+
+            noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
+
+            model_pred = unet.apply({"params": params['unet']},noisy_latents, timesteps, encoder_hidden_states, train=True).sample
+            if noise_scheduler.config.prediction_type == "epsilon":
+                target = noise
+            elif noise_scheduler.config.prediction_type == "v_prediction":
+                target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
+            else:
+                raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+
+            loss = (target - model_pred) ** 2
+            loss = loss.mean()
+
+            return loss
+
+        grad_fn = jax.value_and_grad(compute_loss)
+
+        loss, grads = grad_fn(params)
+        unet_updates, new_unet_opt_state = optimizer2.update(grads['unet'], opt_state, params['unet'])
+        new_unet_params = optax.apply_updates(params['unet'], unet_updates)
+        
+        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
+        new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
+        
+        metrics = {"loss": loss}
+
+        return new_unet_params, new_unet_opt_state,new_text_params,new_text_opt_state, metrics, new_train_rng 
+        
+
+    
+    def train_step(state, text_encoder_params, vae_params, batch, train_rng):
+            
+        dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
         def compute_loss(params):
             # Convert images to latent space
             vae_outputs = vae.apply(
@@ -456,7 +538,7 @@ def main():
             model_pred = unet.apply(
                 {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
             ).sample
-
+    
             # Get the target for loss depending on the prediction type
             if noise_scheduler.config.prediction_type == "epsilon":
                 target = noise
@@ -471,23 +553,45 @@ def main():
             return loss
 
         grad_fn = jax.value_and_grad(compute_loss)
-        loss, grad = grad_fn(state.params)
-        grad = jax.lax.pmean(grad, "batch")
+        if args.model_parallel:
+            loss, grads = grad_fn(state.params)
+            unet_updates, new_opt_state = optimizer.update(grads, state.opt_state, state.params)
+            new_unet_params = optax.apply_updates(state.params, unet_updates)
+            state['params'] = new_unet_params
+            state['opt_state'] = new_unet_params
 
-        new_state = state.apply_gradients(grads=grad)
+            metrics = {"loss": loss}
+            return state, metrics, new_train_rng 
+        else:
+            loss, grad = grad_fn(state.params)
 
-        metrics = {"loss": loss}
-        metrics = jax.lax.pmean(metrics, axis_name="batch")
+            grad = jax.lax.pmean(grad, "batch")
+    
+            new_state = state.apply_gradients(grads=grad)
+    
+            metrics = {"loss": loss}
+            metrics = jax.lax.pmean(metrics, axis_name="batch")
 
-        return new_state, metrics, new_train_rng
-
+            return new_state, metrics, new_train_rng
+    
     # Create parallel version of the train step
-    p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
+    if args.model_parallel:
+        p_train_step = pjit(
+            train_step,
+            in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,None,None ),
+            out_axis_resources=(unet_param_spec,unet_opt_state_spec,None, None),
+            donate_argnums=(0,1),
+        )
 
-    # Replicate the train state on each device
-    state = jax_utils.replicate(state)
-    text_encoder_params = jax_utils.replicate(text_encoder.params)
-    vae_params = jax_utils.replicate(vae_params)
+        
+    
+    else:
+        p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
+    
+        # Replicate the train state on each device
+        state = jax_utils.replicate(state)
+        text_encoder_params = jax_utils.replicate(text_encoder.params)
+        vae_params = jax_utils.replicate(vae_params)
 
     # Train!
     num_update_steps_per_epoch = math.ceil(len(train_dataloader))
