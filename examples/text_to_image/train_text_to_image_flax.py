@@ -21,6 +21,8 @@ from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import CLIPImageProcessor, CLIPTokenizer, FlaxCLIPTextModel, set_seed
 
+from partitions import partition_shape
+
 from diffusers import (
     FlaxAutoencoderKL,
     FlaxDDPMScheduler,
@@ -424,7 +426,8 @@ def main():
         adamw,
     )
 
-    state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
+    if not args.model_parallel:
+        state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
     noise_scheduler = FlaxDDPMScheduler(
         beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
@@ -433,73 +436,15 @@ def main():
 
     # Initialize our training
     rng = jax.random.PRNGKey(args.seed)
-    train_rngs = jax.random.split(rng, jax.local_device_count())
     if args.model_parallel:
+        train_rngs = rng
+    else:
+        train_rngs = jax.random.split(rng, jax.local_device_count())
 
-    def train_step(unet_params, opt_state,text_encoder_params,vae_params, batch, train_rng):
-        dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-        # params = {"text_encoder": text_params, "unet": unet_params}
-
-        def compute_loss(params):
-            # Convert images to latent space
-            vae_outputs = vae.apply(
-                    {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
-                )
-            latents = vae_outputs.latent_dist.sample(sample_rng)
-            # (NHWC) -> (NCHW)
-            latents = jnp.transpose(latents, (0, 3, 1, 2))
-            latents = latents * vae.config.scaling_factor
-
-            # Sample noise that we'll add to the latents
-            noise_rng, timestep_rng = jax.random.split(sample_rng)
-            noise = jax.random.normal(noise_rng, latents.shape)
-            # Sample a random timestep for each image
-            bsz = latents.shape[0]
-            timesteps = jax.random.randint(
-                timestep_rng,
-                (bsz,),
-                0,
-                noise_scheduler[0].config.num_train_timesteps,
-            )
-            encoder_hidden_states = text_encoder(
-                batch['input_ids'],
-                params=text_encoder_params,
-                train=True,
-                dropout_rng=dropout_rng,
-            )[0]
-
-            noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
-
-            model_pred = unet.apply({"params": params['unet']},noisy_latents, timesteps, encoder_hidden_states, train=True).sample
-            if noise_scheduler.config.prediction_type == "epsilon":
-                target = noise
-            elif noise_scheduler.config.prediction_type == "v_prediction":
-                target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
-            else:
-                raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
-
-            loss = (target - model_pred) ** 2
-            loss = loss.mean()
-
-            return loss
-
-        grad_fn = jax.value_and_grad(compute_loss)
-
-        loss, grads = grad_fn(params)
-        unet_updates, new_unet_opt_state = optimizer2.update(grads['unet'], opt_state, params['unet'])
-        new_unet_params = optax.apply_updates(params['unet'], unet_updates)
-        
-        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
-        new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
-        
-        metrics = {"loss": loss}
-
-        return new_unet_params, new_unet_opt_state,new_text_params,new_text_opt_state, metrics, new_train_rng 
-        
-
-    
     # Create parallel version of the train step
     if args.model_parallel:
+        from jax.sharding import PartitionSpec as P 
+        from jax.sharding import NamedSharding
 
         def train_step(unet_params, opt_state, text_encoder_params, vae_params, batch, train_rng):
                 
@@ -628,26 +573,16 @@ def main():
                 return loss
     
             grad_fn = jax.value_and_grad(compute_loss)
-            if args.model_parallel:
-                loss, grads = grad_fn(state.params)
-                unet_updates, new_opt_state = optimizer.update(grads, state.opt_state, state.params)
-                new_unet_params = optax.apply_updates(state.params, unet_updates)
-                state['params'] = new_unet_params
-                state['opt_state'] = new_unet_params
+            loss, grad = grad_fn(state.params)
+
+            grad = jax.lax.pmean(grad, "batch")
     
-                metrics = {"loss": loss}
-                return state, metrics, new_train_rng 
-            else:
-                loss, grad = grad_fn(state.params)
+            new_state = state.apply_gradients(grads=grad)
     
-                grad = jax.lax.pmean(grad, "batch")
-        
-                new_state = state.apply_gradients(grads=grad)
-        
-                metrics = {"loss": loss}
-                metrics = jax.lax.pmean(metrics, axis_name="batch")
-    
-                return new_state, metrics, new_train_rng
+            metrics = {"loss": loss}
+            metrics = jax.lax.pmean(metrics, axis_name="batch")
+
+            return new_state, metrics, new_train_rng
     
         p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
     
