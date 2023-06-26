@@ -498,94 +498,157 @@ def main():
         
 
     
-    def train_step(state, text_encoder_params, vae_params, batch, train_rng):
-            
-        dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-        def compute_loss(params):
-            # Convert images to latent space
-            vae_outputs = vae.apply(
-                {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
-            )
-            latents = vae_outputs.latent_dist.sample(sample_rng)
-            # (NHWC) -> (NCHW)
-            latents = jnp.transpose(latents, (0, 3, 1, 2))
-            latents = latents * vae.config.scaling_factor
-
-            # Sample noise that we'll add to the latents
-            noise_rng, timestep_rng = jax.random.split(sample_rng)
-            noise = jax.random.normal(noise_rng, latents.shape)
-            # Sample a random timestep for each image
-            bsz = latents.shape[0]
-            timesteps = jax.random.randint(
-                timestep_rng,
-                (bsz,),
-                0,
-                noise_scheduler.config.num_train_timesteps,
-            )
-
-            # Add noise to the latents according to the noise magnitude at each timestep
-            # (this is the forward diffusion process)
-            noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
-
-            # Get the text embedding for conditioning
-            encoder_hidden_states = text_encoder(
-                batch["input_ids"],
-                params=text_encoder_params,
-                train=False,
-            )[0]
-
-            # Predict the noise residual and compute loss
-            model_pred = unet.apply(
-                {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
-            ).sample
-    
-            # Get the target for loss depending on the prediction type
-            if noise_scheduler.config.prediction_type == "epsilon":
-                target = noise
-            elif noise_scheduler.config.prediction_type == "v_prediction":
-                target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
-            else:
-                raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
-
-            loss = (target - model_pred) ** 2
-            loss = loss.mean()
-
-            return loss
-
-        grad_fn = jax.value_and_grad(compute_loss)
-        if args.model_parallel:
-            loss, grads = grad_fn(state.params)
-            unet_updates, new_opt_state = optimizer.update(grads, state.opt_state, state.params)
-            new_unet_params = optax.apply_updates(state.params, unet_updates)
-            state['params'] = new_unet_params
-            state['opt_state'] = new_unet_params
-
-            metrics = {"loss": loss}
-            return state, metrics, new_train_rng 
-        else:
-            loss, grad = grad_fn(state.params)
-
-            grad = jax.lax.pmean(grad, "batch")
-    
-            new_state = state.apply_gradients(grads=grad)
-    
-            metrics = {"loss": loss}
-            metrics = jax.lax.pmean(metrics, axis_name="batch")
-
-            return new_state, metrics, new_train_rng
-    
     # Create parallel version of the train step
     if args.model_parallel:
+
+        def train_step(unet_params, opt_state, text_encoder_params, vae_params, batch, train_rng):
+                
+            dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+            def compute_loss(params):
+                # Convert images to latent space
+                vae_outputs = vae.apply(
+                    {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
+                )
+                latents = vae_outputs.latent_dist.sample(sample_rng)
+                # (NHWC) -> (NCHW)
+                latents = jnp.transpose(latents, (0, 3, 1, 2))
+                latents = latents * vae.config.scaling_factor
+    
+                # Sample noise that we'll add to the latents
+                noise_rng, timestep_rng = jax.random.split(sample_rng)
+                noise = jax.random.normal(noise_rng, latents.shape)
+                # Sample a random timestep for each image
+                bsz = latents.shape[0]
+                timesteps = jax.random.randint(
+                    timestep_rng,
+                    (bsz,),
+                    0,
+                    noise_scheduler.config.num_train_timesteps,
+                )
+    
+                # Add noise to the latents according to the noise magnitude at each timestep
+                # (this is the forward diffusion process)
+                noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
+    
+                # Get the text embedding for conditioning
+                encoder_hidden_states = text_encoder(
+                    batch["input_ids"],
+                    params=text_encoder_params,
+                    train=False,
+                )[0]
+    
+                # Predict the noise residual and compute loss
+                model_pred = unet.apply(
+                    {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
+                ).sample
+        
+                # Get the target for loss depending on the prediction type
+                if noise_scheduler.config.prediction_type == "epsilon":
+                    target = noise
+                elif noise_scheduler.config.prediction_type == "v_prediction":
+                    target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
+                else:
+                    raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+    
+                loss = (target - model_pred) ** 2
+                loss = loss.mean()
+    
+                return loss
+    
+            grad_fn = jax.value_and_grad(compute_loss)
+            loss, grads = grad_fn(params)
+            unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], opt_state, params['unet'])
+            new_unet_params = optax.apply_updates(params['unet'], unet_updates)
+                        
+            metrics = {"loss": loss}
+    
+            return new_unet_params, new_unet_opt_state, metrics, new_train_rng 
+
         p_train_step = pjit(
             train_step,
             in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,None,None ),
             out_axis_resources=(unet_param_spec,unet_opt_state_spec,None, None),
             donate_argnums=(0,1),
         )
-
-        
     
     else:
+
+        def train_step(state, text_encoder_params, vae_params, batch, train_rng):
+                
+            dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+            def compute_loss(params):
+                # Convert images to latent space
+                vae_outputs = vae.apply(
+                    {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
+                )
+                latents = vae_outputs.latent_dist.sample(sample_rng)
+                # (NHWC) -> (NCHW)
+                latents = jnp.transpose(latents, (0, 3, 1, 2))
+                latents = latents * vae.config.scaling_factor
+    
+                # Sample noise that we'll add to the latents
+                noise_rng, timestep_rng = jax.random.split(sample_rng)
+                noise = jax.random.normal(noise_rng, latents.shape)
+                # Sample a random timestep for each image
+                bsz = latents.shape[0]
+                timesteps = jax.random.randint(
+                    timestep_rng,
+                    (bsz,),
+                    0,
+                    noise_scheduler.config.num_train_timesteps,
+                )
+    
+                # Add noise to the latents according to the noise magnitude at each timestep
+                # (this is the forward diffusion process)
+                noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
+    
+                # Get the text embedding for conditioning
+                encoder_hidden_states = text_encoder(
+                    batch["input_ids"],
+                    params=text_encoder_params,
+                    train=False,
+                )[0]
+    
+                # Predict the noise residual and compute loss
+                model_pred = unet.apply(
+                    {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
+                ).sample
+        
+                # Get the target for loss depending on the prediction type
+                if noise_scheduler.config.prediction_type == "epsilon":
+                    target = noise
+                elif noise_scheduler.config.prediction_type == "v_prediction":
+                    target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
+                else:
+                    raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+    
+                loss = (target - model_pred) ** 2
+                loss = loss.mean()
+    
+                return loss
+    
+            grad_fn = jax.value_and_grad(compute_loss)
+            if args.model_parallel:
+                loss, grads = grad_fn(state.params)
+                unet_updates, new_opt_state = optimizer.update(grads, state.opt_state, state.params)
+                new_unet_params = optax.apply_updates(state.params, unet_updates)
+                state['params'] = new_unet_params
+                state['opt_state'] = new_unet_params
+    
+                metrics = {"loss": loss}
+                return state, metrics, new_train_rng 
+            else:
+                loss, grad = grad_fn(state.params)
+    
+                grad = jax.lax.pmean(grad, "batch")
+        
+                new_state = state.apply_gradients(grads=grad)
+        
+                metrics = {"loss": loss}
+                metrics = jax.lax.pmean(metrics, axis_name="batch")
+    
+                return new_state, metrics, new_train_rng
+    
         p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
     
         # Replicate the train state on each device
@@ -621,8 +684,12 @@ def main():
         train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
         # train
         for batch in train_dataloader:
-            batch = shard(batch)
-            state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+            if args.model_parallel:
+                unet_params, opt_state, train_metric, train_rngs = p_train_step(unet_params, opt_state, text_encoder_params, vae_params, batch, train_rngs)
+            else:
+                batch = shard(batch)
+                state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+
             train_metrics.append(train_metric)
 
             train_step_progress_bar.update(1)
@@ -631,38 +698,68 @@ def main():
             if global_step >= args.max_train_steps:
                 break
 
-        train_metric = jax_utils.unreplicate(train_metric)
+        if not args.model_parallel:
+            train_metric = jax_utils.unreplicate(train_metric)
 
         train_step_progress_bar.close()
         epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
 
     # Create the pipeline using using the trained modules and save it.
     if jax.process_index() == 0:
-        scheduler = FlaxPNDMScheduler(
-            beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
-        )
-        safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
-            "CompVis/stable-diffusion-safety-checker", from_pt=True
-        )
-        pipeline = FlaxStableDiffusionPipeline(
-            text_encoder=text_encoder,
-            vae=vae,
-            unet=unet,
-            tokenizer=tokenizer,
-            scheduler=scheduler,
-            safety_checker=safety_checker,
-            feature_extractor=CLIPImageProcessor.from_pretrained("openai/clip-vit-base-patch32"),
-        )
+        if args.model_parallel:
+                        scheduler = FlaxPNDMScheduler(
+                beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+            )
+            safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
+                "CompVis/stable-diffusion-safety-checker", from_pt=True
+            )
+            pipeline = FlaxStableDiffusionPipeline(
+                text_encoder=text_encoder,
+                vae=vae,
+                unet=unet,
+                tokenizer=tokenizer,
+                scheduler=scheduler,
+                safety_checker=safety_checker,
+                feature_extractor=CLIPImageProcessor.from_pretrained("openai/clip-vit-base-patch32"),
+            )
 
-        pipeline.save_pretrained(
-            args.output_dir,
-            params={
-                "text_encoder": get_params_to_save(text_encoder_params),
-                "vae": get_params_to_save(vae_params),
-                "unet": get_params_to_save(state.params),
-                "safety_checker": safety_checker.params,
-            },
-        )
+            pipeline.save_pretrained(
+                args.output_dir,
+                params={
+                    "text_encoder": jax.device_get(text_encoder_params),
+                    "vae": jax.device_get(vae_params),
+                    "unet": jax.device_get(unet_params),
+                    "safety_checker": safety_checker.params,
+                },
+            )
+
+
+        else:
+            scheduler = FlaxPNDMScheduler(
+                beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
+            )
+            safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
+                "CompVis/stable-diffusion-safety-checker", from_pt=True
+            )
+            pipeline = FlaxStableDiffusionPipeline(
+                text_encoder=text_encoder,
+                vae=vae,
+                unet=unet,
+                tokenizer=tokenizer,
+                scheduler=scheduler,
+                safety_checker=safety_checker,
+                feature_extractor=CLIPImageProcessor.from_pretrained("openai/clip-vit-base-patch32"),
+            )
+
+            pipeline.save_pretrained(
+                args.output_dir,
+                params={
+                    "text_encoder": get_params_to_save(text_encoder_params),
+                    "vae": get_params_to_save(vae_params),
+                    "unet": get_params_to_save(state.params),
+                    "safety_checker": safety_checker.params,
+                },
+            )
 
         if args.push_to_hub:
             upload_folder(
