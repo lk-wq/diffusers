@@ -311,7 +311,7 @@ def main():
         caption_column = args.caption_column
         if caption_column not in column_names:
             raise ValueError(
-                f"--caption_column' value '{args.caption_column}' needs to be one of: {', '.join(column_names)}"
+                f"--caption_column' value '{args.caption_column}' needs to be one of: '{', '.join(column_names)}' "
             )
 
     # Preprocessing the datasets.
