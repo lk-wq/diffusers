@@ -659,7 +659,7 @@ def main():
     # Create the pipeline using using the trained modules and save it.
     if jax.process_index() == 0:
         if args.model_parallel:
-                        scheduler = FlaxPNDMScheduler(
+            scheduler = FlaxPNDMScheduler(
                 beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
             )
             safety_checker = FlaxStableDiffusionSafetyChecker.from_pretrained(
