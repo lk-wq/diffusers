@@ -31,7 +31,7 @@ def partition_shape(shape):
     if len(shape) == 1:
       if shape[0] % 4 == 0:
         return P("dp")
-      else:
+      elif shape[0] % 2 == 0:
         return P("mp")
     if len(shape) == 2:
       if shape[0] % 4 == 0 and shape[1] % 2 == 0 and shape[0] > shape[1]:
