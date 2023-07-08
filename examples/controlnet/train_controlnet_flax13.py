@@ -721,7 +721,10 @@ def main():
         raise NotImplementedError("No tokenizer specified!")
 
     # Get the datasets: you can either provide your own training and evaluation files (see below)
-    total_train_batch_size = args.train_batch_size * jax.local_device_count() * args.gradient_accumulation_steps
+    if args.model_parallel:
+        total_train_batch_size = args.train_batch_size 
+    else:
+        total_train_batch_size = args.train_batch_size * jax.local_device_count() * args.gradient_accumulation_steps
     train_dataset = make_train_dataset(args, tokenizer, batch_size=total_train_batch_size)
 
     train_dataloader = torch.utils.data.DataLoader(
