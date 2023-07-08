@@ -4,6 +4,7 @@ import math
 import os
 import random
 from pathlib import Path
+from jax.experimental import mesh_utils
 
 import jax
 import jax.numpy as jnp
