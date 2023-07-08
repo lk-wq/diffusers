@@ -1119,7 +1119,7 @@ def main():
     logger.info(f"  Total train batch size (w. parallel & distributed) = {total_train_batch_size}")
     logger.info(f"  Total optimization steps = {args.num_train_epochs * num_update_steps_per_epoch}")
 
-    if jax.process_index() == 0 and args.report_to == "wandb":
+    if jax.process_index() == 0 and args.report_to == "wandb" and not args.model_parallel:
         wandb.define_metric("*", step_metric="train/step")
         wandb.define_metric("train/step", step_metric="walltime")
         wandb.config.update(
