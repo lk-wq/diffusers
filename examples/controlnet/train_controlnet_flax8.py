@@ -882,14 +882,14 @@ def main():
         return snr
 
     if args.model_parallel:
-
-        def train_step(unet_params, opt_state, text_encoder_params, vae_params, batch, train_rng):
-                
-            dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-            def compute_loss(params):
+    
+        def train_step(unet_params,text_params,controlnet_params,vae_params,opt_state,batch,train_rng):
+            params = {"text_encoder": text_params, "unet": unet_params,"controlnet_params": controlnet_params}
+    
+            def compute_loss(params, minibatch, sample_rng):
                 # Convert images to latent space
                 vae_outputs = vae.apply(
-                    {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
+                    {"params": vae_params}, minibatch["pixel_values"], deterministic=True, method=vae.encode
                 )
                 latents = vae_outputs.latent_dist.sample(sample_rng)
                 # (NHWC) -> (NCHW)
@@ -914,41 +914,81 @@ def main():
     
                 # Get the text embedding for conditioning
                 encoder_hidden_states = text_encoder(
-                    batch["input_ids"],
-                    params=text_encoder_params,
+                    minibatch["input_ids"],
+                    params=params['text_encoder'],
                     train=False,
                 )[0]
     
+                controlnet_cond = minibatch["conditioning_pixel_values"]
+    
                 # Predict the noise residual and compute loss
+                down_block_res_samples, mid_block_res_sample = controlnet.apply(
+                    {"params": controlnet_params},
+                    noisy_latents,
+                    timesteps,
+                    encoder_hidden_states,
+                    controlnet_cond,
+                    train=True,
+                    return_dict=False,
+                )
+    
                 model_pred = unet.apply(
-                    {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
+                    {"params": params['unet']},
+                    noisy_latents,
+                    timesteps,
+                    encoder_hidden_states,
+                    down_block_additional_residuals=down_block_res_samples,
+                    mid_block_additional_residual=mid_block_res_sample,
                 ).sample
-        
+    
                 # Get the target for loss depending on the prediction type
                 if noise_scheduler.config.prediction_type == "epsilon":
                     target = noise
                 elif noise_scheduler.config.prediction_type == "v_prediction":
                     target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
                 else:
-                    # raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
-                    raise ValueError(
-                    "fail "
-                    )
-
+                    raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+    
                 loss = (target - model_pred) ** 2
+    
+                if args.snr_gamma is not None:
+                    snr = jnp.array(compute_snr(timesteps))
+                    snr_loss_weights = jnp.where(snr < args.snr_gamma, snr, jnp.ones_like(snr) * args.snr_gamma) / snr
+                    loss = loss * snr_loss_weights
+    
                 loss = loss.mean()
     
                 return loss
     
             grad_fn = jax.value_and_grad(compute_loss)
-            loss, grads = grad_fn(unet_params)
-            unet_updates, new_unet_opt_state = optimizer.update(grads, opt_state, unet_params)
-            new_unet_params = optax.apply_updates(unet_params, unet_updates)
-                        
+    
+            # get a minibatch (one gradient accumulation slice)
+            def get_minibatch(batch, grad_idx):
+                return jax.tree_util.tree_map(
+                    lambda x: jax.lax.dynamic_index_in_dim(x, grad_idx, keepdims=False),
+                    batch,
+                )
+    
+            def loss_and_grad(grad_idx, train_rng):
+                # create minibatch for the grad step
+                minibatch = get_minibatch(batch, grad_idx) if grad_idx is not None else batch
+                sample_rng, train_rng = jax.random.split(train_rng, 2)
+                loss, grad = grad_fn(params, minibatch, sample_rng)
+                return loss, grad, train_rng
+    
+            loss, grad, new_train_rng = loss_and_grad(None, train_rng)
+    
+            controlnet_updates, new_opt_state = optimizer.update(grad, opt_state, params)
+            newcontrolnet_params = optax.apply_updates(params, controlnet_updates)
+        
             metrics = {"loss": loss}
     
-            return new_unet_params, new_unet_opt_state, metrics, new_train_rng 
-
+            def l2(xs):
+                return jnp.sqrt(sum([jnp.vdot(x, x) for x in jax.tree_util.tree_leaves(xs)]))
+    
+            metrics["l2_grads"] = l2(jax.tree_util.tree_leaves(grad))
+    
+            return newcontrolnet_params,new_opt_state, metrics, new_train_rng
         p_train_step = pjit(
             train_step,
             in_axis_resources=( unet_param_spec,text_param_spec,control_param_spec,vae_param_spec,opt_state_spec,None,None ),
