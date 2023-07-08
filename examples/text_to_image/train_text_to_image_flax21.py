@@ -647,7 +647,8 @@ def main():
         # train
         for batch in train_dataloader:
             if args.model_parallel:
-                unet_params, opt_state, train_metric, train_rngs = p_train_step(unet_params, opt_state, text_params, vae_params, batch, train_rngs)
+                with Mesh(mesh_devices, ("dp","mp")):
+                    unet_params, opt_state, train_metric, train_rngs = p_train_step(unet_params, opt_state, text_params, vae_params, batch, train_rngs)
             else:
                 batch = shard(batch)
                 state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
