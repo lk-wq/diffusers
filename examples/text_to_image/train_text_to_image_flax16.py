@@ -408,24 +408,7 @@ def main():
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="unet", dtype=weight_dtype
     )
-    if args.model_parallel:
-        from jax.sharding import NamedSharding
-
-        mesh_devices = mesh_utils.create_device_mesh((4, 2))
-
-        mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
-        text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_encoder.params)
-        unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
-        vae_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , vae_params )
     
-        text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_encoder.params)
-        unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), unet_params)
-        vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), vae_params)
-        
-        unet_opt_state = optimizer2.init(unet_params)
-        unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), unet_opt_state )
-    
-
     # Optimization
     if args.scale_lr:
         args.learning_rate = args.learning_rate * total_train_batch_size
@@ -444,6 +427,25 @@ def main():
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
     )
+
+    if args.model_parallel:
+        from jax.sharding import NamedSharding
+
+        mesh_devices = mesh_utils.create_device_mesh((4, 2))
+
+        mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
+        text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_encoder.params)
+        unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
+        vae_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , vae_params )
+    
+        text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_encoder.params)
+        unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), unet_params)
+        vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), vae_params)
+        
+        unet_opt_state = optimizer.init(unet_params)
+        unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), unet_opt_state )
+    
+
 
     if not args.model_parallel:
         state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
