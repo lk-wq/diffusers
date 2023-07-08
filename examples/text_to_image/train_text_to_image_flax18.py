@@ -443,7 +443,7 @@ def main():
         unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), vae_params)
         
-        unet_opt_state = optimizer.init(unet_params)
+        opt_state = optimizer.init(unet_params)
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), unet_opt_state )
     
 
