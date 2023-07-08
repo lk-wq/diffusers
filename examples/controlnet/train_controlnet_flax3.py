@@ -464,6 +464,7 @@ def parse_args():
         "--gradient_accumulation_steps", type=int, default=1, help="Number of steps to accumulate gradients over"
     )
     parser.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
+    parser.add_argument("--model_parallel", action="store_true", help="Train on TPU in a model parallel manner.")
 
     args = parser.parse_args()
     args.output_dir = args.output_dir.replace("{timestamp}", time.strftime("%Y%m%d_%H%M%S"))
@@ -816,11 +817,15 @@ def main():
         eps=args.adam_epsilon,
         weight_decay=args.adam_weight_decay,
     )
-
     optimizer = optax.chain(
-        optax.clip_by_global_norm(args.max_grad_norm),
-        adamw,
-    )
+            optax.clip_by_global_norm(args.max_grad_norm),
+            adamw,
+        )
+    if args.model_parallel:
+        optimizer = optax.MultiSteps(
+        optimizer, args.gradient_accumulation_steps
+        )
+
     if args.model_parallel:
         from jax.sharding import NamedSharding
         mesh_devices = mesh_utils.create_device_mesh((4, 2))
