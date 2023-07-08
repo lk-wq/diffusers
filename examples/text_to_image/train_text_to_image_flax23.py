@@ -689,7 +689,7 @@ def main():
             pipeline.save_pretrained(
                 args.output_dir,
                 params={
-                    "text_encoder": jax.device_get(text_encoder_params),
+                    "text_encoder": jax.device_get(text_params),
                     "vae": jax.device_get(vae_params),
                     "unet": jax.device_get(unet_params),
                     "safety_checker": safety_checker.params,
