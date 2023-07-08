@@ -835,7 +835,6 @@ def main():
         optimizer, args.gradient_accumulation_steps
         )
 
-    if args.model_parallel:
         from jax.sharding import NamedSharding
         mesh_devices = mesh_utils.create_device_mesh((4, 2))
         mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
@@ -1182,7 +1181,7 @@ def main():
         position=0,
         disable=jax.process_index() > 0,
     )
-    if args.profile_memory:
+    if args.profile_memory and args.model_parallel:
         jax.profiler.save_device_memory_profile(os.path.join(args.output_dir, "memory_initial.prof"))
     t00 = t0 = time.monotonic()
     for epoch in epochs:
@@ -1308,7 +1307,7 @@ def main():
                 ignore_patterns=["step_*", "epoch_*"],
             )
 
-    if args.profile_memory:
+    if args.profile_memory and args.model_parallel:
         jax.profiler.save_device_memory_profile(os.path.join(args.output_dir, "memory_final.prof"))
     logger.info("Finished training.")
 
