@@ -821,16 +821,39 @@ def main():
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
     )
+    if args.model_parallel:
+        from jax.sharding import NamedSharding
+        mesh_devices = mesh_utils.create_device_mesh((4, 2))
+        mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
 
-    state = train_state.TrainState.create(apply_fn=controlnet.__call__, params=controlnet_params, tx=optimizer)
+        text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
+        unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
+        control_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , controlnet_params )
+        vae_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , vae_params )
+    
+        text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_params)
+        unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), unet_params)
+        controlnet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), controlnet_params)
+        vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), vae_params)
+    
+        opt_state = optimizer.init(controlnet_params)
+        opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
+
+    if not args.model_parallel:
+        state = train_state.TrainState.create(apply_fn=controlnet.__call__, params=controlnet_params, tx=optimizer)
 
     noise_scheduler, noise_scheduler_state = FlaxDDPMScheduler.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="scheduler"
     )
 
     # Initialize our training
-    validation_rng, train_rngs = jax.random.split(rng)
-    train_rngs = jax.random.split(train_rngs, jax.local_device_count())
+    if args.model_parallel:
+        train_rngs = rng
+        validation_rng = rng
+    else:
+        # train_rngs = jax.random.split(rng, jax.local_device_count())
+        validation_rng, train_rngs = jax.random.split(rng)
+        train_rngs = jax.random.split(train_rngs, jax.local_device_count())
 
     def compute_snr(timesteps):
         """
@@ -846,147 +869,223 @@ def main():
         snr = (alpha / sigma) ** 2
         return snr
 
-    def train_step(state, unet_params, text_encoder_params, vae_params, batch, train_rng):
-        # reshape batch, add grad_step_dim if gradient_accumulation_steps > 1
-        if args.gradient_accumulation_steps > 1:
-            grad_steps = args.gradient_accumulation_steps
-            batch = jax.tree_map(lambda x: x.reshape((grad_steps, x.shape[0] // grad_steps) + x.shape[1:]), batch)
+    if args.model_parallel:
 
-        def compute_loss(params, minibatch, sample_rng):
-            # Convert images to latent space
-            vae_outputs = vae.apply(
-                {"params": vae_params}, minibatch["pixel_values"], deterministic=True, method=vae.encode
-            )
-            latents = vae_outputs.latent_dist.sample(sample_rng)
-            # (NHWC) -> (NCHW)
-            latents = jnp.transpose(latents, (0, 3, 1, 2))
-            latents = latents * vae.config.scaling_factor
+        def train_step(unet_params, opt_state, text_encoder_params, vae_params, batch, train_rng):
+                
+            dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
+            def compute_loss(params):
+                # Convert images to latent space
+                vae_outputs = vae.apply(
+                    {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
+                )
+                latents = vae_outputs.latent_dist.sample(sample_rng)
+                # (NHWC) -> (NCHW)
+                latents = jnp.transpose(latents, (0, 3, 1, 2))
+                latents = latents * vae.config.scaling_factor
+    
+                # Sample noise that we'll add to the latents
+                noise_rng, timestep_rng = jax.random.split(sample_rng)
+                noise = jax.random.normal(noise_rng, latents.shape)
+                # Sample a random timestep for each image
+                bsz = latents.shape[0]
+                timesteps = jax.random.randint(
+                    timestep_rng,
+                    (bsz,),
+                    0,
+                    noise_scheduler.config.num_train_timesteps,
+                )
+    
+                # Add noise to the latents according to the noise magnitude at each timestep
+                # (this is the forward diffusion process)
+                noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
+    
+                # Get the text embedding for conditioning
+                encoder_hidden_states = text_encoder(
+                    batch["input_ids"],
+                    params=text_encoder_params,
+                    train=False,
+                )[0]
+    
+                # Predict the noise residual and compute loss
+                model_pred = unet.apply(
+                    {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
+                ).sample
+        
+                # Get the target for loss depending on the prediction type
+                if noise_scheduler.config.prediction_type == "epsilon":
+                    target = noise
+                elif noise_scheduler.config.prediction_type == "v_prediction":
+                    target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
+                else:
+                    # raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+                    raise ValueError(
+                    "fail "
+                    )
 
-            # Sample noise that we'll add to the latents
-            noise_rng, timestep_rng = jax.random.split(sample_rng)
-            noise = jax.random.normal(noise_rng, latents.shape)
-            # Sample a random timestep for each image
-            bsz = latents.shape[0]
-            timesteps = jax.random.randint(
-                timestep_rng,
-                (bsz,),
-                0,
-                noise_scheduler.config.num_train_timesteps,
-            )
+                loss = (target - model_pred) ** 2
+                loss = loss.mean()
+    
+                return loss
+    
+            grad_fn = jax.value_and_grad(compute_loss)
+            loss, grads = grad_fn(unet_params)
+            unet_updates, new_unet_opt_state = optimizer.update(grads, opt_state, unet_params)
+            new_unet_params = optax.apply_updates(unet_params, unet_updates)
+                        
+            metrics = {"loss": loss}
+    
+            return new_unet_params, new_unet_opt_state, metrics, new_train_rng 
 
-            # Add noise to the latents according to the noise magnitude at each timestep
-            # (this is the forward diffusion process)
-            noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
+        p_train_step = pjit(
+            train_step,
+            in_axis_resources=( unet_param_spec,text_param_spec,control_param_spec,opt_state_spec,None,None ),
+            out_axis_resources=(control_param_spec,opt_state_spec,None, None),
+            donate_argnums=(2,3),
+        )
 
-            # Get the text embedding for conditioning
-            encoder_hidden_states = text_encoder(
-                minibatch["input_ids"],
-                params=text_encoder_params,
-                train=False,
-            )[0]
-
-            controlnet_cond = minibatch["conditioning_pixel_values"]
-
-            # Predict the noise residual and compute loss
-            down_block_res_samples, mid_block_res_sample = controlnet.apply(
-                {"params": params},
-                noisy_latents,
-                timesteps,
-                encoder_hidden_states,
-                controlnet_cond,
-                train=True,
-                return_dict=False,
-            )
-
-            model_pred = unet.apply(
-                {"params": unet_params},
-                noisy_latents,
-                timesteps,
-                encoder_hidden_states,
-                down_block_additional_residuals=down_block_res_samples,
-                mid_block_additional_residual=mid_block_res_sample,
-            ).sample
-
-            # Get the target for loss depending on the prediction type
-            if noise_scheduler.config.prediction_type == "epsilon":
-                target = noise
-            elif noise_scheduler.config.prediction_type == "v_prediction":
-                target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
+    else:
+        def train_step(state, unet_params, text_encoder_params, vae_params, batch, train_rng):
+            # reshape batch, add grad_step_dim if gradient_accumulation_steps > 1
+            if args.gradient_accumulation_steps > 1:
+                grad_steps = args.gradient_accumulation_steps
+                batch = jax.tree_map(lambda x: x.reshape((grad_steps, x.shape[0] // grad_steps) + x.shape[1:]), batch)
+    
+            def compute_loss(params, minibatch, sample_rng):
+                # Convert images to latent space
+                vae_outputs = vae.apply(
+                    {"params": vae_params}, minibatch["pixel_values"], deterministic=True, method=vae.encode
+                )
+                latents = vae_outputs.latent_dist.sample(sample_rng)
+                # (NHWC) -> (NCHW)
+                latents = jnp.transpose(latents, (0, 3, 1, 2))
+                latents = latents * vae.config.scaling_factor
+    
+                # Sample noise that we'll add to the latents
+                noise_rng, timestep_rng = jax.random.split(sample_rng)
+                noise = jax.random.normal(noise_rng, latents.shape)
+                # Sample a random timestep for each image
+                bsz = latents.shape[0]
+                timesteps = jax.random.randint(
+                    timestep_rng,
+                    (bsz,),
+                    0,
+                    noise_scheduler.config.num_train_timesteps,
+                )
+    
+                # Add noise to the latents according to the noise magnitude at each timestep
+                # (this is the forward diffusion process)
+                noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
+    
+                # Get the text embedding for conditioning
+                encoder_hidden_states = text_encoder(
+                    minibatch["input_ids"],
+                    params=text_encoder_params,
+                    train=False,
+                )[0]
+    
+                controlnet_cond = minibatch["conditioning_pixel_values"]
+    
+                # Predict the noise residual and compute loss
+                down_block_res_samples, mid_block_res_sample = controlnet.apply(
+                    {"params": params},
+                    noisy_latents,
+                    timesteps,
+                    encoder_hidden_states,
+                    controlnet_cond,
+                    train=True,
+                    return_dict=False,
+                )
+    
+                model_pred = unet.apply(
+                    {"params": unet_params},
+                    noisy_latents,
+                    timesteps,
+                    encoder_hidden_states,
+                    down_block_additional_residuals=down_block_res_samples,
+                    mid_block_additional_residual=mid_block_res_sample,
+                ).sample
+    
+                # Get the target for loss depending on the prediction type
+                if noise_scheduler.config.prediction_type == "epsilon":
+                    target = noise
+                elif noise_scheduler.config.prediction_type == "v_prediction":
+                    target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
+                else:
+                    raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+    
+                loss = (target - model_pred) ** 2
+    
+                if args.snr_gamma is not None:
+                    snr = jnp.array(compute_snr(timesteps))
+                    snr_loss_weights = jnp.where(snr < args.snr_gamma, snr, jnp.ones_like(snr) * args.snr_gamma) / snr
+                    loss = loss * snr_loss_weights
+    
+                loss = loss.mean()
+    
+                return loss
+    
+            grad_fn = jax.value_and_grad(compute_loss)
+    
+            # get a minibatch (one gradient accumulation slice)
+            def get_minibatch(batch, grad_idx):
+                return jax.tree_util.tree_map(
+                    lambda x: jax.lax.dynamic_index_in_dim(x, grad_idx, keepdims=False),
+                    batch,
+                )
+    
+            def loss_and_grad(grad_idx, train_rng):
+                # create minibatch for the grad step
+                minibatch = get_minibatch(batch, grad_idx) if grad_idx is not None else batch
+                sample_rng, train_rng = jax.random.split(train_rng, 2)
+                loss, grad = grad_fn(state.params, minibatch, sample_rng)
+                return loss, grad, train_rng
+    
+            if args.gradient_accumulation_steps == 1:
+                loss, grad, new_train_rng = loss_and_grad(None, train_rng)
             else:
-                raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+                init_loss_grad_rng = (
+                    0.0,  # initial value for cumul_loss
+                    jax.tree_map(jnp.zeros_like, state.params),  # initial value for cumul_grad
+                    train_rng,  # initial value for train_rng
+                )
+    
+                def cumul_grad_step(grad_idx, loss_grad_rng):
+                    cumul_loss, cumul_grad, train_rng = loss_grad_rng
+                    loss, grad, new_train_rng = loss_and_grad(grad_idx, train_rng)
+                    cumul_loss, cumul_grad = jax.tree_map(jnp.add, (cumul_loss, cumul_grad), (loss, grad))
+                    return cumul_loss, cumul_grad, new_train_rng
+    
+                loss, grad, new_train_rng = jax.lax.fori_loop(
+                    0,
+                    args.gradient_accumulation_steps,
+                    cumul_grad_step,
+                    init_loss_grad_rng,
+                )
+                loss, grad = jax.tree_map(lambda x: x / args.gradient_accumulation_steps, (loss, grad))
+    
+            grad = jax.lax.pmean(grad, "batch")
+    
+            new_state = state.apply_gradients(grads=grad)
+    
+            metrics = {"loss": loss}
+            metrics = jax.lax.pmean(metrics, axis_name="batch")
+    
+            def l2(xs):
+                return jnp.sqrt(sum([jnp.vdot(x, x) for x in jax.tree_util.tree_leaves(xs)]))
+    
+            metrics["l2_grads"] = l2(jax.tree_util.tree_leaves(grad))
+    
+            return new_state, metrics, new_train_rng
 
-            loss = (target - model_pred) ** 2
+        # Create parallel version of the train step
+        p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
 
-            if args.snr_gamma is not None:
-                snr = jnp.array(compute_snr(timesteps))
-                snr_loss_weights = jnp.where(snr < args.snr_gamma, snr, jnp.ones_like(snr) * args.snr_gamma) / snr
-                loss = loss * snr_loss_weights
-
-            loss = loss.mean()
-
-            return loss
-
-        grad_fn = jax.value_and_grad(compute_loss)
-
-        # get a minibatch (one gradient accumulation slice)
-        def get_minibatch(batch, grad_idx):
-            return jax.tree_util.tree_map(
-                lambda x: jax.lax.dynamic_index_in_dim(x, grad_idx, keepdims=False),
-                batch,
-            )
-
-        def loss_and_grad(grad_idx, train_rng):
-            # create minibatch for the grad step
-            minibatch = get_minibatch(batch, grad_idx) if grad_idx is not None else batch
-            sample_rng, train_rng = jax.random.split(train_rng, 2)
-            loss, grad = grad_fn(state.params, minibatch, sample_rng)
-            return loss, grad, train_rng
-
-        if args.gradient_accumulation_steps == 1:
-            loss, grad, new_train_rng = loss_and_grad(None, train_rng)
-        else:
-            init_loss_grad_rng = (
-                0.0,  # initial value for cumul_loss
-                jax.tree_map(jnp.zeros_like, state.params),  # initial value for cumul_grad
-                train_rng,  # initial value for train_rng
-            )
-
-            def cumul_grad_step(grad_idx, loss_grad_rng):
-                cumul_loss, cumul_grad, train_rng = loss_grad_rng
-                loss, grad, new_train_rng = loss_and_grad(grad_idx, train_rng)
-                cumul_loss, cumul_grad = jax.tree_map(jnp.add, (cumul_loss, cumul_grad), (loss, grad))
-                return cumul_loss, cumul_grad, new_train_rng
-
-            loss, grad, new_train_rng = jax.lax.fori_loop(
-                0,
-                args.gradient_accumulation_steps,
-                cumul_grad_step,
-                init_loss_grad_rng,
-            )
-            loss, grad = jax.tree_map(lambda x: x / args.gradient_accumulation_steps, (loss, grad))
-
-        grad = jax.lax.pmean(grad, "batch")
-
-        new_state = state.apply_gradients(grads=grad)
-
-        metrics = {"loss": loss}
-        metrics = jax.lax.pmean(metrics, axis_name="batch")
-
-        def l2(xs):
-            return jnp.sqrt(sum([jnp.vdot(x, x) for x in jax.tree_util.tree_leaves(xs)]))
-
-        metrics["l2_grads"] = l2(jax.tree_util.tree_leaves(grad))
-
-        return new_state, metrics, new_train_rng
-
-    # Create parallel version of the train step
-    p_train_step = jax.pmap(train_step, "batch", donate_argnums=(0,))
-
-    # Replicate the train state on each device
-    state = jax_utils.replicate(state)
-    unet_params = jax_utils.replicate(unet_params)
-    text_encoder_params = jax_utils.replicate(text_encoder.params)
-    vae_params = jax_utils.replicate(vae_params)
+        # Replicate the train state on each device
+        state = jax_utils.replicate(state)
+        unet_params = jax_utils.replicate(unet_params)
+        text_encoder_params = jax_utils.replicate(text_encoder.params)
+        vae_params = jax_utils.replicate(vae_params)
 
     # Train!
     if args.streaming:
@@ -1051,18 +1150,23 @@ def main():
         )
         # train
         for batch in train_dataloader:
-            if args.profile_steps and global_step == 1:
-                train_metric["loss"].block_until_ready()
-                jax.profiler.start_trace(args.output_dir)
-            if args.profile_steps and global_step == 1 + args.profile_steps:
-                train_metric["loss"].block_until_ready()
-                jax.profiler.stop_trace()
+            if not args.model_parallel:
+                if args.profile_steps and global_step == 1:
+                    train_metric["loss"].block_until_ready()
+                    jax.profiler.start_trace(args.output_dir)
+                if args.profile_steps and global_step == 1 + args.profile_steps:
+                    train_metric["loss"].block_until_ready()
+                    jax.profiler.stop_trace()
+                
+                batch = shard(batch)
+                with jax.profiler.StepTraceAnnotation("train", step_num=global_step):
+                    state, train_metric, train_rngs = p_train_step(
+                        state, unet_params, text_encoder_params, vae_params, batch, train_rngs
+                    )
+            else:
+                with Mesh(mesh_devices, ("dp","mp")):
+                    controlnet_params, opt_state,train_metric, train_rngs = p_train_step(unet_params,text_params,controlnet_params,vae_params, opt_state,batch,train_rngs)
 
-            batch = shard(batch)
-            with jax.profiler.StepTraceAnnotation("train", step_num=global_step):
-                state, train_metric, train_rngs = p_train_step(
-                    state, unet_params, text_encoder_params, vae_params, batch, train_rngs
-                )
             train_metrics.append(train_metric)
 
             train_step_progress_bar.update(1)
@@ -1074,13 +1178,13 @@ def main():
             if (
                 args.validation_prompt is not None
                 and global_step % args.validation_steps == 0
-                and jax.process_index() == 0
+                and jax.process_index() == 0 and not args.model_parallel
             ):
                 _ = log_validation(
                     pipeline, pipeline_params, state.params, tokenizer, args, validation_rng, weight_dtype
                 )
 
-            if global_step % args.logging_steps == 0 and jax.process_index() == 0:
+            if global_step % args.logging_steps == 0 and jax.process_index() == 0 and not args.model_parallel:
                 if args.report_to == "wandb":
                     train_metrics = jax_utils.unreplicate(train_metrics)
                     train_metrics = jax.tree_util.tree_map(lambda *m: jnp.array(m).mean(), *train_metrics)
@@ -1096,18 +1200,24 @@ def main():
                 t0, step0 = time.monotonic(), global_step
                 train_metrics = []
             if global_step % args.checkpointing_steps == 0 and jax.process_index() == 0:
-                controlnet.save_pretrained(
-                    f"{args.output_dir}/{global_step}",
-                    params=get_params_to_save(state.params),
-                )
-
-        train_metric = jax_utils.unreplicate(train_metric)
+                if args.model_parallel:
+                    controlnet.save_pretrained(
+                        f"{args.output_dir}/{global_step}",
+                        params=jax.device_get(controlnet_params),
+                    )
+                else:
+                    controlnet.save_pretrained(
+                        f"{args.output_dir}/{global_step}",
+                        params=get_params_to_save(state.params),
+                    )
+        if not args.model_parallel:
+            train_metric = jax_utils.unreplicate(train_metric)
         train_step_progress_bar.close()
         epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
 
     # Final validation & store model.
     if jax.process_index() == 0:
-        if args.validation_prompt is not None:
+        if args.validation_prompt is not None and not args.model_parallel:
             if args.profile_validation:
                 jax.profiler.start_trace(args.output_dir)
             image_logs = log_validation(
@@ -1117,11 +1227,17 @@ def main():
                 jax.profiler.stop_trace()
         else:
             image_logs = None
+        if args.model_parallel:
+            controlnet.save_pretrained(
+                args.output_dir,
+                params=jax.device_get(controlnet_params),
+            )
 
-        controlnet.save_pretrained(
-            args.output_dir,
-            params=get_params_to_save(state.params),
-        )
+        else:
+            controlnet.save_pretrained(
+                args.output_dir,
+                params=get_params_to_save(state.params),
+            )
 
         if args.push_to_hub:
             save_model_card(
