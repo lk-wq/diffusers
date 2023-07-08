@@ -978,8 +978,8 @@ def main():
     
             loss, grad, new_train_rng = loss_and_grad(None, train_rng)
     
-            controlnet_updates, new_opt_state = optimizer.update(grad, opt_state, params)
-            newcontrolnet_params = optax.apply_updates(params, controlnet_updates)
+            controlnet_updates, new_opt_state = optimizer.update(grad['controlnet_params'], opt_state, params['controlnet_params'])
+            newcontrolnet_params = optax.apply_updates(params['controlnet_params'], controlnet_updates)
         
             metrics = {"loss": loss}
     
