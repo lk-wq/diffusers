@@ -798,7 +798,7 @@ def main():
             "mid_block",
         ]:
             controlnet_params[key] = unet_params[key]
-
+    if not args.model_parallel:
         pipeline, pipeline_params = FlaxStableDiffusionControlNetPipeline.from_pretrained(
             args.pretrained_model_name_or_path,
             tokenizer=tokenizer,
