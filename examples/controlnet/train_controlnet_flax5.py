@@ -836,6 +836,7 @@ def main():
         from jax.sharding import NamedSharding
         mesh_devices = mesh_utils.create_device_mesh((4, 2))
         mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
+        text_params = text_encoder.params
 
         text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
         unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
