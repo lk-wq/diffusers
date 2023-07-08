@@ -409,6 +409,8 @@ def main():
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="unet", dtype=weight_dtype
     )
     if args.model_parallel:
+        from jax.sharding import NamedSharding
+
         mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
         mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
@@ -460,8 +462,8 @@ def main():
 
     # Create parallel version of the train step
     if args.model_parallel:
-        from jax.sharding import PartitionSpec as P 
-        from jax.sharding import NamedSharding
+        # from jax.sharding import PartitionSpec as P 
+        # from jax.sharding import NamedSharding
 
         def train_step(unet_params, opt_state, text_encoder_params, vae_params, batch, train_rng):
                 
