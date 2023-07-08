@@ -22,6 +22,7 @@ from tqdm.auto import tqdm
 from transformers import CLIPImageProcessor, CLIPTokenizer, FlaxCLIPTextModel, set_seed
 
 from partitions import partition_shape
+from jax.sharding import Mesh
 
 from diffusers import (
     FlaxAutoencoderKL,
