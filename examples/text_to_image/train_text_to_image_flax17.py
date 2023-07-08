@@ -6,6 +6,7 @@ import random
 from pathlib import Path
 from jax.experimental import mesh_utils
 from jax.sharding import NamedSharding
+from jax.experimental.pjit import pjit
 
 import jax
 import jax.numpy as jnp
