@@ -887,7 +887,7 @@ def main():
     if args.model_parallel:
     
         def train_step(unet_params,text_params,controlnet_params,vae_params,opt_state,batch,train_rng):
-            params = {"text_encoder": text_params, "unet": unet_params,"controlnet_params": controlnet_params}
+            # params = {"text_encoder": text_params, "unet": unet_params,"controlnet_params": controlnet_params}
     
             def compute_loss(params, minibatch, sample_rng):
                 # Convert images to latent space
@@ -918,7 +918,7 @@ def main():
                 # Get the text embedding for conditioning
                 encoder_hidden_states = text_encoder(
                     minibatch["input_ids"],
-                    params=params['text_encoder'],
+                    params=text_params,
                     train=False,
                 )[0]
     
@@ -926,7 +926,7 @@ def main():
     
                 # Predict the noise residual and compute loss
                 down_block_res_samples, mid_block_res_sample = controlnet.apply(
-                    {"params": controlnet_params},
+                    {"params": params},
                     noisy_latents,
                     timesteps,
                     encoder_hidden_states,
@@ -936,7 +936,7 @@ def main():
                 )
     
                 model_pred = unet.apply(
-                    {"params": params['unet']},
+                    {"params": unet_params},
                     noisy_latents,
                     timesteps,
                     encoder_hidden_states,
@@ -976,13 +976,13 @@ def main():
                 # create minibatch for the grad step
                 minibatch = get_minibatch(batch, grad_idx) if grad_idx is not None else batch
                 sample_rng, train_rng = jax.random.split(train_rng, 2)
-                loss, grad = grad_fn(params, minibatch, sample_rng)
+                loss, grad = grad_fn(controlnet_params, minibatch, sample_rng)
                 return loss, grad, train_rng
     
             loss, grad, new_train_rng = loss_and_grad(None, train_rng)
     
-            controlnet_updates, new_opt_state = optimizer.update(grad['controlnet_params'], opt_state, params['controlnet_params'])
-            newcontrolnet_params = optax.apply_updates(params['controlnet_params'], controlnet_updates)
+            controlnet_updates, new_opt_state = optimizer.update(grad, opt_state, controlnet_params)
+            newcontrolnet_params = optax.apply_updates(controlnet_params, controlnet_updates)
         
             metrics = {"loss": loss}
     
