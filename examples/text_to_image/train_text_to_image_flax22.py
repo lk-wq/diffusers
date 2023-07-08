@@ -526,9 +526,9 @@ def main():
                 return loss
     
             grad_fn = jax.value_and_grad(compute_loss)
-            loss, grads = grad_fn(params)
-            unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], opt_state, params['unet'])
-            new_unet_params = optax.apply_updates(params['unet'], unet_updates)
+            loss, grads = grad_fn(unet_params)
+            unet_updates, new_unet_opt_state = optimizer.update(grads, opt_state, unet_params)
+            new_unet_params = optax.apply_updates(unet_params, unet_updates)
                         
             metrics = {"loss": loss}
     
