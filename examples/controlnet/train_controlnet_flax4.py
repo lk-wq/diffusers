@@ -40,6 +40,12 @@ from torchvision import transforms
 from tqdm.auto import tqdm
 from transformers import CLIPTokenizer, FlaxCLIPTextModel, set_seed
 
+from jax.experimental import mesh_utils
+from jax.sharding import NamedSharding
+from jax.experimental.pjit import pjit
+from partitions import partition_shape
+from jax.sharding import Mesh
+
 from diffusers import (
     FlaxAutoencoderKL,
     FlaxControlNetModel,
