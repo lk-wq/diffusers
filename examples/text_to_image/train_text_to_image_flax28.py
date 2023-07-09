@@ -435,7 +435,7 @@ def main():
         vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
 
         # text_params = text_encoder.params
-        del text_params
+        # del text_params
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 
         mesh_devices = mesh_utils.create_device_mesh((4, 2))
