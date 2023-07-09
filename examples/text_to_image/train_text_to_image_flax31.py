@@ -621,7 +621,7 @@ def main():
     
         # Replicate the train state on each device
         state = jax_utils.replicate(state)
-        text_encoder_params = jax_utils.replicate(text_encoder.params)
+        text_encoder_params = jax_utils.replicate(text_params)
         vae_params = jax_utils.replicate(vae_params)
 
     # Train!
