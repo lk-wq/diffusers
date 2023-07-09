@@ -431,15 +431,22 @@ def main():
 
     if args.model_parallel:
         from jax.sharding import NamedSharding
+        params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
+        unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
+        vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
+
+        text_params = text_encoder.params
+        del text_encoder.params
+        text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 
         mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
         mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
-        text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_encoder.params)
+        text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
         unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
         vae_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , vae_params )
     
-        text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_encoder.params)
+        text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_params)
         unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), vae_params)
         
