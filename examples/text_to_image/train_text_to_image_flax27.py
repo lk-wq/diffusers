@@ -400,7 +400,7 @@ def main():
     tokenizer = CLIPTokenizer.from_pretrained(
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="tokenizer"
     )
-    text_encoder = FlaxCLIPTextModel.from_pretrained(
+    text_encoder, text_params = FlaxCLIPTextModel.from_pretrained(
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="text_encoder", dtype=weight_dtype
     )
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
@@ -434,8 +434,8 @@ def main():
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
 
-        text_params = text_encoder.params
-        del text_encoder.params
+        # text_params = text_encoder.params
+        del text_params
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 
         mesh_devices = mesh_utils.create_device_mesh((4, 2))
