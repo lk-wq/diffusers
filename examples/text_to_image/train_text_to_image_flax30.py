@@ -643,7 +643,12 @@ def main():
     global_step = 0
 
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
-    with Mesh(mesh_devices, ("dp","mp")):
+    if args.model_parallel:
+        context = Mesh(mesh_devices, ("dp","mp"))
+    else:
+        from contextlib import nullcontext
+        context = nullcontext
+    with context:
 
         for epoch in epochs:
             # ======================== Training ================================
