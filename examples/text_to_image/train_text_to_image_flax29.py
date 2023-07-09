@@ -643,35 +643,36 @@ def main():
     global_step = 0
 
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
-    for epoch in epochs:
-        # ======================== Training ================================
+    with Mesh(mesh_devices, ("dp","mp")):
 
-        train_metrics = []
-
-        steps_per_epoch = len(train_dataset) // total_train_batch_size
-        train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
-        # train
-        for batch in train_dataloader:
-            if args.model_parallel:
-                with Mesh(mesh_devices, ("dp","mp")):
+        for epoch in epochs:
+            # ======================== Training ================================
+    
+            train_metrics = []
+    
+            steps_per_epoch = len(train_dataset) // total_train_batch_size
+            train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
+            # train
+            for batch in train_dataloader:
+                if args.model_parallel:
                     unet_params, opt_state, train_metric, train_rngs = p_train_step(unet_params, opt_state, text_params, vae_params, batch, train_rngs)
-            else:
-                batch = shard(batch)
-                state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
-
-            train_metrics.append(train_metric)
-
-            train_step_progress_bar.update(1)
-
-            global_step += 1
-            if global_step >= args.max_train_steps:
-                break
-
-        if not args.model_parallel:
-            train_metric = jax_utils.unreplicate(train_metric)
-
-        train_step_progress_bar.close()
-        epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
+                else:
+                    batch = shard(batch)
+                    state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
+    
+                train_metrics.append(train_metric)
+    
+                train_step_progress_bar.update(1)
+    
+                global_step += 1
+                if global_step >= args.max_train_steps:
+                    break
+    
+            if not args.model_parallel:
+                train_metric = jax_utils.unreplicate(train_metric)
+    
+            train_step_progress_bar.close()
+            epochs.write(f"Epoch... ({epoch + 1}/{args.num_train_epochs} | Loss: {train_metric['loss']})")
 
     # Create the pipeline using using the trained modules and save it.
     if jax.process_index() == 0:
