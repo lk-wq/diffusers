@@ -431,7 +431,6 @@ def main():
 
     if args.model_parallel:
         from jax.sharding import NamedSharding
-        params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
 
