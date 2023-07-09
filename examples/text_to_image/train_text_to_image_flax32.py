@@ -647,7 +647,7 @@ def main():
         context = Mesh(mesh_devices, ("dp","mp"))
     else:
         from contextlib import nullcontext
-        context = nullcontext
+        context = nullcontext()
     with context:
 
         for epoch in epochs:
