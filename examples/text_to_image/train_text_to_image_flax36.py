@@ -438,7 +438,7 @@ def main():
       if len(shape) == 1:
         if shape[0] % 4 == 0:
           return P("dp")
-        else:
+        elif shape[0] % 2 == 0:
           return P("mp")
       if len(shape) == 2:
         if shape[0] % 4 == 0 and shape[1] % 2 == 0 and shape[0] > shape[1]:
@@ -468,7 +468,6 @@ def main():
     from jax.sharding import PartitionSpec as P 
     from jax.sharding import NamedSharding
 
-
     if args.model_parallel:
         from jax.sharding import NamedSharding
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
@@ -492,8 +491,6 @@ def main():
         opt_state = optimizer.init(unet_params)
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
     
-
-
     if not args.model_parallel:
         state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
