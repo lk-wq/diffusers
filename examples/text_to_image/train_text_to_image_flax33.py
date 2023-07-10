@@ -465,6 +465,9 @@ def main():
         
       print("fail")
       return P()
+    from jax.sharding import PartitionSpec as P 
+    from jax.sharding import NamedSharding
+
 
     if args.model_parallel:
         from jax.sharding import NamedSharding
