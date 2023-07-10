@@ -477,9 +477,9 @@ def main():
     from jax.sharding import NamedSharding
 
     if not args.model_parallel:
-        unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(jnp.bfloat16), unet_params)
-        vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(jnp.bfloat16), vae_params)
-        text_encoder_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(jnp.bfloat16), text_encoder.params)
+        unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(weight_dtype), unet_params)
+        vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(weight_dtype), vae_params)
+        text_encoder_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(weight_dtype), text_encoder.params)
 
     if args.model_parallel:
         from jax.sharding import NamedSharding
@@ -497,9 +497,9 @@ def main():
         unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
         vae_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , vae_params )
     
-        text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.float32), text_params)
-        unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.float32), unet_params)
-        vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.float32), vae_params)
+        text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), text_params)
+        unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
+        vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), vae_params)
         
         opt_state = optimizer.init(unet_params)
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
@@ -524,13 +524,13 @@ def main():
         # from jax.sharding import PartitionSpec as P 
         # from jax.sharding import NamedSharding
 
-        def train_step(unet_params, opt_state, text_encoder_params, vae_params, batch, train_rng):
+        def train_step(unet_params, opt_state, text_encoder_params, vae_params, batchi,batchp, train_rng):
                 
             dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
             def compute_loss(params):
                 # Convert images to latent space
                 vae_outputs = vae.apply(
-                    {"params": vae_params}, batch["pixel_values"], deterministic=True, method=vae.encode
+                    {"params": vae_params}, batchp, deterministic=True, method=vae.encode
                 )
                 latents = vae_outputs.latent_dist.sample(sample_rng)
                 # (NHWC) -> (NCHW)
@@ -555,7 +555,7 @@ def main():
     
                 # Get the text embedding for conditioning
                 encoder_hidden_states = text_encoder(
-                    batch["input_ids"],
+                    batchi,
                     params=text_encoder_params,
                     train=False,
                 )[0]
@@ -592,14 +592,14 @@ def main():
 
         p_train_step = pjit(
             train_step,
-            in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,None,None ),
+            in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,P("dp",None),P("dp",None),None ),
             out_axis_resources=(unet_param_spec,unet_opt_state_spec,None, None),
             donate_argnums=(0,1),
         )
     
     else:
 
-        def train_step(state, text_encoder_params, vae_params, batch, train_rng):
+        def train_step(state, text_encoder_params, vae_params, batchi,batchp, train_rng):
                 
             dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
             def compute_loss(params):
@@ -710,7 +710,9 @@ def main():
             # train
             for batch in train_dataloader:
                 if args.model_parallel:
-                    unet_params, opt_state, train_metric, train_rngs = p_train_step(unet_params, opt_state, text_params, vae_params, batch, train_rngs)
+                    bi = batch['input_ids']
+                    bp = batch['pixel_values']
+                    unet_params, opt_state, train_metric, train_rngs = p_train_step(unet_params, opt_state, text_params, vae_params, bi, ,bp, train_rngs)
                 else:
                     batch = shard(batch)
                     state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
