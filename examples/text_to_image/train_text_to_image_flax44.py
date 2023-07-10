@@ -712,7 +712,7 @@ def main():
                 if args.model_parallel:
                     bi = batch['input_ids']
                     bp = batch['pixel_values']
-                    unet_params, opt_state, train_metric, train_rngs = p_train_step(unet_params, opt_state, text_params, vae_params, bi, ,bp, train_rngs)
+                    unet_params, opt_state, train_metric, train_rngs = p_train_step(unet_params, opt_state, text_params, vae_params, bi,bp, train_rngs)
                 else:
                     batch = shard(batch)
                     state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
