@@ -428,6 +428,43 @@ def main():
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
     )
+    def partition_shape(shape):
+      for i in shape:
+        if 6 in shape:
+            if len(shape) == 1:
+                return P(None)
+            if len(shape) == 4:
+                return P(None,None,None,None)
+      if len(shape) == 1:
+        if shape[0] % 4 == 0:
+          return P("dp")
+        else:
+          return P("mp")
+      if len(shape) == 2:
+        if shape[0] % 4 == 0 and shape[1] % 2 == 0 and shape[0] > shape[1]:
+          return P("dp","mp")
+        if shape[0] % 2 == 0 and shape[1] % 4 == 0:
+          return P("mp","dp")
+        if shape[0] % 4 == 0:# and shape[1] % 2 == 0:
+          return P("dp",None)
+        if shape[1] % 4 == 0:# and shape[1] % 2 == 0:
+          return P(None,"dp")
+        if shape[0] % 2 == 0 and shape[1] % 2 == 0:
+          return P("mp",None)
+      if len(shape) == 4:
+        if shape[-2] % 4 == 0 and shape[-1] % 2 == 0:
+          return P(None,None,"dp","mp")
+        if shape[-2] % 2 == 0 and shape[-1] % 4 == 0:
+          return P(None,None,"mp","dp")
+        if shape[-2] % 4 == 0:# and shape[1] % 2 == 0:
+          return P(None,None,"dp",None)
+        if shape[-1] % 4 == 0:# and shape[1] % 2 == 0:
+          return P(None,None,None,"dp")
+        if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
+          return P(None,None,"mp",None)
+        
+      print("fail")
+      return P()
 
     if args.model_parallel:
         from jax.sharding import NamedSharding
