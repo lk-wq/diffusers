@@ -409,7 +409,7 @@ def main():
     tokenizer = CLIPTokenizer.from_pretrained(
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="tokenizer"
     )
-    text_encoder, text_params = FlaxCLIPTextModel.from_pretrained(
+    text_encoder = FlaxCLIPTextModel.from_pretrained(
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="text_encoder", dtype=weight_dtype, from_pt=args.from_pt
     )
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
@@ -481,7 +481,7 @@ def main():
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
 
-        # text_params = text_encoder.params
+        text_params = text_encoder.params
         # del text_params
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 
@@ -666,7 +666,7 @@ def main():
     
         # Replicate the train state on each device
         state = jax_utils.replicate(state)
-        text_encoder_params = jax_utils.replicate(text_params)
+        text_encoder_params = jax_utils.replicate(text_encoder.params)
         vae_params = jax_utils.replicate(vae_params)
 
     # Train!
