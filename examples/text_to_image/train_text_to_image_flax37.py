@@ -384,8 +384,10 @@ def main():
         batch = {k: v.numpy() for k, v in batch.items()}
 
         return batch
-
-    total_train_batch_size = args.train_batch_size * jax.local_device_count()
+    if args.model_parallel:
+        total_train_batch_size = args.train_batch_size
+    else:
+        total_train_batch_size = args.train_batch_size * jax.local_device_count()
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset, shuffle=True, collate_fn=collate_fn, batch_size=total_train_batch_size, drop_last=True
     )
@@ -430,11 +432,10 @@ def main():
     )
     def partition_shape(shape):
       for i in shape:
-        if 6 in shape:
-            if len(shape) == 1:
-                return P(None)
-            if len(shape) == 4:
-                return P(None,None,None,None)
+        if len(shape) == 1:
+            return P(None)
+        if len(shape) == 4:
+            return P(None,None,None,None)
       if len(shape) == 1:
         if shape[0] % 4 == 0:
           return P("dp")
@@ -463,7 +464,7 @@ def main():
         if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
           return P(None,None,"mp",None)
         
-      print("fail")
+      print("fail",shape)
       return P()
     from jax.sharding import PartitionSpec as P 
     from jax.sharding import NamedSharding
