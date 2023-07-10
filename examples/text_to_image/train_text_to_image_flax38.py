@@ -403,13 +403,13 @@ def main():
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="tokenizer"
     )
     text_encoder, text_params = FlaxCLIPTextModel.from_pretrained(
-        args.pretrained_model_name_or_path, revision=args.revision, subfolder="text_encoder", dtype=weight_dtype
+        args.pretrained_model_name_or_path, revision=args.revision, subfolder="text_encoder", dtype=weight_dtype, from_pt=args.from_pt
     )
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-        args.pretrained_model_name_or_path, revision=args.revision, subfolder="vae", dtype=weight_dtype
+        args.pretrained_model_name_or_path, revision=args.revision, subfolder="vae", dtype=weight_dtype, from_pt=args.from_pt
     )
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-        args.pretrained_model_name_or_path, revision=args.revision, subfolder="unet", dtype=weight_dtype
+        args.pretrained_model_name_or_path, revision=args.revision, subfolder="unet", dtype=weight_dtype, from_pt=args.from_pt
     )
     
     # Optimization
