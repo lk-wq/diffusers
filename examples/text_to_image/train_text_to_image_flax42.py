@@ -476,6 +476,11 @@ def main():
     from jax.sharding import PartitionSpec as P 
     from jax.sharding import NamedSharding
 
+    if not args.model_parallel:
+        unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(jnp.bfloat16), unet_params)
+        vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(jnp.bfloat16), vae_params)
+        text_encoder_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(jnp.bfloat16), text_encoder.params)
+
     if args.model_parallel:
         from jax.sharding import NamedSharding
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
@@ -666,7 +671,7 @@ def main():
     
         # Replicate the train state on each device
         state = jax_utils.replicate(state)
-        text_encoder_params = jax_utils.replicate(text_encoder.params)
+        text_encoder_params = jax_utils.replicate(text_encoder_params)
         vae_params = jax_utils.replicate(vae_params)
 
     # Train!
