@@ -599,7 +599,7 @@ def main():
     
     else:
 
-        def train_step(state, text_encoder_params, vae_params, batchi,batchp, train_rng):
+        def train_step(state, text_encoder_params, vae_params, batch, train_rng):
                 
             dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
             def compute_loss(params):
