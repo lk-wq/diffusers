@@ -940,7 +940,7 @@ def main():
 #     optimizer = optax.MultiSteps(
 #         optimizer_, args.accumulation_frequency
 #     )
-    optimizer2_ = optax.MultiSteps(
+    optimizer = optax.MultiSteps(
         optimizer_2, args.accumulation_frequency
     )
 #     optimizer3_ = optax.MultiSteps(
@@ -984,12 +984,17 @@ def main():
         return jax.random.PRNGKey(seed)
     rng = create_key(args.seed)
     weight_dtype = jnp.bfloat16
-    unet, params = FlaxUNet2DConditionModel.from_pretrained(
-        "new_attempt17", subfolder="unet",dtype=weight_dtype
+    tokenizer = CLIPTokenizer.from_pretrained(
+        args.pretrained_model_name_or_path, revision=args.revision, subfolder="tokenizer"
     )
-    
-    text_encoder, text_params = FlaxT5EncoderModel.from_pretrained(
-        "new_attempt17", subfolder="text_encoder",dtype=weight_dtype
+    text_encoder = FlaxCLIPTextModel.from_pretrained(
+        args.pretrained_model_name_or_path, revision=args.revision, subfolder="text_encoder", dtype=weight_dtype, from_pt=args.from_pt
+    )
+    vae, vae_params = FlaxAutoencoderKL.from_pretrained(
+        args.pretrained_model_name_or_path, revision=args.revision, subfolder="vae", dtype=weight_dtype, from_pt=args.from_pt
+    )
+    unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
+        args.pretrained_model_name_or_path, revision=args.revision, subfolder="unet", dtype=weight_dtype, from_pt=args.from_pt
     )
     
 #     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
@@ -1003,13 +1008,10 @@ def main():
         else:
             d[key] = 'none'
     fd = flax.core.frozen_dict.freeze({"params":d})
-    optimizer = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn )
-    optimizer2 = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn2 )
-
-    params = jax.tree_util.tree_map(lambda x: np.asarray(x), params)
-    text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
+    # optimizer = optax.multi_transform(
+    #   {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn )
+    # optimizer2 = optax.multi_transform(
+    #   {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn2 )
     
 #     mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
     mesh_devices = mesh_utils.create_device_mesh((4, 2))
@@ -1070,18 +1072,28 @@ def main():
     mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
 #     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
-    text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
-    param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , params )
+    if True:
+        from jax.sharding import NamedSharding
+        unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
+        vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
 
-    text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), text_params)
-    unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(jnp.bfloat16), params)
+        text_params = text_encoder.params
+        # del text_params
+        text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
+
+        mesh_devices = mesh_utils.create_device_mesh((4, 2))
+
+        # mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
+        text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params )
+        unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
+        vae_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , vae_params )
     
-    opt_state = optimizer2.init(unet_params)
-#     opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), opt_state)
-    opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
-    
-    text_opt_state = optimizer.init(text_params)
-    text_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), text_opt_state )
+        text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), text_params)
+        unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
+        vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), vae_params)
+        
+        opt_state = optimizer.init(unet_params)
+        unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
 
     noise_scheduler = FlaxDDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
@@ -1094,7 +1106,7 @@ def main():
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
     import random
-    def train_step(unet_params, opt_state,text_params,text_opt_state, input_ids, pixels, mask, train_rng):
+    def train_step(unet_params, opt_state,text_params,vae_params, input_ids, pixels, mask, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
         params = {"text_encoder": text_params, "unet": unet_params}
 
@@ -1102,9 +1114,13 @@ def main():
             # Convert images to latent space
 #             latents = vae_outputs.latent_dist.sample(sample_rng)
             # (NHWC) -> (NCHW)
-            latents = pixels#batch["pixel_values"]
+            # latents = pixels#batch["pixel_values"]
 #             latents = jnp.transpose(latents, (0, 3, 1, 2))
 #             latents = latents * 0.18215
+            vae_outputs = vae.apply(
+                    {"params": vae_params}, pixels, deterministic=True, method=vae.encode
+                )
+            latents = vae_outputs.latent_dist.sample(sample_rng)
 
             # Sample noise that we'll add to the latents
             noise_rng, timestep_rng = jax.random.split(sample_rng)
@@ -1118,13 +1134,10 @@ def main():
                 noise_scheduler[0].config.num_train_timesteps,
             )
             encoder_hidden_states = text_encoder(
-                input_ids,
-                attention_mask=mask,
-                params=params['text_encoder'],
-                train=True,
-                dropout_rng=dropout_rng,
-            )[0]
-
+                    input_ids,
+                    params=params['text_encoder'],
+                    train=False,
+                )[0]
             noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
 #             encoder_hidden_states 
@@ -1142,24 +1155,21 @@ def main():
         grad_fn = jax.value_and_grad(compute_loss)
 #         loss = compute_loss(params)
         loss, grads = grad_fn(params)
-        unet_updates, new_unet_opt_state = optimizer2.update(grads['unet'], opt_state, params['unet'])
+        unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], opt_state, params['unet'])
         new_unet_params = optax.apply_updates(params['unet'], unet_updates)
-        
-        text_updates, new_text_opt_state = optimizer.update(grads['text_encoder'], text_opt_state,params['text_encoder'])
-        new_text_params = optax.apply_updates(params['text_encoder'], text_updates)
-#         save_3_( grads['unet'] )
+        #         save_3_( grads['unet'] )
 
 #         print("grads ------------------------------>",grads['unet'])
         
         metrics = {"loss": loss}
 
-        return new_unet_params, new_unet_opt_state,new_text_params,new_text_opt_state, metrics, new_train_rng 
+        return new_unet_params, new_unet_opt_state, metrics, new_train_rng 
 
     p_train_step = pjit(
         train_step,
-        in_axis_resources=( param_spec,opt_state_spec,text_param_spec,text_opt_state_spec,P("dp",None),P("dp",None),P("dp",None),None ),
-        out_axis_resources=( param_spec,opt_state_spec,text_param_spec, text_opt_state_spec,None, None),
-        donate_argnums=(0, 1,2),
+        in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,P("dp",None),P("dp",None),None ),
+        out_axis_resources=( unet_param_spec,unet_opt_state_spec,None, None),
+        donate_argnums=(0, 1),
     )
 
     # Train!
@@ -1241,7 +1251,7 @@ def main():
                 pixels = batch['pixel_values']#.astype(jnp.float32)
                 mask = batch['attention_mask']
 #                 with jax.default_matmul_precision('float32'):
-                unet_params,opt_state,text_params,text_opt_state, train_metric, train_rngs = p_train_step(unet_params,opt_state,text_params, text_opt_state,bi, pixels,mask,train_rngs)
+                unet_params,opt_state, train_metric, train_rngs = p_train_step(unet_params,opt_state,text_params,vae_params ,bi, pixels,mask,train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
