@@ -326,7 +326,7 @@ class TrainState(struct.PyTreeNode):
 
 
 import random
-from google.cloud import storage
+# from google.cloud import storage
 class FolderData(Dataset):
     def __init__(self,
         root_dir,
@@ -1176,7 +1176,7 @@ def main():
     num_update_steps_per_epoch = math.ceil(len(train_dataloader))
 
     import glob
-    from google.cloud import storage
+    # from google.cloud import storage
 
     def upload_local_directory_to_gcs(local_path, bucket, gcs_path):
         #assert os.path.isdir(local_path)
@@ -1220,8 +1220,8 @@ def main():
 #     avg = jax.tree_util.tree_map(lambda x: jnp.copy(x), unet_params)
 #     text_avg = jax.tree_util.tree_map(lambda x: jnp.copy(x), text_params)
 
-    client = storage.Client()
-    bucket = client.bucket(args.bucketname)
+    # client = storage.Client()
+    # bucket = client.bucket(args.bucketname)
     
 #     for ix , epoch in enumerate(epochs):k
 #         # ======================== Training ================================
