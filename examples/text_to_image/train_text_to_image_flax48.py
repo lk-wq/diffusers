@@ -439,10 +439,11 @@ def main():
     )
     def partition_shape(shape):
       for i in shape:
-        if len(shape) == 1:
-            return P(None)
-        if len(shape) == 4:
-            return P(None,None,None,None)
+        if 6 in shape:
+            if len(shape) == 1:
+                return P(None)
+            if len(shape) == 4:
+                return P(None,None,None,None)
       if len(shape) == 1:
         if shape[0] % 4 == 0:
           return P("dp")
@@ -694,7 +695,7 @@ def main():
 
     epochs = tqdm(range(args.num_train_epochs), desc="Epoch ... ", position=0)
     if args.model_parallel:
-        context = Mesh(mesh_devices, ("dp","mp"))
+        context = mesh
     else:
         from contextlib import nullcontext
         context = nullcontext()
