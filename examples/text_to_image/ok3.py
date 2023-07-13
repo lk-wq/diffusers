@@ -431,11 +431,10 @@ class FolderData(Dataset):
 #         self.tokenizer = CLIPTokenizer.from_pretrained(token_dir, subfolder="tokenizer")
         self.negative_prompt = negative_prompt
         self.instance_prompt = ip
-        self.tokenizer = pipe = DiffusionPipeline.from_pretrained(
-            tokenizer_folder, 
-            text_encoder=None, # pass the previously instantiated 8bit text encoder
-            unet=None, 
-        ).tokenizer
+        self.tokenizer = CLIPTokenizer.from_pretrained(
+        args.pretrained_model_name_or_path, revision=args.revision, subfolder="tokenizer"
+        )
+
         prompt_ids = torch.load('prompt_embeds.pth',map_location='cpu')
 #         prompt_ids = jnp.asarray(prompt_ids)
         self.data = prompt_ids[0].unsqueeze(0)
