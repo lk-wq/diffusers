@@ -432,7 +432,7 @@ class FolderData(Dataset):
         self.negative_prompt = negative_prompt
         self.instance_prompt = ip
         self.tokenizer = CLIPTokenizer.from_pretrained(
-        args.pretrained_model_name_or_path, revision=args.revision, subfolder="tokenizer"
+        'stabilityai/stable-diffusion-2-1', subfolder="tokenizer"
         )
 
         prompt_ids = torch.load('prompt_embeds.pth',map_location='cpu')
@@ -480,9 +480,9 @@ class FolderData(Dataset):
             text_input_ids, untruncated_ids
         ):
             removed_text = self.tokenizer.batch_decode(untruncated_ids[:, 77 - 1 : -1])
-        attention_mask = text_inputs.attention_mask
+        # attention_mask = text_inputs.attention_mask
 
-        return (text_input_ids, attention_mask)
+        return text_input_ids
     
     def process_im(self, im):
         i = random.choice([0,1])
@@ -845,14 +845,13 @@ def main():
     def collate_fn(examples):
         pixel_values = torch.stack([example["image"] for example in examples] )#+ [example['class_images'] for example in examples] )
         pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
-        input_ids = torch.cat([example["txt"][0] for example in examples])
-        attention_mask = torch.cat([example["txt"][1] for example in examples])
+        input_ids = torch.cat([example["txt"] for example in examples])
+        # attention_mask = torch.cat([example["txt"][1] for example in examples])
         fixed = [example["fixed"] for example in examples]
         fixed = torch.cat(fixed)
 
         batch = {
             "input_ids": input_ids,
-            "attention_mask":attention_mask,
             "pixel_values": pixel_values,
             'fixed':fixed,
         }
