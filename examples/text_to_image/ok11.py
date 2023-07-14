@@ -1111,7 +1111,7 @@ def main():
     train_rngs = jax.random.PRNGKey(args.seed)
 #     train_rngs = jax.random.split(rng, jax.local_device_count())
     import random
-    def train_step(unet_params, opt_state,text_params,vae_params, input_ids, pixels, mask, train_rng):
+    def train_step(unet_params, opt_state,text_params,vae_params, input_ids, pixels, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
         params = {"text_encoder": text_params, "unet": unet_params}
 
@@ -1254,9 +1254,8 @@ def main():
 #                 text_params = optax.apply_updates(text_params, text_updates)
                 bi = batch['input_ids']#.astype(jnp.float32)
                 pixels = batch['pixel_values']#.astype(jnp.float32)
-                mask = batch['attention_mask']
 #                 with jax.default_matmul_precision('float32'):
-                unet_params,opt_state, train_metric, train_rngs = p_train_step(unet_params,opt_state,text_params,vae_params ,bi, pixels,mask,train_rngs)
+                unet_params,opt_state, train_metric, train_rngs = p_train_step(unet_params,opt_state,text_params,vae_params ,bi, pixels,train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
                 # start = time.perf_counter()
