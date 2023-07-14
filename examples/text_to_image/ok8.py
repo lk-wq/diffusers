@@ -1003,7 +1003,7 @@ def main():
     )
     
 #     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
-    flat = flax.traverse_util.flatten_dict( text_params )
+    flat = flax.traverse_util.flatten_dict( text_encoder.params )
     
     d = {}
     for i in flat.keys():
