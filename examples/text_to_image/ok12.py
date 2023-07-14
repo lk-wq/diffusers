@@ -1086,7 +1086,7 @@ def main():
         # del text_params
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
 
-        mesh_devices = mesh_utils.create_device_mesh((4, 2))
+        # mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
         # mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
         text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params )
