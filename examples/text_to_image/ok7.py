@@ -753,6 +753,12 @@ def parse_args():
         action="store_true",
         help="Flag to add prior preservation loss.",
     )
+    parser.add_argument(
+        "--from_pt",
+        action="store_true",
+        default=False,
+        help="Convert pytorch models to jax/flax",
+    )
 
     args = parser.parse_args()
     env_local_rank = int(os.environ.get("LOCAL_RANK", -1))
