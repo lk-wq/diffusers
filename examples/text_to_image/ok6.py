@@ -982,17 +982,18 @@ def main():
         return jax.random.PRNGKey(seed)
     rng = create_key(args.seed)
     weight_dtype = jnp.bfloat16
+    
     tokenizer = CLIPTokenizer.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="tokenizer"
     )
     text_encoder = FlaxCLIPTextModel.from_pretrained(
-        args.pretrained_model_name_or_path, revision=args.revision, subfolder="text_encoder", dtype=weight_dtype, from_pt=args.from_pt
+        args.pretrained_model_name_or_path, subfolder="text_encoder", dtype=weight_dtype, from_pt=args.from_pt
     )
     vae, vae_params = FlaxAutoencoderKL.from_pretrained(
-        args.pretrained_model_name_or_path, revision=args.revision, subfolder="vae", dtype=weight_dtype, from_pt=args.from_pt
+        args.pretrained_model_name_or_path, subfolder="vae", dtype=weight_dtype, from_pt=args.from_pt
     )
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
-        args.pretrained_model_name_or_path, revision=args.revision, subfolder="unet", dtype=weight_dtype, from_pt=args.from_pt
+        args.pretrained_model_name_or_path, subfolder="unet", dtype=weight_dtype, from_pt=args.from_pt
     )
     
 #     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
