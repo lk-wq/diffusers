@@ -1004,7 +1004,8 @@ def main():
     
 #     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     flat = flax.traverse_util.flatten_dict( text_encoder.params )
-    
+    flat2 = flax.traverse_util.flatten_dict( unet_params )
+    print('0',flat2[('conv_in','kernel')].shape)
     d = {}
     for i in flat.keys():
         key = ".".join(list(i))
@@ -1101,6 +1102,8 @@ def main():
         
         opt_state = optimizer.init(unet_params)
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
+    flat2 = flax.traverse_util.flatten_dict( unet_params )
+    print('1',flat2[('conv_in','kernel')].shape)
 
     noise_scheduler = FlaxDDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
@@ -1264,6 +1267,9 @@ def main():
                 bi = batch['input_ids']#.astype(jnp.float32)
                 pixels = batch['pixel_values']#.astype(jnp.float32)
 #                 with jax.default_matmul_precision('float32'):
+                flat2 = flax.traverse_util.flatten_dict( unet_params )
+                print('2',flat2[('conv_in','kernel')].shape)
+
                 unet_params,opt_state, train_metric, train_rngs = p_train_step(unet_params,opt_state,text_params,vae_params ,bi, pixels,train_rngs)
 
     #             state, train_metric, train_rngs = p_train_step(state, text_encoder_params, vae_params, batch, train_rngs)
