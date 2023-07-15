@@ -1037,13 +1037,13 @@ def main():
     gc.collect()
 
     def partition_shape(shape):
-      # return P()
-      for i in shape:
-        if 6 in shape:
-            if len(shape) == 1:
-                return P(None)
-            if len(shape) == 4:
-                return P(None,None,None,None)
+      return P()
+      # for i in shape:
+      #   if 6 in shape:
+      #       if len(shape) == 1:
+      #           return P(None)
+      #       if len(shape) == 4:
+      #           return P(None,None,None,None)
       if len(shape) == 1:
         if shape[0] % 4 == 0:
           return P("dp")
@@ -1258,6 +1258,7 @@ def main():
             train_step_progress_bar = tqdm(total=steps_per_epoch, desc="Training...", position=1, leave=False)
 
             for batch in train_dataloader:
+                
     #                 batch = shard(batch)
                 # batch = shard(batch)
     #             save_(unet_params['time_embedding']['linear_1']['kernel'],'k3_pre.npy')
