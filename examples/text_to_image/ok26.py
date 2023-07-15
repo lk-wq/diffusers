@@ -1037,7 +1037,7 @@ def main():
     gc.collect()
 
     def partition_shape(shape):
-      return P()
+      # return P()
       for i in shape:
         if 6 in shape:
             if len(shape) == 1:
@@ -1187,7 +1187,7 @@ def main():
         return new_unet_params, new_unet_opt_state, metrics, new_train_rng 
     p_train_step = pjit(
         train_step,
-        in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,P("mp",None),P("mp",None),None ),
+        in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,P("mp",None),P(None,None,'dp','mp'),None ),
         out_axis_resources=( unet_param_spec,unet_opt_state_spec,None, None),
         donate_argnums=(0, 1),
     )
