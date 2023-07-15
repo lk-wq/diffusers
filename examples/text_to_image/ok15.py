@@ -1036,6 +1036,7 @@ def main():
     gc.collect()
 
     def partition_shape(shape):
+      return P()
       for i in shape:
         if 6 in shape:
             if len(shape) == 1:
