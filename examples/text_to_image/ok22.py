@@ -1107,7 +1107,8 @@ def main():
 
     noise_scheduler = FlaxDDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
 
-    noise_scheduler_state = noise_scheduler[1]#.create_state()
+    # noise_scheduler_state = noise_scheduler[1]#.create_state()
+    noise_scheduler_state = noise_scheduler.create_state()
 
     # Initialize our training
     rng = jax.random.PRNGKey(args.seed)
