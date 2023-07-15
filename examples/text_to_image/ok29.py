@@ -1050,35 +1050,43 @@ def main():
         elif shape[0] % 2 == 0:
           return P("mp")
       if len(shape) == 2:
-        if shape[0] % 4 == 0 and shape[1] % 2 == 0 and shape[0] > shape[1]:
+        if shape[0] % 4 == 0 and shape[1] % 2 == 0:
+          print("4 0",shape)
+
           return P("dp","mp")
+        # if shape[0] % 4 == 0 and shape[1] % 2 == 0:
+        #   return P("dp","mp")
+
         if shape[0] % 2 == 0 and shape[1] % 4 == 0:
+          print("2 0",shape)
+
           return P("mp","dp")
         if shape[0] % 4 == 0:# and shape[1] % 2 == 0:
+          print("2 1",shape)
+
           return P("dp",None)
         if shape[1] % 4 == 0:# and shape[1] % 2 == 0:
+          print("2 2",shape)
+
           return P(None,"dp")
-        if shape[0] % 2 == 0 and shape[1] % 2 == 0:
+        if shape[0] % 2 == 0:
+          print("2 3",shape)
+
           return P("mp",None)
       if len(shape) == 4:
         if shape[-2] % 4 == 0 and shape[-1] % 2 == 0:
-          print("4 0",shape)
 
           return P(None,None,"dp","mp")
         if shape[-2] % 2 == 0 and shape[-1] % 4 == 0:
-          print("4 q",shape)
 
           return P(None,None,"mp","dp")
         if shape[-2] % 4 == 0:# and shape[1] % 2 == 0:
-          print("4 2",shape)
 
           return P(None,None,"dp",None)
         if shape[-1] % 4 == 0:# and shape[1] % 2 == 0:
-          print("4 3",shape)
 
           return P(None,None,None,"dp")
         if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
-          print("4 4",shape)
 
           return P(None,None,"mp",None)
         
