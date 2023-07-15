@@ -1182,6 +1182,8 @@ def main():
 #         print("grads ------------------------------>",grads['unet'])
         
         metrics = {"loss": loss}
+        flat2 = flax.traverse_util.flatten_dict( new_unet_params )
+        print('4',flat2[('conv_in','kernel')].shape)
 
         return new_unet_params, new_unet_opt_state, metrics, new_train_rng 
 
