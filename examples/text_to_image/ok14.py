@@ -1032,6 +1032,7 @@ def main():
     print("starting -----------------------------------------------------------> ")
     print("starting -----------------------------------------------------------> ")
     import gc 
+    
     gc.collect()
 
     def partition_shape(shape):
@@ -1179,7 +1180,7 @@ def main():
 
     p_train_step = pjit(
         train_step,
-        in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,P("dp",None),P("dp",None),None ),
+        in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,P("mp",None),P("mp",None),None ),
         out_axis_resources=( unet_param_spec,unet_opt_state_spec,None, None),
         donate_argnums=(0, 1),
     )
