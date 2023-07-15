@@ -1152,7 +1152,7 @@ def main():
 
 #             encoder_hidden_states 
 #             save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
-            flat2 = flax.traverse_util.flatten_dict( unet_params )
+            flat2 = flax.traverse_util.flatten_dict( params )
             print('3',flat2[('conv_in','kernel')].shape)
 
             model_pred = unet.apply({"params": params},noisy_latents, timesteps, encoder_hidden_states, train=True)
