@@ -1105,7 +1105,10 @@ def main():
     flat2 = flax.traverse_util.flatten_dict( unet_params )
     print('1',flat2[('conv_in','kernel')].shape)
 
-    noise_scheduler = FlaxDDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+    # noise_scheduler = FlaxDDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
+    noise_scheduler = FlaxDDPMScheduler(
+        beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", num_train_timesteps=1000
+    )
 
     # noise_scheduler_state = noise_scheduler[1]#.create_state()
     noise_scheduler_state = noise_scheduler.create_state()
