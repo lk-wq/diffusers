@@ -1113,7 +1113,7 @@ def main():
     import random
     def train_step(unet_params, opt_state,text_params,vae_params, input_ids, pixels, train_rng):
         dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
-        params = {"text_encoder": text_params, "unet": unet_params}
+        # params = {"text_encoder": text_params, "unet": unet_params}
 
         def compute_loss(params):
             # Convert images to latent space
@@ -1140,28 +1140,35 @@ def main():
             )
             encoder_hidden_states = text_encoder(
                     input_ids,
-                    params=params['text_encoder'],
+                    params=text_params,
                     train=False,
                 )[0]
             noisy_latents = noise_scheduler[0].add_noise(noise_scheduler_state, latents, noise, timesteps)
 
 #             encoder_hidden_states 
 #             save_(params['unet']['time_embedding']['linear_1']['kernel'],'k5.npy')
-            unet_outputs = unet.apply({"params": params['unet']},noisy_latents, timesteps, encoder_hidden_states, train=True)
+            model_pred = unet.apply({"params": params},noisy_latents, timesteps, encoder_hidden_states, train=True)
 
-            noise_pred = unet_outputs.sample 
-            noise_pred , variance = noise_pred.split(2, axis=1)
+            if noise_scheduler.config.prediction_type == "epsilon":
+                target = noise
+            elif noise_scheduler.config.prediction_type == "v_prediction":
+                target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
+            else:
+                    # raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+                raise ValueError(
+                    "fail "
+                )
 
-            loss = (noise - noise_pred) ** 2
+            loss = (target - model_pred) ** 2
             loss = loss.mean()
-
+    
             return loss
 
         grad_fn = jax.value_and_grad(compute_loss)
 #         loss = compute_loss(params)
-        loss, grads = grad_fn(params)
-        unet_updates, new_unet_opt_state = optimizer.update(grads['unet'], opt_state, params['unet'])
-        new_unet_params = optax.apply_updates(params['unet'], unet_updates)
+        loss, grads = grad_fn(unet_params)
+        unet_updates, new_unet_opt_state = optimizer.update(grads, opt_state, unet_params)
+        new_unet_params = optax.apply_updates( unet_params , unet_updates)
         #         save_3_( grads['unet'] )
 
 #         print("grads ------------------------------>",grads['unet'])
