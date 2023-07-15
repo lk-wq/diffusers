@@ -1167,7 +1167,7 @@ def main():
             elif noise_scheduler.config.prediction_type == "v_prediction":
                 target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
             else:
-                    # raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+                # raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
                 raise ValueError(
                     "fail "
                     )
@@ -1269,8 +1269,8 @@ def main():
 #                 text_params = optax.apply_updates(text_params, text_updates)
                 bi = batch['input_ids']#.astype(jnp.float32)
                 pixels = batch['pixel_values']#.astype(jnp.float32)
-                print(bi,bi.shape)
-                print(pixels,pixels.shape)
+                print(bi.shape)
+                print(pixels.shape)
 #                 with jax.default_matmul_precision('float32'):
                 flat2 = flax.traverse_util.flatten_dict( unet_params )
                 print('2',flat2[('conv_in','kernel')].shape)
