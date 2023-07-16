@@ -233,7 +233,8 @@ from typing import Any, Callable
 from flax import core
 from flax import struct
 import optax
-
+from jax_smi import initialise_tracking
+initialise_tracking()
 class TrainState(struct.PyTreeNode):
   """Simple train state for the common case with a single Optax optimizer.
 
