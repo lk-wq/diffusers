@@ -1037,61 +1037,41 @@ def main():
     gc.collect()
 
     def partition_shape(shape):
-      # return P()
-      # for i in shape:
-      #   if 6 in shape:
-      #       if len(shape) == 1:
-      #           return P(None)
-      #       if len(shape) == 4:
-      #           return P(None,None,None,None)
+      for i in shape:
+        if 6 in shape:
+            if len(shape) == 1:
+                return P(None)
+            if len(shape) == 4:
+                return P(None,None,None,None)
       if len(shape) == 1:
         if shape[0] % 4 == 0:
           return P("dp")
         elif shape[0] % 2 == 0:
           return P("mp")
       if len(shape) == 2:
-        # if shape[0] % 4 == 0 and shape[1] % 2 == 0:
-        #   return P("dp","mp")
-
-        if shape[0] % 2 == 0 and shape[1] % 4 == 0 and shape[1] >= shape[0] :
-          print("2 0",shape)
-
-          return P("mp","dp")
-        if shape[0] % 4 == 0 and shape[1] % 2 == 0:
-          print("4 0",shape)
-
+        if shape[0] % 4 == 0 and shape[1] % 2 == 0 and shape[0] > shape[1]:
           return P("dp","mp")
-
+        if shape[0] % 2 == 0 and shape[1] % 4 == 0:
+          return P("mp","dp")
         if shape[0] % 4 == 0:# and shape[1] % 2 == 0:
-          print("2 1",shape)
-
           return P("dp",None)
         if shape[1] % 4 == 0:# and shape[1] % 2 == 0:
-          print("2 2",shape)
-
           return P(None,"dp")
-        if shape[0] % 2 == 0:
-          print("2 3",shape)
-
+        if shape[0] % 2 == 0 and shape[1] % 2 == 0:
           return P("mp",None)
       if len(shape) == 4:
         if shape[-2] % 4 == 0 and shape[-1] % 2 == 0:
-
           return P(None,None,"dp","mp")
         if shape[-2] % 2 == 0 and shape[-1] % 4 == 0:
-
           return P(None,None,"mp","dp")
         if shape[-2] % 4 == 0:# and shape[1] % 2 == 0:
-
           return P(None,None,"dp",None)
         if shape[-1] % 4 == 0:# and shape[1] % 2 == 0:
-
           return P(None,None,None,"dp")
         if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
-
           return P(None,None,"mp",None)
         
-      print("fail",shape)
+      print("fail")
       return P()
     from jax.sharding import PartitionSpec as P 
     from jax.sharding import NamedSharding
