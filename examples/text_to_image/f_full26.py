@@ -215,18 +215,18 @@ train_transforms = transforms.Compose(
         transforms.Normalize([0.5], [0.5]),
     ]
 )
-from jax.experimental import io_callback
-from jax import debug
+# from jax.experimental import io_callback
+# from jax import debug
 import numpy as np
 
-def save_3_(x):
-    # print(name , "---------------------------------------------------->",x)
-#     debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
-#     debug.callback(lambda x: print( jax.tree_util.tree_map(lambda y:  np.asarray(y) if np.isnan(y).any() else None , x)  ),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
-    debug.callback(lambda x: print("hi") ,x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+# def save_3_(x):
+#     # print(name , "---------------------------------------------------->",x)
+# #     debug.callback(lambda x: np.save(name,x),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+# #     debug.callback(lambda x: print( jax.tree_util.tree_map(lambda y:  np.asarray(y) if np.isnan(y).any() else None , x)  ),x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
+#     debug.callback(lambda x: print("hi") ,x ) #np.save('post_conv1.npy',np.asarray(hidden_states))
 
-    #     print(x)
-    return x
+#     #     print(x)
+#     return x
 
 from typing import Any, Callable
 
