@@ -1053,7 +1053,7 @@ def main():
         # if shape[0] % 4 == 0 and shape[1] % 2 == 0:
         #   return P("dp","mp")
 
-        if shape[0] % 2 == 0 and shape[1] % 4 == 0 and shape[0] >= shape[1] :
+        if shape[0] % 2 == 0 and shape[1] % 4 == 0 and shape[1] >= shape[0] :
           print("2 0",shape)
 
           return P("mp","dp")
