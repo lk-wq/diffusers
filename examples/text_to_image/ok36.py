@@ -1102,6 +1102,7 @@ def main():
         
         opt_state = optimizer.init(unet_params)
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
+    return
     flat2 = flax.traverse_util.flatten_dict( unet_params )
     print('1',flat2[('conv_in','kernel')].shape)
 
