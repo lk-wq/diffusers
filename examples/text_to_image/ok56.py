@@ -1100,10 +1100,12 @@ def main():
     
         text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), text_params)
         vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), vae_params)
-        return
+        
         unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
+        
         # del text_encoder
         opt_state = optimizer.init(unet_params)
+        print('os',opt_state)
         # return
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
     # flat2 = flax.traverse_util.flatten_dict( unet_params )
