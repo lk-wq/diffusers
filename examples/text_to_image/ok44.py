@@ -1097,7 +1097,6 @@ def main():
         setattr(text_encoder,'params',e)
 
         # print(text_encoder)
-        return
         # mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
         # mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
@@ -1108,7 +1107,7 @@ def main():
         text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), text_params)
         unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), vae_params)
-        
+        return
         opt_state = optimizer.init(unet_params)
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
     flat2 = flax.traverse_util.flatten_dict( unet_params )
