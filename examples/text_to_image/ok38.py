@@ -1002,7 +1002,9 @@ def main():
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, subfolder="unet", dtype=weight_dtype, from_pt=args.from_pt
     )
-    
+    unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
+    vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
+
 #     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     flat = flax.traverse_util.flatten_dict( text_encoder.params )
     flat2 = flax.traverse_util.flatten_dict( unet_params )
@@ -1080,7 +1082,7 @@ def main():
     mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
 #     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
-    return
+    # return
 
     if True:
         from jax.sharding import NamedSharding
@@ -1088,9 +1090,9 @@ def main():
         vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
 
         text_params = text_encoder.params
-        # del text_params
+        del text_encoder.params
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
-
+        return
         # mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
         # mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
