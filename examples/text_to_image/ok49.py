@@ -1009,14 +1009,14 @@ def main():
     # flat = flax.traverse_util.flatten_dict( text_encoder.params )
     flat2 = flax.traverse_util.flatten_dict( unet_params )
     print('0',flat2[('conv_in','kernel')].shape)
-    d = {}
-    for i in flat.keys():
-        key = ".".join(list(i))
-        if '23' in key:
-            d[key] = 'adam'
-        else:
-            d[key] = 'none'
-    fd = flax.core.frozen_dict.freeze({"params":d})
+    # d = {}
+    # for i in flat.keys():
+    #     key = ".".join(list(i))
+    #     if '23' in key:
+    #         d[key] = 'adam'
+    #     else:
+    #         d[key] = 'none'
+    # fd = flax.core.frozen_dict.freeze({"params":d})
     # optimizer = optax.multi_transform(
     #   {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn )
     # optimizer2 = optax.multi_transform(
