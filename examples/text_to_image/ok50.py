@@ -1094,7 +1094,7 @@ def main():
         # e = jax.tree_util.tree_map(lambda x: None, text_params)
 
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
-        setattr(text_encoder,'params',text_params)
+        # setattr(text_encoder,'params',text_params)
 
         # print(text_encoder)
         # mesh_devices = mesh_utils.create_device_mesh((4, 2))
@@ -1107,7 +1107,7 @@ def main():
         text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), text_params)
         unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), vae_params)
-        del text_encoder
+        # del text_encoder
         gc.collect()
 
         return
