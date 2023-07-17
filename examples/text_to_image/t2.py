@@ -226,6 +226,7 @@ def parse_args():
         default=False,
         help="Convert pytorch models to jax/flax",
     )
+    parser.add_argument("--accumulation_frequency", type=int, default=1, help="How frequently to save")
 
 
     args = parser.parse_args()
