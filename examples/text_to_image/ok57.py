@@ -1040,6 +1040,8 @@ def main():
     gc.collect()
 
     def partition_shape(shape):
+      return P()
+
       if len(shape) == 1:
         if shape[0] % 4 == 0:
           return P("dp")
