@@ -1040,7 +1040,7 @@ def main():
     gc.collect()
 
     def partition_shape(shape):
-      return P()
+      # return P()
 
       if len(shape) == 1:
         if shape[0] % 4 == 0:
@@ -1048,7 +1048,7 @@ def main():
         elif shape[0] % 2 == 0:
           return P("mp")
       if len(shape) == 2:
-        if shape[0] % 4 == 0 and shape[1] % 2 == 0 and shape[0] > shape[1]:
+        if shape[0] % 4 == 0 and shape[1] % 2 == 0:
           return P("dp","mp")
         if shape[0] % 2 == 0 and shape[1] % 4 == 0:
           return P("mp","dp")
@@ -1107,7 +1107,7 @@ def main():
         
         # del text_encoder
         opt_state = optimizer.init(unet_params)
-        print('os',opt_state)
+        # print('os',opt_state)
         # return
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
     # flat2 = flax.traverse_util.flatten_dict( unet_params )
