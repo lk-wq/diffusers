@@ -1048,10 +1048,11 @@ def main():
         elif shape[0] % 2 == 0:
           return P("mp")
       if len(shape) == 2:
-        if shape[0] % 4 == 0 and shape[1] % 2 == 0:
-          return P("dp","mp")
         if shape[0] % 2 == 0 and shape[1] % 4 == 0:
           return P("mp","dp")
+        if shape[0] % 4 == 0 and shape[1] % 2 == 0:
+          return P("dp","mp")
+
         if shape[0] % 4 == 0:# and shape[1] % 2 == 0:
           return P("dp",None)
         if shape[1] % 4 == 0:# and shape[1] % 2 == 0:
