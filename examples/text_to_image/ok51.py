@@ -1091,10 +1091,10 @@ def main():
 
         text_params = text_encoder.params
         # del text_encoder.params
-        # e = jax.tree_util.tree_map(lambda x: None, text_params)
+        e = jax.tree_util.tree_map(lambda x: None, text_params)
 
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
-        # setattr(text_encoder,'params',text_params)
+        setattr(text_encoder,'params',text_params)
 
         # print(text_encoder)
         # mesh_devices = mesh_utils.create_device_mesh((4, 2))
@@ -1113,8 +1113,8 @@ def main():
         return
         opt_state = optimizer.init(unet_params)
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
-    flat2 = flax.traverse_util.flatten_dict( unet_params )
-    print('1',flat2[('conv_in','kernel')].shape)
+    # flat2 = flax.traverse_util.flatten_dict( unet_params )
+    # print('1',flat2[('conv_in','kernel')].shape)
 
     # noise_scheduler = FlaxDDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
     noise_scheduler = FlaxDDPMScheduler(
