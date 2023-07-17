@@ -1080,6 +1080,8 @@ def main():
     mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
 #     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
+    return
+
     if True:
         from jax.sharding import NamedSharding
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
@@ -1102,7 +1104,6 @@ def main():
         
         opt_state = optimizer.init(unet_params)
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
-    return
     flat2 = flax.traverse_util.flatten_dict( unet_params )
     print('1',flat2[('conv_in','kernel')].shape)
 
