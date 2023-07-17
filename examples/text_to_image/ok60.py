@@ -945,7 +945,7 @@ def main():
 #     optimizer = optax.MultiSteps(
 #         optimizer_, args.accumulation_frequency
 #     )
-    optimizer = optax.MultiSteps(
+    optimizer2_ = optax.MultiSteps(
         optimizer_2, args.accumulation_frequency
     )
 #     optimizer3_ = optax.MultiSteps(
@@ -1004,6 +1004,8 @@ def main():
     )
     unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
     vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
+    optimizer = optax.multi_transform(
+      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn2 )
 
     # text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     # flat = flax.traverse_util.flatten_dict( text_encoder.params )
@@ -1167,7 +1169,7 @@ def main():
     
                 # Predict the noise residual and compute loss
             model_pred = unet.apply(
-                    {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
+                    {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=False
                 ).sample
         
                 # Get the target for loss depending on the prediction type
