@@ -1092,7 +1092,9 @@ def main():
         text_params = text_encoder.params
         # del text_encoder.params
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
-        print(text_encoder)
+        setattr(text_encoder,'params',{})
+
+        # print(text_encoder)
         return
         # mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
