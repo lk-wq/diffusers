@@ -1007,8 +1007,8 @@ def main():
 
     # text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
     # flat = flax.traverse_util.flatten_dict( text_encoder.params )
-    flat2 = flax.traverse_util.flatten_dict( unet_params )
-    print('0',flat2[('conv_in','kernel')].shape)
+    # flat2 = flax.traverse_util.flatten_dict( unet_params )
+    # print('0',flat2[('conv_in','kernel')].shape)
     # d = {}
     # for i in flat.keys():
     #     key = ".".join(list(i))
@@ -1040,12 +1040,6 @@ def main():
     gc.collect()
 
     def partition_shape(shape):
-      for i in shape:
-        if 6 in shape:
-            if len(shape) == 1:
-                return P(None)
-            if len(shape) == 4:
-                return P(None,None,None,None)
       if len(shape) == 1:
         if shape[0] % 4 == 0:
           return P("dp")
