@@ -67,7 +67,7 @@ from typing import Callable, Dict, Union, NamedTuple, Optional, Iterable, Sequen
 from transformers import T5EncoderModel, FlaxT5EncoderModel
 
 import chex
-from jax_smi import initialise_tracking
+# from jax_smi import initialise_tracking
 from jax import make_jaxpr
 """
 Stochastically rounded operations between JAX tensors.
@@ -233,8 +233,8 @@ from typing import Any, Callable
 from flax import core
 from flax import struct
 import optax
-from jax_smi import initialise_tracking
-initialise_tracking()
+# from jax_smi import initialise_tracking
+# initialise_tracking()
 class TrainState(struct.PyTreeNode):
   """Simple train state for the common case with a single Optax optimizer.
 
