@@ -1005,8 +1005,8 @@ def main():
     unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
     vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
 
-#     text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
-    flat = flax.traverse_util.flatten_dict( text_encoder.params )
+    # text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_params)
+    # flat = flax.traverse_util.flatten_dict( text_encoder.params )
     flat2 = flax.traverse_util.flatten_dict( unet_params )
     print('0',flat2[('conv_in','kernel')].shape)
     d = {}
@@ -1108,6 +1108,8 @@ def main():
         unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), vae_params)
         del text_encoder
+        gc.collect()
+
         return
         opt_state = optimizer.init(unet_params)
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
