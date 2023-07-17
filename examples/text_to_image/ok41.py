@@ -1083,7 +1083,7 @@ def main():
 #     text_opt_state = optimizer.init(text_params)
 #     text_opt_state = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ), text_opt_state)
     # return
-
+    
     if True:
         from jax.sharding import NamedSharding
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
@@ -1092,6 +1092,7 @@ def main():
         text_params = text_encoder.params
         # del text_encoder.params
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
+        print(text_encoder)
         return
         # mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
