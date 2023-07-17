@@ -1091,8 +1091,10 @@ def main():
 
         text_params = text_encoder.params
         # del text_encoder.params
+        e = jax.tree_util.tree_map(lambda x: None, text_params)
+
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
-        setattr(text_encoder,'params',{})
+        setattr(text_encoder,'params',e)
 
         # print(text_encoder)
         return
