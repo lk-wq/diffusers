@@ -1091,10 +1091,10 @@ def main():
 
         text_params = text_encoder.params
         # del text_encoder.params
-        e = jax.tree_util.tree_map(lambda x: None, text_params)
+        # e = jax.tree_util.tree_map(lambda x: None, text_params)
 
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
-        setattr(text_encoder,'params',e)
+        setattr(text_encoder,'params',text_params)
 
         # print(text_encoder)
         # mesh_devices = mesh_utils.create_device_mesh((4, 2))
@@ -1193,6 +1193,7 @@ def main():
         metrics = {"loss": loss}
     
         return new_unet_params, new_unet_opt_state, metrics, new_train_rng 
+        
     p_train_step = pjit(
         train_step,
         in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,P("mp",None),P(None,None,'dp','mp'),None ),
