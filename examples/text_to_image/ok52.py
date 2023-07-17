@@ -1108,9 +1108,6 @@ def main():
         unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), vae_params)
         # del text_encoder
-        gc.collect()
-
-        return
         opt_state = optimizer.init(unet_params)
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
     # flat2 = flax.traverse_util.flatten_dict( unet_params )
@@ -1285,8 +1282,8 @@ def main():
                 print(bi.shape)
                 print(pixels.shape)
 #                 with jax.default_matmul_precision('float32'):
-                flat2 = flax.traverse_util.flatten_dict( unet_params )
-                print('2',flat2[('conv_in','kernel')].shape)
+                # flat2 = flax.traverse_util.flatten_dict( unet_params )
+                # print('2',flat2[('conv_in','kernel')].shape)
 
                 unet_params,opt_state, train_metric, train_rngs = p_train_step(unet_params,opt_state,text_params,vae_params ,bi, pixels,train_rngs)
 
