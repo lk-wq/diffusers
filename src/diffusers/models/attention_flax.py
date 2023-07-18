@@ -180,7 +180,7 @@ class FlaxAttention(nn.Module):
         key_states = self.reshape_heads_to_batch_dim(key_proj)
         value_states = self.reshape_heads_to_batch_dim(value_proj)
 
-        if True:
+        if self.use_memory_efficient_attention:
             query_states = query_states.transpose(1, 0, 2)
             key_states = key_states.transpose(1, 0, 2)
             value_states = value_states.transpose(1, 0, 2)
@@ -253,11 +253,11 @@ class FlaxBasicTransformerBlock(nn.Module):
     def setup(self):
         # self attention (or cross_attention if only_cross_attention is True)
         self.attn1 = FlaxAttention(
-            self.dim, self.n_heads, self.d_head, self.dropout, self.use_memory_efficient_attention, dtype=self.dtype
+            self.dim, self.n_heads, self.d_head, self.dropout, use_memory_efficient_attention=True, dtype=self.dtype
         )
         # cross attention
         self.attn2 = FlaxAttention(
-            self.dim, self.n_heads, self.d_head, self.dropout, self.use_memory_efficient_attention, dtype=self.dtype
+            self.dim, self.n_heads, self.d_head, self.dropout, use_memory_efficient_attention=False, dtype=self.dtype
         )
         self.ff = FlaxFeedForward(dim=self.dim, dropout=self.dropout, dtype=self.dtype)
         self.norm1 = nn.LayerNorm(epsilon=1e-5, dtype=self.dtype)
@@ -275,7 +275,7 @@ class FlaxBasicTransformerBlock(nn.Module):
 
         # cross attention
         residual = hidden_states
-        hidden_states = hidden_states#self.attn2(self.norm2(hidden_states), context, deterministic=deterministic)
+        hidden_states = self.attn2(self.norm2(hidden_states), context, deterministic=deterministic)
         hidden_states = hidden_states + residual
 
         # feed forward
