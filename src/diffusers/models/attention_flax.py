@@ -275,7 +275,7 @@ class FlaxBasicTransformerBlock(nn.Module):
 
         # cross attention
         residual = hidden_states
-        hidden_states = hidden_states#sself.attn2(self.norm2(hidden_states), context, deterministic=deterministic)
+        hidden_states = self.attn2(self.norm2(hidden_states), context, deterministic=deterministic)
         hidden_states = hidden_states + residual
 
         # feed forward
