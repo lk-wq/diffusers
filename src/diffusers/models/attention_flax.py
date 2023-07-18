@@ -180,7 +180,7 @@ class FlaxAttention(nn.Module):
         key_states = self.reshape_heads_to_batch_dim(key_proj)
         value_states = self.reshape_heads_to_batch_dim(value_proj)
 
-        if self.use_memory_efficient_attention:
+        if True:
             query_states = query_states.transpose(1, 0, 2)
             key_states = key_states.transpose(1, 0, 2)
             value_states = value_states.transpose(1, 0, 2)
