@@ -180,7 +180,7 @@ class FlaxAttention(nn.Module):
         key_states = self.reshape_heads_to_batch_dim(key_proj)
         value_states = self.reshape_heads_to_batch_dim(value_proj)
 
-        if True:
+        if False:
             query_states = query_states.transpose(1, 0, 2)
             key_states = key_states.transpose(1, 0, 2)
             value_states = value_states.transpose(1, 0, 2)
@@ -205,7 +205,9 @@ class FlaxAttention(nn.Module):
             hidden_states = hidden_states.transpose(1, 0, 2)
         else:
             # compute attentions
-            attention_scores = jnp.einsum("b i d, b j d->b i j", query_states, key_states)
+            # attention_scores = jnp.einsum("b i d, b j d->b i j", query_states, key_states)
+            print(' q , k ' , query_states.shape ,  key_states.shape )
+            attention_scores = query_states @ key_states.transpose(1, 0, 2)
             attention_scores = attention_scores * self.scale
             attention_probs = nn.softmax(attention_scores, axis=2)
 
