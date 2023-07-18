@@ -212,8 +212,8 @@ class FlaxAttention(nn.Module):
             attention_probs = nn.softmax(attention_scores, axis=2)
 
             # attend to values
-            # hidden_states = jnp.einsum("b i j, b j d -> b i d", attention_probs, value_states)
-            hidden_states = attention_probs @ value_states
+            # hidden_states = attention_probs @ value_states
+            hidden_states = jnp.einsum("b i j, b j d -> b i d", attention_probs, value_states)
 
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
         hidden_states = self.proj_attn(hidden_states)
