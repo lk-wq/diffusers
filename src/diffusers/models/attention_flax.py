@@ -205,9 +205,9 @@ class FlaxAttention(nn.Module):
             hidden_states = hidden_states.transpose(1, 0, 2)
         else:
             # compute attentions
-            # attention_scores = jnp.einsum("b i d, b j d->b i j", query_states, key_states)
+            attention_scores = jnp.einsum("b i d, b j d->b i j", query_states, key_states)
             # print(' q , k ' , query_states.shape ,  key_states.shape )
-            attention_scores = query_states @ key_states.transpose(0, 2, 1)
+            # attention_scores = query_states @ key_states.transpose(0, 2, 1)
             attention_scores = attention_scores * self.scale
             attention_probs = nn.softmax(attention_scores, axis=2)
 
