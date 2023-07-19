@@ -206,7 +206,7 @@ class FlaxAttention(nn.Module):
         else:
             # compute attentions
             attention_scores = jnp.einsum("b i d, b j d->b i j", query_states, key_states)
-            print(' q , k ' , query_states.shape ,  key_states.shape )
+            # print(' q , k ' , query_states.shape ,  key_states.shape )
             # attention_scores = query_states @ key_states.transpose(0, 2, 1)
             attention_scores = attention_scores * self.scale
             attention_probs = nn.softmax(attention_scores, axis=2)
@@ -253,11 +253,11 @@ class FlaxBasicTransformerBlock(nn.Module):
     def setup(self):
         # self attention (or cross_attention if only_cross_attention is True)
         self.attn1 = FlaxAttention(
-            self.dim, self.n_heads, self.d_head, self.dropout, use_memory_efficient_attention=True, dtype=self.dtype
+            self.dim, self.n_heads, self.d_head, self.dropout, use_memory_efficient_attention, dtype=self.dtype
         )
         # cross attention
         self.attn2 = FlaxAttention(
-            self.dim, self.n_heads, self.d_head, self.dropout, use_memory_efficient_attention=False, dtype=self.dtype
+            self.dim, self.n_heads, self.d_head, self.dropout, use_memory_efficient_attention, dtype=self.dtype
         )
         self.ff = FlaxFeedForward(dim=self.dim, dropout=self.dropout, dtype=self.dtype)
         self.norm1 = nn.LayerNorm(epsilon=1e-5, dtype=self.dtype)
