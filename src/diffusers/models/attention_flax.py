@@ -257,7 +257,7 @@ class FlaxBasicTransformerBlock(nn.Module):
         )
         # cross attention
         self.attn2 = FlaxAttention(
-            self.dim, self.n_heads, self.d_head, self.dropout, True, dtype=self.dtype
+            self.dim, self.n_heads, self.d_head, self.dropout, False, dtype=self.dtype
         )
         self.ff = FlaxFeedForward(dim=self.dim, dropout=self.dropout, dtype=self.dtype)
         self.norm1 = nn.LayerNorm(epsilon=1e-5, dtype=self.dtype)
