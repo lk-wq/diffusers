@@ -1050,10 +1050,10 @@ def main():
         elif shape[0] % 2 == 0:
           return P("mp")
       if len(shape) == 2:
-        if shape[0] % 2 == 0 and shape[1] % 4 == 0:
-          return P("mp","dp")
         if shape[0] % 4 == 0 and shape[1] % 2 == 0:
           return P("dp","mp")
+        if shape[0] % 2 == 0 and shape[1] % 4 == 0:
+          return P("mp","dp")
 
         if shape[0] % 4 == 0:# and shape[1] % 2 == 0:
           return P("dp",None)
@@ -1087,7 +1087,6 @@ def main():
         from jax.sharding import NamedSharding
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
-
         text_params = text_encoder.params
         # del text_encoder.params
         e = jax.tree_util.tree_map(lambda x: None, text_params)
