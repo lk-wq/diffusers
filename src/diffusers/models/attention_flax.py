@@ -427,6 +427,8 @@ class FlaxFeedForward(nn.Module):
 
     def __call__(self, hidden_states, deterministic=True):
         hidden_states = self.net_0(hidden_states)
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+
         hidden_states = self.net_2(hidden_states)
         return hidden_states
 
@@ -453,6 +455,10 @@ class FlaxGEGLU(nn.Module):
         self.proj = nn.Dense(inner_dim * 2, dtype=self.dtype)
 
     def __call__(self, hidden_states, deterministic=True):
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+
         hidden_states = self.proj(hidden_states)
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+
         hidden_linear, hidden_gelu = jnp.split(hidden_states, 2, axis=2)
         return hidden_linear * nn.gelu(hidden_gelu)
