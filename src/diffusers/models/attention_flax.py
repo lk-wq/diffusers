@@ -292,7 +292,7 @@ class FlaxBasicTransformerBlock(nn.Module):
         residual = hidden_states
         # print('hidden_states', hidden_states.shape )
 
-        hidden_states = self.ff(self.norm3(hidden_states), deterministic=deterministic)
+        # hidden_states = self.ff(self.norm3(hidden_states), deterministic=deterministic)
         hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
 
         hidden_states = hidden_states + residual
