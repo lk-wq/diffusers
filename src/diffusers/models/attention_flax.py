@@ -213,7 +213,7 @@ class FlaxAttention(nn.Module):
 
             # attend to values
             # hidden_states = attention_probs @ value_states
-            # print(' q , k ' , query_states.shape ,  key_states.shape )
+            print(' q , k ' , query_states.shape ,  key_states.shape )
 
             hidden_states = jnp.einsum("b i j, b j d -> b i d", attention_probs, value_states)
 
