@@ -158,7 +158,7 @@ class FlaxAttention(nn.Module):
         head_size = self.heads
         tensor = tensor.reshape(batch_size, seq_len, head_size, dim // head_size)
 
-        tensor = nn_partitioning.with_sharding_constraint(tensor, ("dp", None, "mp",None))
+        tensor = nn_partitioning.with_sharding_constraint(tensor, ("mp", None, "dp",None))
         
         tensor = jnp.transpose(tensor, (0, 2, 1, 3))
         tensor = tensor.reshape(batch_size * head_size, seq_len, dim // head_size)
@@ -210,7 +210,6 @@ class FlaxAttention(nn.Module):
             # compute attentions
             # attention_scores = jnp.einsum("b i d, b j d->b i j", query_states, key_states)
             # print(' q , k ' , query_states.shape ,  key_states.shape )
-            jax.debug.visualize_array_sharding(query_states) 
             
             attention_scores = query_states @ key_states.transpose(0, 2, 1)
             attention_scores = attention_scores * self.scale
@@ -280,7 +279,7 @@ class FlaxBasicTransformerBlock(nn.Module):
         else:
             hidden_states = self.attn1(self.norm1(hidden_states), deterministic=deterministic)
         hidden_states = hidden_states + residual
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
 
         # cross attention
         residual = hidden_states
@@ -289,18 +288,17 @@ class FlaxBasicTransformerBlock(nn.Module):
         hidden_states = hidden_states + residual
         
         # feed forward
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
 
         residual = hidden_states
         # print('hidden_states', hidden_states.shape )
 
         hidden_states = self.ff(self.norm3(hidden_states), deterministic=deterministic)
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
 
         hidden_states = hidden_states + residual
 
         return hidden_states
-
 
 class FlaxTransformer2DModel(nn.Module):
     r"""
