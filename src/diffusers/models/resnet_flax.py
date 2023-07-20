@@ -37,7 +37,7 @@ class FlaxUpsample2D(nn.Module):
             shape=(batch, height * 2, width * 2, channels),
             method="nearest",
         )
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, (None,"dp", "mp",None))
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, None, "mp"))
 
         hidden_states = self.conv(hidden_states)
         return hidden_states
@@ -59,7 +59,7 @@ class FlaxDownsample2D(nn.Module):
     def __call__(self, hidden_states):
         # pad = ((0, 0), (0, 1), (0, 1), (0, 0))  # pad height and width dim
         # hidden_states = jnp.pad(hidden_states, pad_width=pad)
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, (None,"dp", "mp",None))
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states,("dp", None, None, "mp"))
 
         hidden_states = self.conv(hidden_states)
         return hidden_states
@@ -109,31 +109,31 @@ class FlaxResnetBlock2D(nn.Module):
             )
 
     def __call__(self, hidden_states, temb, deterministic=True):
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, (None,"dp", "mp",None))
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, None, "mp"))
         # print('hidden states',hidden_states.shape)
         
         residual = hidden_states
         hidden_states = self.norm1(hidden_states)
         hidden_states = nn.swish(hidden_states)
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, (None,"dp", "mp",None))
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, None, "mp"))
 
         hidden_states = self.conv1(hidden_states)
 
         temb = self.time_emb_proj(nn.swish(temb))
         temb = jnp.expand_dims(jnp.expand_dims(temb, 1), 1)
         hidden_states = hidden_states + temb
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, (None,"dp", "mp",None))
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, None, "mp"))
 
         hidden_states = self.norm2(hidden_states)
         hidden_states = nn.swish(hidden_states)
         hidden_states = self.dropout(hidden_states, deterministic)
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, (None,"dp", "mp",None))
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, None, "mp"))
 
         hidden_states = self.conv2(hidden_states)
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, (None,"dp", "mp",None))
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states,("dp", None, None, "mp"))
 
         if self.conv_shortcut is not None:
             residual = self.conv_shortcut(residual)
-        residual = nn_partitioning.with_sharding_constraint(residual, (None,"dp", "mp",None))
+        residual = nn_partitioning.with_sharding_constraint(residual, ("dp", None, None, "mp"))
 
         return hidden_states + residual
