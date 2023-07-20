@@ -104,6 +104,8 @@ class FlaxResnetBlock2D(nn.Module):
             )
 
     def __call__(self, hidden_states, temb, deterministic=True):
+        # hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+        print('hidden states',hidden_states.shape)
         residual = hidden_states
         hidden_states = self.norm1(hidden_states)
         hidden_states = nn.swish(hidden_states)
