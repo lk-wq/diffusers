@@ -455,7 +455,8 @@ class FlaxGEGLU(nn.Module):
         self.proj = nn.Dense(inner_dim * 2, dtype=self.dtype)
 
     def __call__(self, hidden_states, deterministic=True):
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+        print('uhhh', hidden_states.shape)
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
 
         hidden_states = self.proj(hidden_states)
         hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
