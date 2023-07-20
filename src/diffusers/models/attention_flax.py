@@ -257,11 +257,11 @@ class FlaxBasicTransformerBlock(nn.Module):
     def setup(self):
         # self attention (or cross_attention if only_cross_attention is True)
         self.attn1 = FlaxAttention(
-            self.dim, self.n_heads, self.d_head, self.dropout, True, dtype=self.dtype
+            self.dim, self.n_heads, self.d_head, self.dropout, self.use_memory_efficient_attention , dtype=self.dtype
         )
         # cross attention
         self.attn2 = FlaxAttention(
-            self.dim, self.n_heads, self.d_head, self.dropout, False, dtype=self.dtype
+            self.dim, self.n_heads, self.d_head, self.dropout, self.use_memory_efficient_attention , dtype=self.dtype
         )
         self.ff = FlaxFeedForward(dim=self.dim, dropout=self.dropout, dtype=self.dtype)
         self.norm1 = nn.LayerNorm(epsilon=1e-5, dtype=self.dtype)
@@ -271,6 +271,8 @@ class FlaxBasicTransformerBlock(nn.Module):
     def __call__(self, hidden_states, context, deterministic=True):
         # self attention
         residual = hidden_states
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+
         if self.only_cross_attention:
             hidden_states = self.attn1(self.norm1(hidden_states), context, deterministic=deterministic)
         else:
