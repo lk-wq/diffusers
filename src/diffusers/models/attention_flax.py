@@ -278,6 +278,7 @@ class FlaxBasicTransformerBlock(nn.Module):
         else:
             hidden_states = self.attn1(self.norm1(hidden_states), deterministic=deterministic)
         hidden_states = hidden_states + residual
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
 
         # cross attention
         residual = hidden_states
