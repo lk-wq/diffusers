@@ -14,6 +14,7 @@
 import flax.linen as nn
 import jax
 import jax.numpy as jnp
+from flax.linen import partitioning as nn_partitioning
 
 
 class FlaxUpsample2D(nn.Module):
