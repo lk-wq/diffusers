@@ -1169,7 +1169,7 @@ def main():
     
                 # Predict the noise residual and compute loss
             model_pred = unet.apply(
-                    {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=False
+                    {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
                 ).sample
         
                 # Get the target for loss depending on the prediction type
