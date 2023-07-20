@@ -210,6 +210,7 @@ class FlaxAttention(nn.Module):
             # compute attentions
             # attention_scores = jnp.einsum("b i d, b j d->b i j", query_states, key_states)
             # print(' q , k ' , query_states.shape ,  key_states.shape )
+            jax.debug.visualize_array_sharding(y) 
             attention_scores = query_states @ key_states.transpose(0, 2, 1)
             attention_scores = attention_scores * self.scale
             attention_probs = nn.softmax(attention_scores, axis=2)
@@ -272,7 +273,7 @@ class FlaxBasicTransformerBlock(nn.Module):
         # self attention
         residual = hidden_states
         hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
-
+        
         if self.only_cross_attention:
             hidden_states = self.attn1(self.norm1(hidden_states), context, deterministic=deterministic)
         else:
