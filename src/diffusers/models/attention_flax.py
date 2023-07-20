@@ -221,7 +221,6 @@ class FlaxAttention(nn.Module):
         hidden_states = self.proj_attn(hidden_states)
         return hidden_states
 
-
 class FlaxBasicTransformerBlock(nn.Module):
     r"""
     A Flax transformer block layer with `GLU` (Gated Linear Unit) activation function as described in:
@@ -288,6 +287,8 @@ class FlaxBasicTransformerBlock(nn.Module):
         # print('hidden_states', hidden_states.shape )
 
         hidden_states = self.ff(self.norm3(hidden_states), deterministic=deterministic)
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+
         hidden_states = hidden_states + residual
 
         return hidden_states
