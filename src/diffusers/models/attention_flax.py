@@ -157,6 +157,9 @@ class FlaxAttention(nn.Module):
         batch_size, seq_len, dim = tensor.shape
         head_size = self.heads
         tensor = tensor.reshape(batch_size, seq_len, head_size, dim // head_size)
+
+        tensor = nn_partitioning.with_sharding_constraint(tensor, ("dp", None, "mp",None))
+        
         tensor = jnp.transpose(tensor, (0, 2, 1, 3))
         tensor = tensor.reshape(batch_size * head_size, seq_len, dim // head_size)
         return tensor
@@ -213,7 +216,7 @@ class FlaxAttention(nn.Module):
 
             # attend to values
             # hidden_states = attention_probs @ value_states
-            print(' q , k ' , query_states.shape ,  key_states.shape )
+            # print(' q , k ' , query_states.shape ,  key_states.shape )
 
             hidden_states = jnp.einsum("b i j, b j d -> b i d", attention_probs, value_states)
 
