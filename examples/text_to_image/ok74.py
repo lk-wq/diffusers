@@ -1062,6 +1062,7 @@ def main():
         if shape[0] % 2 == 0 and shape[1] % 2 == 0:
           return P("mp",None)
       if len(shape) == 4:
+        print('shape',shape)
         if shape[-2] % 4 == 0 and shape[-1] % 2 == 0:
           return P(None,None,"dp","mp")
         if shape[-2] % 2 == 0 and shape[-1] % 4 == 0:
