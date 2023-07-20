@@ -19,6 +19,7 @@ import flax.linen as nn
 import jax
 import jax.numpy as jnp
 
+from flax.linen import partitioning as nn_partitioning
 
 def _query_chunk_attention(query, key, value, precision, key_chunk_size: int = 4096):
     """Multi-head dot product attention with a limited number of queries."""
@@ -114,7 +115,6 @@ def jax_memory_efficient_attention(
     )
 
     return jnp.concatenate(res, axis=-3)  # fuse the chunked result back
-
 
 class FlaxAttention(nn.Module):
     r"""
@@ -282,8 +282,11 @@ class FlaxBasicTransformerBlock(nn.Module):
         hidden_states = hidden_states + residual
         
         # feed forward
+        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+
         residual = hidden_states
-        print('hidden_states', hidden_states.shape )
+        # print('hidden_states', hidden_states.shape )
+
         hidden_states = self.ff(self.norm3(hidden_states), deterministic=deterministic)
         hidden_states = hidden_states + residual
 
