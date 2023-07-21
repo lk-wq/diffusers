@@ -1025,7 +1025,7 @@ def main():
     #   {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn2 )
     
 #     mesh_devices = np.array(jax.devices()).reshape(1, jax.local_device_count())
-    mesh_devices = mesh_utils.create_device_mesh((2, 4))
+    mesh_devices = mesh_utils.create_device_mesh((4, 2))
         
     print("starting -----------------------------------------------------------> ",mesh_devices)
     print("starting -----------------------------------------------------------> ")
