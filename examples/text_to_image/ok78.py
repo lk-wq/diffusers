@@ -233,8 +233,8 @@ from typing import Any, Callable
 from flax import core
 from flax import struct
 import optax
-# from jax_smi import initialise_tracking
-# initialise_tracking()
+from jax_smi import initialise_tracking
+initialise_tracking()
 class TrainState(struct.PyTreeNode):
   """Simple train state for the common case with a single Optax optimizer.
 
@@ -1050,10 +1050,10 @@ def main():
         elif shape[0] % 2 == 0:
           return P("mp")
       if len(shape) == 2:
-        if shape[0] % 4 == 0 and shape[1] % 2 == 0 and shape[0] >= shape[1]:
-          return P("dp",None)
+        if shape[0] % 4 == 0 and shape[1] % 2 == 0:# and shape[0] >= shape[1]:
+          return P("dp",'mp')
         if shape[0] % 2 == 0 and shape[1] % 4 == 0:
-          return P('mp',None)
+          return P('mp','dp')
 
         if shape[0] % 4 == 0:# and shape[1] % 2 == 0:
           return P("dp",None)
