@@ -208,18 +208,18 @@ class FlaxAttention(nn.Module):
             hidden_states = hidden_states.transpose(1, 0, 2)
         else:
             # compute attentions
-            # attention_scores = jnp.einsum("b i d, b j d->b i j", query_states, key_states)
+            attention_scores = jnp.einsum("b i d, b j d->b i j", query_states, key_states)
             # print(' q , k ' , query_states.shape ,  key_states.shape )
             
-            attention_scores = query_states @ key_states.transpose(0, 2, 1)
+            # attention_scores = query_states @ key_states.transpose(0, 2, 1)
             attention_scores = attention_scores * self.scale
             attention_probs = nn.softmax(attention_scores, axis=2)
 
             # attend to values
-            hidden_states = attention_probs @ value_states
+            # hidden_states = attention_probs @ value_states
             # print(' q , k ' , query_states.shape ,  key_states.shape )
 
-            # hidden_states = jnp.einsum("b i j, b j d -> b i d", attention_probs, value_states)
+            hidden_states = jnp.einsum("b i j, b j d -> b i d", attention_probs, value_states)
 
         hidden_states = self.reshape_batch_dim_to_heads(hidden_states)
         hidden_states = self.proj_attn(hidden_states)
@@ -258,7 +258,7 @@ class FlaxBasicTransformerBlock(nn.Module):
     def setup(self):
         # self attention (or cross_attention if only_cross_attention is True)
         self.attn1 = FlaxAttention(
-            self.dim, self.n_heads, self.d_head, self.dropout, True , dtype=self.dtype
+            self.dim, self.n_heads, self.d_head, self.dropout, False , dtype=self.dtype
         )
         # cross attention
         self.attn2 = FlaxAttention(
