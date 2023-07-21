@@ -158,7 +158,7 @@ class FlaxAttention(nn.Module):
         head_size = self.heads
         tensor = tensor.reshape(batch_size, seq_len, head_size, dim // head_size)
 
-        tensor = nn_partitioning.with_sharding_constraint(tensor, ("mp", None, None,'dp'))
+        # tensor = nn_partitioning.with_sharding_constraint(tensor, ("mp", None, None,'dp'))
         
         tensor = jnp.transpose(tensor, (0, 2, 1, 3))
         tensor = tensor.reshape(batch_size * head_size, seq_len, dim // head_size)
@@ -272,14 +272,14 @@ class FlaxBasicTransformerBlock(nn.Module):
     def __call__(self, hidden_states, context, deterministic=True):
         # self attention
         residual = hidden_states
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
+        # hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
         
         if self.only_cross_attention:
             hidden_states = self.attn1(self.norm1(hidden_states), context, deterministic=deterministic)
         else:
             hidden_states = self.attn1(self.norm1(hidden_states), deterministic=deterministic)
         hidden_states = hidden_states + residual
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
+        # hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
 
         # cross attention
         residual = hidden_states
@@ -288,13 +288,13 @@ class FlaxBasicTransformerBlock(nn.Module):
         hidden_states = hidden_states + residual
         
         # feed forward
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
+        # hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
 
         residual = hidden_states
         # print('hidden_states', hidden_states.shape )
 
         hidden_states = self.ff(self.norm3(hidden_states), deterministic=deterministic)
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
+        # hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
 
         hidden_states = hidden_states + residual
 
@@ -427,7 +427,7 @@ class FlaxFeedForward(nn.Module):
 
     def __call__(self, hidden_states, deterministic=True):
         hidden_states = self.net_0(hidden_states)
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+        # hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
 
         hidden_states = self.net_2(hidden_states)
         return hidden_states
@@ -456,10 +456,10 @@ class FlaxGEGLU(nn.Module):
 
     def __call__(self, hidden_states, deterministic=True):
         print('uhhh', hidden_states.shape)
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
+        # hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("mp", None, "dp"))
 
         hidden_states = self.proj(hidden_states)
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
+        # hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, "mp"))
 
         hidden_linear, hidden_gelu = jnp.split(hidden_states, 2, axis=2)
         return hidden_linear * nn.gelu(hidden_gelu)
