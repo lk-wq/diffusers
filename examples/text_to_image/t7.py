@@ -536,7 +536,7 @@ def main():
         setattr(text_encoder,'params',text_params)
 
         # print(text_encoder)
-        # mesh_devices = mesh_utils.create_device_mesh((4, 2))
+        mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
         mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
         text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params )
@@ -721,6 +721,7 @@ def main():
     
         # Replicate the train state on each device
         state = jax_utils.replicate(state)
+        
         text_encoder_params = jax_utils.replicate(text_encoder_params)
         vae_params = jax_utils.replicate(vae_params)
 
