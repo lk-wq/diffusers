@@ -528,23 +528,30 @@ def main():
         from jax.sharding import NamedSharding
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
-
         text_params = text_encoder.params
-        # del text_params
+        # del text_encoder.params
+        e = jax.tree_util.tree_map(lambda x: None, text_params)
+
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
+        setattr(text_encoder,'params',text_params)
 
-        mesh_devices = mesh_utils.create_device_mesh((4, 2))
+        # print(text_encoder)
+        # mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
-        mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
-        text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params)
+        # mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
+        text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params )
         unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
         vae_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , vae_params )
     
         text_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), text_params)
-        unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), vae_params)
         
+        unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
+        
+        # del text_encoder
         opt_state = optimizer.init(unet_params)
+        # print('os',opt_state)
+        # return
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
     
     if not args.model_parallel:
