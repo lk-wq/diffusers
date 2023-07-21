@@ -258,7 +258,7 @@ class FlaxBasicTransformerBlock(nn.Module):
     def setup(self):
         # self attention (or cross_attention if only_cross_attention is True)
         self.attn1 = FlaxAttention(
-            self.dim, self.n_heads, self.d_head, self.dropout, False , dtype=self.dtype
+            self.dim, self.n_heads, self.d_head, self.dropout, True , dtype=self.dtype
         )
         # cross attention
         self.attn2 = FlaxAttention(
