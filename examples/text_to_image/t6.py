@@ -538,7 +538,7 @@ def main():
         # print(text_encoder)
         # mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
-        # mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
+        mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
         text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params )
         unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
         vae_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , vae_params )
