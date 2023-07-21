@@ -37,7 +37,7 @@ class FlaxUpsample2D(nn.Module):
             shape=(batch, height * 2, width * 2, channels),
             method="nearest",
         )
-        hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, None, "mp"))
+        # hidden_states = nn_partitioning.with_sharding_constraint(hidden_states, ("dp", None, None, "mp"))
 
         hidden_states = self.conv(hidden_states)
         return hidden_states
