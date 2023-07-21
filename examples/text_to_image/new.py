@@ -434,58 +434,12 @@ def main():
         weight_decay=args.adam_weight_decay,
     )
 
-    optimizer_ = optax.chain(
+    optimizer = optax.chain(
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
     )
-    
-    optimizer2_ = optax.MultiSteps(
-        optimizer_, args.accumulation_frequency
-    )
-
-    def flattened_traversal(fn):
-      """Returns function that is called with `(path, param)` instead of pytree."""
-      def mask(tree):
-        flat = flax.traverse_util.flatten_dict(tree)
-        return flax.traverse_util.unflatten_dict(
-            {k: fn(k, v) for k, v in flat.items()})
-      return mask
-    label_fn = flattened_traversal(
-        lambda path, _: 'adam' if check_str(path) else 'none')
-    label_fn2 = flattened_traversal(
-        lambda path, _: 'adam' if check_str2(path) else 'none')
-    def check_str2(path):
-      for s in path:
-        if 'atte' not in s:# or 'up_blocks_3' in s or 'norm' in s or 'bias' in s or 'emb' in s.lower() or 'conv_in' in s or 'conv_out' in s:
-            print("success ---> " , path )
-            return True
-#       print("fail ----> ", path )      
-      return False
-
-    def check_str(path):
-      s = ".".join(path)
-      if 'block.23' in s:# or 'bias' in s or 'norm' in s:# or 'block.0.' in s or 'block.12' in s:
-            print("success ---> " , path )
-            return True
-#       if ('block.0' in s or 'block.12' and 'Atte' in s or 'bias' in s or 'norm' in s:# or 'block.0.' in s or 'block.12' in s:
-#             print("success ---> " , path )
-#             return True
-#       if 'block.12' in s and 'Att' in s or 'norm' in s:# or 'block.0.' in s or 'block.12' in s:
-#             print("success ---> " , path )
-#             return True
-
-        #       print("fail ----> ", path )      
-      return False
-    optimizer = optax.multi_transform(
-      {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn2 )
 
     def partition_shape(shape):
-      # for i in shape:
-      #   if 6 in shape:
-      #       if len(shape) == 1:
-      #           return P(None)
-      #       if len(shape) == 4:
-      #           return P(None,None,None,None)
       if len(shape) == 1:
         if shape[0] % 4 == 0:
           return P("dp")
@@ -514,7 +468,6 @@ def main():
         if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
           return P(None,None,"mp",None)
         
-      print("fail",shape)
       return P()
     from jax.sharding import PartitionSpec as P 
     from jax.sharding import NamedSharding
@@ -529,13 +482,12 @@ def main():
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
         text_params = text_encoder.params
-        # del text_encoder.params
+
         e = jax.tree_util.tree_map(lambda x: None, text_params)
 
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
         setattr(text_encoder,'params',text_params)
 
-        # print(text_encoder)
         mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
         mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
@@ -548,10 +500,7 @@ def main():
         
         unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
         
-        # del text_encoder
         opt_state = optimizer.init(unet_params)
-        # print('os',opt_state)
-        # return
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
     
     if not args.model_parallel:
