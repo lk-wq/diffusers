@@ -314,11 +314,8 @@ def main():
     else:
         image_column = args.image_column
         if image_column not in column_names:
-            # raise ValueError(
-            #     f"--image_column' value '{args.image_column}' needs to be one of: '{', '.join(column_names)}'"
-            # )
             raise ValueError(
-                "fail "
+                f"--image_column' value '{args.image_column}' needs to be one of: '{', '.join(column_names)}'"
             )
 
     if args.caption_column is None:
@@ -326,11 +323,8 @@ def main():
     else:
         caption_column = args.caption_column
         if caption_column not in column_names:
-            # raise ValueError(
-            #     f"--caption_column' value '{args.caption_column}' needs to be one of: '{', '.join(column_names)}' "
-            # )
             raise ValueError(
-                "fail "
+                f"--caption_column' value '{args.caption_column}' needs to be one of: '{', '.join(column_names)}' "
             )
 
     # Preprocessing the datasets.
@@ -344,13 +338,9 @@ def main():
                 # take a random caption if there are multiple
                 captions.append(random.choice(caption) if is_train else caption[0])
             else:
-                # raise ValueError(
-                #     f"Caption column `{caption_column}` should contain either strings or lists of strings."
-                # )
                 raise ValueError(
-                "fail "
+                    f"Caption column `{caption_column}` should contain either strings or lists of strings."
                 )
-
         inputs = tokenizer(captions, max_length=tokenizer.model_max_length, padding="do_not_pad", truncation=True)
         input_ids = inputs.input_ids
         return input_ids
@@ -438,6 +428,10 @@ def main():
         optax.clip_by_global_norm(args.max_grad_norm),
         adamw,
     )
+    if args.accumulation_frequency > 1:
+        optimizer = optax.MultiSteps(
+            optimizer, args.accumulation_frequency
+        )
 
     def partition_shape(shape):
       if len(shape) == 1:
@@ -450,9 +444,9 @@ def main():
           return P("dp","mp")
         if shape[0] % 2 == 0 and shape[1] % 4 == 0:
           return P("mp","dp")
-        if shape[0] % 4 == 0:# and shape[1] % 2 == 0:
+        if shape[0] % 4 == 0:
           return P("dp",None)
-        if shape[1] % 4 == 0:# and shape[1] % 2 == 0:
+        if shape[1] % 4 == 0:
           return P(None,"dp")
         if shape[0] % 2 == 0 and shape[1] % 2 == 0:
           return P("mp",None)
@@ -461,9 +455,9 @@ def main():
           return P(None,None,"dp","mp")
         if shape[-2] % 2 == 0 and shape[-1] % 4 == 0:
           return P(None,None,"mp","dp")
-        if shape[-2] % 4 == 0:# and shape[1] % 2 == 0:
+        if shape[-2] % 4 == 0:
           return P(None,None,"dp",None)
-        if shape[-1] % 4 == 0:# and shape[1] % 2 == 0:
+        if shape[-1] % 4 == 0:
           return P(None,None,None,"dp")
         if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
           return P(None,None,"mp",None)
@@ -478,7 +472,6 @@ def main():
         text_encoder_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(weight_dtype), text_encoder.params)
 
     if args.model_parallel:
-        from jax.sharding import NamedSharding
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
         text_params = text_encoder.params
@@ -570,10 +563,7 @@ def main():
                 elif noise_scheduler.config.prediction_type == "v_prediction":
                     target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
                 else:
-                    # raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
-                    raise ValueError(
-                    "fail "
-                    )
+                    raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
 
                 loss = (target - model_pred) ** 2
                 loss = loss.mean()
@@ -645,9 +635,7 @@ def main():
                 elif noise_scheduler.config.prediction_type == "v_prediction":
                     target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
                 else:
-                    raise ValueError(
-                        "fail "
-                    )
+                    raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
     
                 loss = (target - model_pred) ** 2
                 loss = loss.mean()
