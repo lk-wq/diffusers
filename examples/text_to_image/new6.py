@@ -494,6 +494,8 @@ def main():
       return P()
     from jax.sharding import PartitionSpec as P 
     from jax.sharding import NamedSharding
+    mesh_devices = mesh_utils.create_device_mesh((4, 2))
+
     mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
 
     if not args.model_parallel:
