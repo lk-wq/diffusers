@@ -408,7 +408,9 @@ def main():
     unet, unet_params = FlaxUNet2DConditionModel.from_pretrained(
         args.pretrained_model_name_or_path, revision=args.revision, subfolder="unet", dtype=weight_dtype, from_pt=args.from_pt
     )
-    
+    unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
+    vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
+
     # Optimization
     if args.scale_lr:
         args.learning_rate = args.learning_rate * total_train_batch_size
@@ -449,8 +451,17 @@ def main():
           return False
         optimizer = optax.multi_transform(
           {'adam': optimizer, 'none': optax.set_to_zero()}, label_fn )
+    import gc 
+    
+    gc.collect()
 
     def partition_shape(shape):
+      # for i in shape:
+      #   if 6 in shape:
+      #       if len(shape) == 1:
+      #           return P(None)
+      #       if len(shape) == 4:
+      #           return P(None,None,None,None)
       if len(shape) == 1:
         if shape[0] % 4 == 0:
           return P("dp")
@@ -461,9 +472,9 @@ def main():
           return P("dp","mp")
         if shape[0] % 2 == 0 and shape[1] % 4 == 0:
           return P("mp","dp")
-        if shape[0] % 4 == 0:
+        if shape[0] % 4 == 0:# and shape[1] % 2 == 0:
           return P("dp",None)
-        if shape[1] % 4 == 0:
+        if shape[1] % 4 == 0:# and shape[1] % 2 == 0:
           return P(None,"dp")
         if shape[0] % 2 == 0 and shape[1] % 2 == 0:
           return P("mp",None)
@@ -472,15 +483,18 @@ def main():
           return P(None,None,"dp","mp")
         if shape[-2] % 2 == 0 and shape[-1] % 4 == 0:
           return P(None,None,"mp","dp")
-        if shape[-2] % 4 == 0:
+        if shape[-2] % 4 == 0:# and shape[1] % 2 == 0:
           return P(None,None,"dp",None)
-        if shape[-1] % 4 == 0:
+        if shape[-1] % 4 == 0:# and shape[1] % 2 == 0:
           return P(None,None,None,"dp")
         if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
           return P(None,None,"mp",None)
+        
+      print("fail",shape)
       return P()
     from jax.sharding import PartitionSpec as P 
     from jax.sharding import NamedSharding
+    mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
 
     if not args.model_parallel:
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(weight_dtype), unet_params)
@@ -488,18 +502,20 @@ def main():
         text_encoder_params = jax.tree_util.tree_map(lambda x: np.asarray(x).astype(weight_dtype), text_encoder.params)
 
     if args.model_parallel:
+        from jax.sharding import NamedSharding
         unet_params = jax.tree_util.tree_map(lambda x: np.asarray(x), unet_params)
         vae_params = jax.tree_util.tree_map(lambda x: np.asarray(x), vae_params)
         text_params = text_encoder.params
-
+        # del text_encoder.params
         e = jax.tree_util.tree_map(lambda x: None, text_params)
 
         text_params = jax.tree_util.tree_map(lambda x: np.asarray(x), text_params)
         setattr(text_encoder,'params',text_params)
 
-        mesh_devices = mesh_utils.create_device_mesh((4, 2))
+        # print(text_encoder)
+        # mesh_devices = mesh_utils.create_device_mesh((4, 2))
 
-        mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
+        # mesh = Mesh(mesh_devices , axis_names=('dp','mp'))
         text_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , text_params )
         unet_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , unet_params )
         vae_param_spec = jax.tree_util.tree_map(lambda x: partition_shape(x.shape) , vae_params )
@@ -509,9 +525,15 @@ def main():
         
         unet_params = jax.tree_util.tree_map(lambda x: jax.device_put(x ,NamedSharding(mesh , partition_shape(x.shape)) ).astype(weight_dtype), unet_params)
         
+        # del text_encoder
         opt_state = optimizer.init(unet_params)
+        # print('os',opt_state)
+        # return
         unet_opt_state_spec = jax.tree_util.tree_map(lambda x : partition_shape(x.shape), opt_state )
+    import gc 
     
+    gc.collect()
+
     if not args.model_parallel:
         state = train_state.TrainState.create(apply_fn=unet.__call__, params=unet_params, tx=optimizer)
 
