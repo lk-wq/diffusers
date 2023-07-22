@@ -438,6 +438,7 @@ def main():
             return flax.traverse_util.unflatten_dict(
                 {k: fn(k, v) for k, v in flat.items()})
           return mask
+            
         label_fn = flattened_traversal(
             lambda path, _: 'adam' if check_str(path) else 'none')
         def check_str(path):
@@ -447,7 +448,7 @@ def main():
             print('fail',path)
           return False
         optimizer = optax.multi_transform(
-          {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn )
+          {'adam': optimizer, 'none': optax.set_to_zero()}, label_fn )
 
     def partition_shape(shape):
       if len(shape) == 1:
@@ -477,7 +478,6 @@ def main():
           return P(None,None,None,"dp")
         if shape[-1] % 2 == 0 and shape[-2] % 2 == 0:
           return P(None,None,"mp",None)
-        
       return P()
     from jax.sharding import PartitionSpec as P 
     from jax.sharding import NamedSharding
