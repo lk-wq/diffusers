@@ -557,75 +557,77 @@ def main():
         # from jax.sharding import NamedSharding
 
         def train_step(unet_params, opt_state, text_encoder_params, vae_params, batchi,batchp, train_rng):
-                
+                    
             dropout_rng, sample_rng, new_train_rng = jax.random.split(train_rng, 3)
             def compute_loss(params):
-                # Convert images to latent space
+                    # Convert images to latent space
                 vae_outputs = vae.apply(
-                    {"params": vae_params}, batchp, deterministic=True, method=vae.encode
-                )
+                        {"params": vae_params}, batchp, deterministic=True, method=vae.encode
+                    )
                 latents = vae_outputs.latent_dist.sample(sample_rng)
-                # (NHWC) -> (NCHW)
+                    # (NHWC) -> (NCHW)
                 latents = jnp.transpose(latents, (0, 3, 1, 2))
                 latents = latents * vae.config.scaling_factor
-    
-                # Sample noise that we'll add to the latents
+        
+                    # Sample noise that we'll add to the latents
                 noise_rng, timestep_rng = jax.random.split(sample_rng)
                 noise = jax.random.normal(noise_rng, latents.shape)
-                # Sample a random timestep for each image
+                    # Sample a random timestep for each image
                 bsz = latents.shape[0]
                 timesteps = jax.random.randint(
-                    timestep_rng,
-                    (bsz,),
-                    0,
-                    noise_scheduler.config.num_train_timesteps,
-                )
-    
-                # Add noise to the latents according to the noise magnitude at each timestep
-                # (this is the forward diffusion process)
-                noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
-    
-                # Get the text embedding for conditioning
-                encoder_hidden_states = text_encoder(
-                    batchi,
-                    params=text_encoder_params,
-                    train=False,
-                )[0]
-    
-                # Predict the noise residual and compute loss
-                model_pred = unet.apply(
-                    {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
-                ).sample
+                        timestep_rng,
+                        (bsz,),
+                        0,
+                        noise_scheduler.config.num_train_timesteps,
+                    )
         
-                # Get the target for loss depending on the prediction type
+                    # Add noise to the latents according to the noise magnitude at each timestep
+                    # (this is the forward diffusion process)
+                noisy_latents = noise_scheduler.add_noise(noise_scheduler_state, latents, noise, timesteps)
+        
+                    # Get the text embedding for conditioning
+                encoder_hidden_states = text_encoder(
+                        batchi,
+                        params=text_encoder_params,
+                        train=False,
+                    )[0]
+        
+                    # Predict the noise residual and compute loss
+                model_pred = unet.apply(
+                        {"params": params}, noisy_latents, timesteps, encoder_hidden_states, train=True
+                    ).sample
+            
+                    # Get the target for loss depending on the prediction type
                 if noise_scheduler.config.prediction_type == "epsilon":
                     target = noise
                 elif noise_scheduler.config.prediction_type == "v_prediction":
                     target = noise_scheduler.get_velocity(noise_scheduler_state, latents, noise, timesteps)
                 else:
-                    raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
-
+                    # raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+                    raise ValueError(
+                        "fail "
+                        )
+    
                 loss = (target - model_pred) ** 2
                 loss = loss.mean()
-    
+        
                 return loss
-    
+        
             grad_fn = jax.value_and_grad(compute_loss)
             loss, grads = grad_fn(unet_params)
             unet_updates, new_unet_opt_state = optimizer.update(grads, opt_state, unet_params)
             new_unet_params = optax.apply_updates(unet_params, unet_updates)
-                        
             metrics = {"loss": loss}
-    
+        
             return new_unet_params, new_unet_opt_state, metrics, new_train_rng 
-
+            
         p_train_step = pjit(
             train_step,
             in_axis_resources=( unet_param_spec,unet_opt_state_spec,text_param_spec,vae_param_spec,P("dp",None),P('dp',None,None,'mp'),None ),
             out_axis_resources=( unet_param_spec,unet_opt_state_spec,None, None),
             donate_argnums=(0, 1),
         )
-    
+        
     else:
 
         def train_step(state, text_encoder_params, vae_params, batch, train_rng):
