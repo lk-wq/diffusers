@@ -305,7 +305,6 @@ def main():
     # Preprocessing the datasets.
     # We need to tokenize inputs and targets.
     column_names = dataset["train"].column_names
-    print('cn',column_names)
 
     # 6. Get the column names for input/target.
     dataset_columns = dataset_name_mapping.get(args.dataset_name, None)
@@ -432,6 +431,23 @@ def main():
         optimizer = optax.MultiSteps(
             optimizer, args.accumulation_frequency
         )
+        def flattened_traversal(fn):
+          """Returns function that is called with `(path, param)` instead of pytree."""
+          def mask(tree):
+            flat = flax.traverse_util.flatten_dict(tree)
+            return flax.traverse_util.unflatten_dict(
+                {k: fn(k, v) for k, v in flat.items()})
+          return mask
+        label_fn = flattened_traversal(
+            lambda path, _: 'adam' if check_str(path) else 'none')
+        def check_str(path):
+          for s in path:
+            if 'atte' not in s:# or 'up_blocks_3' in s or 'norm' in s or 'bias' in s or 'emb' in s.lower() or 'conv_in' in s or 'conv_out' in s:
+                return True
+            print('fail',path)
+          return False
+        optimizer = optax.multi_transform(
+          {'adam': optimizer2_, 'none': optax.set_to_zero()}, label_fn )
 
     def partition_shape(shape):
       if len(shape) == 1:
