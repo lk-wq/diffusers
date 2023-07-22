@@ -233,8 +233,8 @@ from typing import Any, Callable
 from flax import core
 from flax import struct
 import optax
-from jax_smi import initialise_tracking
-initialise_tracking()
+# from jax_smi import initialise_tracking
+# initialise_tracking()
 class TrainState(struct.PyTreeNode):
   """Simple train state for the common case with a single Optax optimizer.
 
@@ -1194,7 +1194,6 @@ def main():
         loss, grads = grad_fn(unet_params)
         unet_updates, new_unet_opt_state = optimizer.update(grads, opt_state, unet_params)
         new_unet_params = optax.apply_updates(unet_params, unet_updates)
-                        
         metrics = {"loss": loss}
     
         return new_unet_params, new_unet_opt_state, metrics, new_train_rng 
