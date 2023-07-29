@@ -1290,7 +1290,7 @@ class LoRAAttnProcessor2_0(nn.Module):
         out_hidden_size = kwargs.pop("out_hidden_size", None)
         out_rank = out_rank if out_rank is not None else rank
         out_hidden_size = out_hidden_size if out_hidden_size is not None else hidden_size
-
+        self.id = nn.Identity()
         self.to_q_lora = LoRALinearLayer(q_hidden_size, q_hidden_size, q_rank, network_alpha)
         self.to_k_lora = LoRALinearLayer(cross_attention_dim or hidden_size, hidden_size, rank, network_alpha)
         self.to_v_lora = LoRALinearLayer(cross_attention_dim or v_hidden_size, v_hidden_size, v_rank, network_alpha)
@@ -1338,6 +1338,7 @@ class LoRAAttnProcessor2_0(nn.Module):
         hidden_states = F.scaled_dot_product_attention(
             query, key, value, attn_mask=attention_mask, dropout_p=0.0, is_causal=False
         )
+        hidden_states = self.id(hidden_states)
         hidden_states = hidden_states.transpose(1, 2).reshape(batch_size, -1, attn.heads * head_dim)
         hidden_states = hidden_states.to(query.dtype)
 
